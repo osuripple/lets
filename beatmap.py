@@ -1,4 +1,5 @@
 from constants import rankedStatuses
+from constants import bcolors
 from helpers import osuapiHelper
 import glob
 import time
@@ -25,6 +26,7 @@ class beatmap:
 		self.OD = 0.0
 		self.maxCombo = 0
 		self.hitLength = 0
+		self.bpm = 0
 
 		if md5 != None and beatmapSetID != None:
 			self.setData(md5, beatmapSetID)
@@ -42,7 +44,7 @@ class beatmap:
 
 		# Add new beatmap data
 		consoleHelper.printGetScoresMessage("Saving beatmap data in db...")
-		glob.db.execute("INSERT INTO `beatmaps` (`id`, `beatmap_id`, `beatmapset_id`, `beatmap_md5`, `song_name`, `ar`, `od`, `difficulty`, `max_combo`, `hit_length`, `ranked`, `latest_update`) VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);", [
+		glob.db.execute("INSERT INTO `beatmaps` (`id`, `beatmap_id`, `beatmapset_id`, `beatmap_md5`, `song_name`, `ar`, `od`, `difficulty`, `max_combo`, `hit_length`, `bpm`, `ranked`, `latest_update`) VALUES (NULL, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);", [
 			self.beatmapID,
 			self.beatmapSetID,
 			self.fileMD5,
@@ -52,6 +54,7 @@ class beatmap:
 			self.stars,
 			self.maxCombo,
 			self.hitLength,
+			self.bpm,
 			self.rankedStatus,
 			int(time.time())
 		])
@@ -86,6 +89,7 @@ class beatmap:
 		self.stars = float(data["difficulty"])
 		self.maxCombo = int(data["max_combo"])
 		self.hitLength = int(data["hit_length"])
+		self.bpm = int(data["bpm"])
 		return True
 
 	def setDataFromOsuApi(self, md5, beatmapSetID):
@@ -120,6 +124,7 @@ class beatmap:
 		self.stars = float(data["difficultyrating"])
 		self.maxCombo = int(data["max_combo"])
 		self.hitLength = int(data["hit_length"])
+		self.bpm = int(float(data["bpm"]))
 		return True
 
 	def setData(self, md5, beatmapSetID):

@@ -23,7 +23,8 @@ class db:
 
 		self.connection = pymysql.connect(host=__host, user=__username, password=__password, db=__database, cursorclass=pymysql.cursors.DictCursor, autocommit=True)
 		self.pingTime = __pingTime
-		self.pingLoop()
+		if self.pingTime > 0:
+			self.pingLoop()
 
 
 	def bindParams(self, __query, __params):
@@ -54,12 +55,17 @@ class db:
 
 		with self.connection.cursor() as cursor:
 			try:
-				# Bind params if needed
-				if __params != None:
-					__query = self.bindParams(__query, __params)
+				if "%" not in __query:
+					# Old thing
+					# Bind params if needed
+					if __params != None:
+						__query = self.bindParams(__query, __params)
 
-				# Execute the query
-				cursor.execute(__query)
+					# Execute the query
+					cursor.execute(__query)
+				else:
+					# New thing
+					cursor.execute(__query, tuple(__params))
 			finally:
 				# Close this connection
 				cursor.close()

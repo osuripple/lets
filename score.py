@@ -107,6 +107,7 @@ class score:
 			self.playerUserID = userHelper.getID(self.playerName)
 			self.rank = rank if rank != None else ""
 			self.date = data["time"]
+			self.fileMd5 = data["beatmap_md5"]
 			self.calculateAccuracy()
 
 	def setDataFromScoreData(self, scoreData):
@@ -190,19 +191,15 @@ class score:
 		# Get score id
 		self.scoreID = glob.db.connection.insert_id()
 
-	def calculatePP(self):
+	def calculatePP(self, b = None):
 		"""
 		Calculate this score's pp value
 		"""
-		consoleHelper.printRippMessage("Calculating PP. w00t p00t...")
-
 		# Create beatmap object
-		b = beatmap.beatmap(self.fileMd5, 0)
+		if b == None:
+			b = beatmap.beatmap(self.fileMd5, 0)
 
 		# Create an instance of the magic pp calculator and calculate pp
 		fo = ripp.algo(b, self)
 		self.pp = fo.getPP()
-		consoleHelper.printRippMessage("Aim PP: {}".format(fo.aimValue))
-		consoleHelper.printRippMessage("Speed PP: {}".format(fo.speedValue))
-		consoleHelper.printRippMessage("Acc PP: {}".format(fo.accValue))
-		consoleHelper.printRippMessage("Total PP: {}".format(self.pp))
+		consoleHelper.printRippMessage("PP: {:.2f} (aim::{:.2f} + spd::{:.2f} + acc::{:.2f})".format(self.pp, fo.aimValue, fo.speedValue, fo.accValue))
