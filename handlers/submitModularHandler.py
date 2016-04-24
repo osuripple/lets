@@ -84,7 +84,9 @@ class handler(tornado.web.RequestHandler):
 			userHelper.updateStats(userID, s)
 
 			# Update leaderboard
-			if glob.pp == True and s.gameMode == gameModes.STD:
+			#if glob.pp == True and s.gameMode == gameModes.STD:
+			# NOTE: gne gne meccanica gne gne fa click gne gne
+			if s.gameMode == gameModes.STD:
 				newScore = userHelper.getPP(userID, s.gameMode)
 			else:
 				newScore = userHelper.getRankedScore(userID, s.gameMode)

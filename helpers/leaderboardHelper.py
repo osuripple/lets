@@ -68,6 +68,7 @@ def update(userID, newScore, gameMode):
 		newPlayer = False
 		us = glob.db.fetch("SELECT * FROM leaderboard_{} WHERE user=?".format(mode), [userID])
 		if us == None:
+			consoleHelper.printDebugMessage("New player")
 			newPlayer = True
 
 		# Find player who is right below our score
@@ -98,3 +99,4 @@ def update(userID, newScore, gameMode):
 		glob.db.execute("INSERT INTO leaderboard_{} (position, user, v) VALUES (?, ?, ?);".format(mode), [newT, userID, newScore])
 	except:
 		consoleHelper.printColored("[!] Error while updating leaderboard!", bcolors.RED)
+		raise

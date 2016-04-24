@@ -79,3 +79,6 @@ def printGetReplayMessage(message):
 
 def printRippMessage(message):
 	printColored("[ripp] {}".format(message), bcolors.GREEN)
+
+def printDebugMessage(message):
+	printColored("[debug] {}".format(message), bcolors.BLUE)
