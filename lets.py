@@ -12,6 +12,7 @@ from handlers import getScoresHandler
 from handlers import submitModularHandler
 from handlers import banchoConnectHandler
 from handlers import getReplayHandler
+from handlers import statusHandler
 
 # Tornado
 import tornado.ioloop
@@ -22,7 +23,8 @@ def make_app():
 		(r"/web/bancho_connect.php", banchoConnectHandler.handler),
 		(r"/web/osu-osz2-getscores.php", getScoresHandler.handler),
 		(r"/web/osu-submit-modular.php", submitModularHandler.handler),
-		(r"/web/osu-getreplay.php", getReplayHandler.handler)
+		(r"/web/osu-getreplay.php", getReplayHandler.handler),
+		(r"/status", statusHandler.handler)
 	])
 
 if __name__ == "__main__":
