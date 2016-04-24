@@ -100,6 +100,6 @@ class scoreboard:
 
 		# Output top 50 scores
 		for i in self.scores[1:]:
-			data += i.getData()
+			data += i.getData(self.username)
 
 		return data
