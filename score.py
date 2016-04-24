@@ -2,6 +2,7 @@ from lets import glob
 from helpers import userHelper
 from helpers import scoreHelper
 from helpers import consoleHelper
+from helpers import generalHelper
 import beatmap
 import os
 if os.path.isfile("ripp.py"):
@@ -42,6 +43,7 @@ class score:
 
 		self.pp = 0.00
 
+		self.oldPersonalBest = 0
 		self.rankedScoreIncrease = 0
 
 		if scoreID != None:
@@ -158,7 +160,7 @@ class score:
 			self.mods,
 			self.playerUserID,
 			self.rank,
-			self.date)
+			generalHelper.osuDateToUNIXTimestamp(self.date))
 
 	def setCompletedStatus(self):
 		"""
@@ -166,19 +168,22 @@ class score:
 		"""
 		if self.passed == True and scoreHelper.isRankable(self.mods):
 			# Get right "completed" value
-			personalBest = glob.db.fetch("SELECT score FROM scores WHERE username = ? AND beatmap_md5 = ? AND play_mode = ? AND completed = 3", [self.playerName, self.fileMd5, self.gameMode])
+			personalBest = glob.db.fetch("SELECT id, score FROM scores WHERE username = ? AND beatmap_md5 = ? AND play_mode = ? AND completed = 3", [self.playerName, self.fileMd5, self.gameMode])
 			if personalBest == None:
 				# This is our first score on this map, so it's our best score
 				self.completed = 3
 				self.rankedScoreIncrease = self.score
+				self.oldPersonalBest = 0
 			else:
 				# Compare personal best's score with current score
 				if self.score > personalBest["score"]:
 					self.completed = 3
 					self.rankedScoreIncrease = self.score-personalBest["score"]
+					self.oldPersonalBest = personalBest["id"]
 				else:
 					self.completed = 2
 					self.rankedScoreIncrease = 0
+					self.oldPersonalBest = 0
 
 	def saveScoreInDB(self):
 		"""
@@ -187,6 +192,10 @@ class score:
 		# Add this score
 		query = "INSERT INTO scores (id, beatmap_md5, username, score, max_combo, full_combo, mods, 300_count, 100_count, 50_count, katus_count, gekis_count, misses_count, time, play_mode, completed, accuracy, pp) VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"
 		glob.db.execute(query, [self.fileMd5, self.playerName, self.score, self.maxCombo, 1 if self.fullCombo == True else 0, self.mods, self.c300, self.c100, self.c50, self.cKatu, self.cGeki, self.cMiss, self.playDateTime, self.gameMode, self.completed, self.accuracy*100, self.pp])
+
+		# Set old personal best to completed = 2
+		if self.oldPersonalBest != 0:
+			glob.db.execute("UPDATE scores SET completed = 2 WHERE id = ?", [self.oldPersonalBest])
 
 		# Get score id
 		self.scoreID = glob.db.connection.insert_id()
