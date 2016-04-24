@@ -3,6 +3,7 @@ from helpers import consoleHelper
 from constants import bcolors
 from helpers import aeshelper
 from helpers import userHelper
+from helpers import discordBotHelper
 import score
 import os
 import glob
@@ -89,6 +90,7 @@ class handler(tornado.web.RequestHandler):
 			if s.gameMode == gameModes.STD:
 				newScore = userHelper.getPP(userID, s.gameMode)
 			else:
+				discordBotHelper.sendConfidential("Non-std score submitted by {}. Gamemode: {}".format(s.playerName, s.gameMode))
 				newScore = userHelper.getRankedScore(userID, s.gameMode)
 
 			leaderboardHelper.update(userID, newScore, s.gameMode)

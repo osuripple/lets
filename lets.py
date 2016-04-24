@@ -13,6 +13,7 @@ from handlers import submitModularHandler
 from handlers import banchoConnectHandler
 from handlers import getReplayHandler
 from handlers import statusHandler
+from helpers import discordBotHelper
 
 # Tornado
 import tornado.ioloop
@@ -78,6 +79,8 @@ if __name__ == "__main__":
 		consoleHelper.printColored("[!] No PP calculator found. PP are disabled.", bcolors.YELLOW)
 
 	# Start the server
+	discordBotHelper.sendConfidential("TATOE! (lets started)")
+
 	serverPort = int(glob.conf.config["server"]["port"])
 	consoleHelper.printColored("> Starting L.E.T.S. on 127.0.0.1:{}...".format(serverPort), bcolors.GREEN)
 	app = make_app()
