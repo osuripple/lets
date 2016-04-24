@@ -127,7 +127,10 @@ class beatmap:
 		self.stars = float(data["difficultyrating"])
 		self.maxCombo = int(data["max_combo"])
 		self.hitLength = int(data["hit_length"])
-		self.bpm = int(float(data["bpm"]))
+		if data["bpm"] != None:
+			self.bpm = int(float(data["bpm"]))
+		else:
+			self.bpm = -1
 		return True
 
 	def setData(self, md5, beatmapSetID):
