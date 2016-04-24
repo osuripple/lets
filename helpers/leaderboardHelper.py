@@ -97,8 +97,8 @@ def update(userID, newScore, gameMode):
 			glob.db.execute("DELETE FROM leaderboard_{} WHERE user = ?".format(mode), [userID])
 			glob.db.execute("UPDATE leaderboard_{} SET position = position + 1 WHERE position < ? AND position >= ? ORDER BY position DESC".format(mode), [us["position"], newT])
 
-			if newT <= 1:
-				discordBotHelper.sendConfidential("{} is now #{}".format(userID, newT))
+		if newT <= 1:
+			discordBotHelper.sendConfidential("{} is now #{}".format(userID, newT))
 
 		# Finally, insert the user back.
 		glob.db.execute("INSERT INTO leaderboard_{} (position, user, v) VALUES (?, ?, ?);".format(mode), [newT, userID, newScore])
