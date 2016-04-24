@@ -5,6 +5,7 @@ from helpers import consoleHelper
 from helpers import discordBotHelper
 from constants import bcolors
 import sys
+import traceback
 
 def getUserRank(userID, gameMode):
 	"""
@@ -104,4 +105,5 @@ def update(userID, newScore, gameMode):
 		glob.db.execute("INSERT INTO leaderboard_{} (position, user, v) VALUES (?, ?, ?);".format(mode), [newT, userID, newScore])
 	except:
 		discordBotHelper.sendConfidential("Error while updating the leaderboard: {}".format(sys.exc_info()))
+		discordBotHelper.sendConfidential("Traceback: {}".format(traceback.format_exc()))
 		consoleHelper.printColored("[!] Error while updating leaderboard!", bcolors.RED)
