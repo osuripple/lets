@@ -43,21 +43,24 @@ class beatmap:
 			glob.db.execute("DELETE FROM beatmaps WHERE id = ?", [bid["id"]])
 
 		# Add new beatmap data
-		consoleHelper.printGetScoresMessage("Saving beatmap data in db...")
-		glob.db.execute("INSERT INTO `beatmaps` (`id`, `beatmap_id`, `beatmapset_id`, `beatmap_md5`, `song_name`, `ar`, `od`, `difficulty`, `max_combo`, `hit_length`, `bpm`, `ranked`, `latest_update`) VALUES (NULL, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);", [
-			self.beatmapID,
-			self.beatmapSetID,
-			self.fileMD5,
-			self.songName,
-			self.AR,
-			self.OD,
-			self.stars,
-			self.maxCombo,
-			self.hitLength,
-			self.bpm,
-			self.rankedStatus,
-			int(time.time())
-		])
+		try:
+			consoleHelper.printGetScoresMessage("Saving beatmap data in db...")
+			glob.db.execute("INSERT INTO `beatmaps` (`id`, `beatmap_id`, `beatmapset_id`, `beatmap_md5`, `song_name`, `ar`, `od`, `difficulty`, `max_combo`, `hit_length`, `bpm`, `ranked`, `latest_update`) VALUES (NULL, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);", [
+				self.beatmapID,
+				self.beatmapSetID,
+				self.fileMD5,
+				self.songName,
+				self.AR,
+				self.OD,
+				self.stars,
+				self.maxCombo,
+				self.hitLength,
+				self.bpm,
+				self.rankedStatus,
+				int(time.time())
+			])
+		except:
+			consoleHelper.printColored("[!] Error while saving beatmap data in db", bcolors.RED)
 
 	def setDataFromDB(self, md5):
 		"""
@@ -124,7 +127,10 @@ class beatmap:
 		self.stars = float(data["difficultyrating"])
 		self.maxCombo = int(data["max_combo"])
 		self.hitLength = int(data["hit_length"])
-		self.bpm = int(float(data["bpm"]))
+		if data["bpm"] != None:
+			self.bpm = int(float(data["bpm"]))
+		else:
+			self.bpm = -1
 		return True
 
 	def setData(self, md5, beatmapSetID):

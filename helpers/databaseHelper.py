@@ -67,6 +67,7 @@ class db:
 					# New thing
 					cursor.execute(__query, tuple(__params))
 			finally:
+				print(__query)
 				# Close this connection
 				cursor.close()
 
@@ -99,6 +100,7 @@ class db:
 					return cursor.fetchall()
 			finally:
 				# Close this connection
+				print(__query)
 				cursor.close()
 
 

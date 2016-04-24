@@ -12,6 +12,8 @@ from handlers import getScoresHandler
 from handlers import submitModularHandler
 from handlers import banchoConnectHandler
 from handlers import getReplayHandler
+from handlers import statusHandler
+from helpers import discordBotHelper
 
 # Tornado
 import tornado.ioloop
@@ -22,7 +24,8 @@ def make_app():
 		(r"/web/bancho_connect.php", banchoConnectHandler.handler),
 		(r"/web/osu-osz2-getscores.php", getScoresHandler.handler),
 		(r"/web/osu-submit-modular.php", submitModularHandler.handler),
-		(r"/web/osu-getreplay.php", getReplayHandler.handler)
+		(r"/web/osu-getreplay.php", getReplayHandler.handler),
+		(r"/status", statusHandler.handler)
 	])
 
 if __name__ == "__main__":
@@ -76,6 +79,8 @@ if __name__ == "__main__":
 		consoleHelper.printColored("[!] No PP calculator found. PP are disabled.", bcolors.YELLOW)
 
 	# Start the server
+	discordBotHelper.sendConfidential("TATOE! (lets started)")
+
 	serverPort = int(glob.conf.config["server"]["port"])
 	consoleHelper.printColored("> Starting L.E.T.S. on 127.0.0.1:{}...".format(serverPort), bcolors.GREEN)
 	app = make_app()

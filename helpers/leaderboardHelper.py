@@ -2,7 +2,10 @@ import glob
 from helpers import scoreHelper
 from helpers import userHelper
 from helpers import consoleHelper
+from helpers import discordBotHelper
 from constants import bcolors
+import sys
+import traceback
 
 def getUserRank(userID, gameMode):
 	"""
@@ -68,6 +71,7 @@ def update(userID, newScore, gameMode):
 		newPlayer = False
 		us = glob.db.fetch("SELECT * FROM leaderboard_{} WHERE user=?".format(mode), [userID])
 		if us == None:
+			consoleHelper.printDebugMessage("New player")
 			newPlayer = True
 
 		# Find player who is right below our score
@@ -94,7 +98,12 @@ def update(userID, newScore, gameMode):
 			glob.db.execute("DELETE FROM leaderboard_{} WHERE user = ?".format(mode), [userID])
 			glob.db.execute("UPDATE leaderboard_{} SET position = position + 1 WHERE position < ? AND position >= ? ORDER BY position DESC".format(mode), [us["position"], newT])
 
+		if newT <= 1:
+			discordBotHelper.sendConfidential("{} is now #{}".format(userID, newT))
+
 		# Finally, insert the user back.
 		glob.db.execute("INSERT INTO leaderboard_{} (position, user, v) VALUES (?, ?, ?);".format(mode), [newT, userID, newScore])
 	except:
+		discordBotHelper.sendConfidential("Error while updating the leaderboard: {}".format(sys.exc_info()))
+		discordBotHelper.sendConfidential("Traceback: {}".format(traceback.format_exc()))
 		consoleHelper.printColored("[!] Error while updating leaderboard!", bcolors.RED)
