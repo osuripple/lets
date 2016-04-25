@@ -1,6 +1,7 @@
 import requests
 from lets import glob
 from helpers import generalHelper
+from urllib.parse import urlencode
 
 def sendDiscordMessage(channel, message):
 	"""
@@ -11,7 +12,7 @@ def sendDiscordMessage(channel, message):
 	message -- message to send
 	"""
 	if generalHelper.stringToBool(glob.conf.config["discord"]["enable"]) == True:
-		requests.get("{}/{}?message={}".format(glob.conf.config["discord"]["boturl"], channel, message))
+		requests.get("{}/{}?{}".format(glob.conf.config["discord"]["boturl"], channel, urlencode({ "message": message })))
 
 
 def sendConfidential(message):
