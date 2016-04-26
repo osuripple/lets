@@ -96,7 +96,7 @@ class scoreboard:
 
 			# Set personal best score rank
 			self.scores[0].setRank(self.personalBestRank)
-			data += self.scores[0].getData()
+			data += self.scores[0].getData(self.username)
 
 		# Output top 50 scores
 		for i in self.scores[1:]:
