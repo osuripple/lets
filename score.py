@@ -145,9 +145,6 @@ class score:
 
 	def getData(self, username):
 		"""Return score row relative to this score for getscores"""
-		# zebarkez shadowban
-		if username != "komjugin" and self.playerName == "komjugin":
-			return ""
 		return "{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|1\n".format(
 			self.scoreID,
 			self.playerName,

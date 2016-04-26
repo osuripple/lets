@@ -30,7 +30,7 @@ class scoreboard:
 
 		# Find personal best score
 		if self.username != None:
-			personalBestScore = glob.db.fetch("SELECT id FROM scores WHERE username = ? AND beatmap_md5 = ? AND play_mode = ? AND completed = 3", [self.username, self.beatmap.fileMD5, self.gameMode])
+			personalBestScore = glob.db.fetch("SELECT id FROM scores WHERE username = ? AND beatmap_md5 = ? AND play_mode = ? AND completed = 3 ORDER BY score DESC LIMIT 1", [self.username, self.beatmap.fileMD5, self.gameMode])
 		else:
 			personalBestScore = None
 
