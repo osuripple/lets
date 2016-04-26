@@ -43,7 +43,7 @@ class scoreboard:
 			self.scores.append(-1)
 
 		# Top 50 scores
-		topScores = glob.db.fetchAll("SELECT id FROM scores WHERE beatmap_md5 = ? AND play_mode = ? AND completed = 3 ORDER BY score DESC", [self.beatmap.fileMD5, self.gameMode])
+		topScores = glob.db.fetchAll("SELECT scores.id AS id FROM scores LEFT JOIN users ON scores.username = users.username WHERE beatmap_md5 = ? AND play_mode = ? AND completed = 3 AND users.allowed = '1' ORDER BY score DESC", [self.beatmap.fileMD5, self.gameMode])
 		c = 1
 		if topScores != None:
 			for i in topScores:
@@ -57,13 +57,6 @@ class scoreboard:
 				# Check if this top 50 score is our personal best
 				if s.playerName == self.username:
 					self.personalBestRank = c
-
-				# Make sure this player is not banned.
-				# if the player is banned, skip this score
-				uid = userHelper.getID(s.playerName)
-				allowed = userHelper.getAllowed(uid)
-				if allowed == None or allowed == 0:
-					continue
 
 				# Add this score to scores list and increment rank
 				self.scores.append(s)
