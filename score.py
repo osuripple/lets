@@ -199,8 +199,8 @@ class score:
 			if self.oldPersonalBest != 0:
 				glob.db.execute("UPDATE scores SET completed = 2 WHERE id = ?", [self.oldPersonalBest])
 
-		# Get score id
-		self.scoreID = glob.db.connection.insert_id()
+			# Get score id
+			self.scoreID = glob.db.connection.insert_id()
 
 	def calculatePP(self, b = None):
 		"""
