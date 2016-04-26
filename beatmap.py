@@ -125,7 +125,7 @@ class beatmap:
 		self.AR = float(data["diff_approach"])
 		self.OD = float(data["diff_overall"])
 		self.stars = float(data["difficultyrating"])
-		self.maxCombo = int(data["max_combo"])
+		self.maxCombo = int(data["max_combo"]) if data["max_combo"] is not None else 0
 		self.hitLength = int(data["hit_length"])
 		if data["bpm"] != None:
 			self.bpm = int(float(data["bpm"]))
