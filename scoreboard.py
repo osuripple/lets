@@ -1,6 +1,7 @@
 import score
 import glob
 from helpers import userHelper
+from constants import rankedStatuses
 
 class scoreboard:
 	def __init__(self, username, gameMode, beatmap, setScores = True):
@@ -27,6 +28,11 @@ class scoreboard:
 		"""
 		# Reset score list
 		self.scores = []
+		self.scores.append(-1)
+
+		# Make sure the beatmap is ranked
+		if self.beatmap.rankedStatus < rankedStatuses.RANKED:
+			return
 
 		# Find personal best score
 		if self.username != None:
@@ -37,10 +43,10 @@ class scoreboard:
 		# Output our personal best if found
 		if personalBestScore != None:
 			s = score.score(personalBestScore["id"])
-			self.scores.append(s)
+			self.scores[0] = s
 		else:
 			# No personal best
-			self.scores.append(-1)
+			self.scores[0] = -1
 
 		# Top 50 scores
 		topScores = glob.db.fetchAll("SELECT scores.id AS id FROM scores LEFT JOIN users ON scores.username = users.username WHERE beatmap_md5 = ? AND play_mode = ? AND completed = 3 AND users.allowed = '1' ORDER BY score DESC", [self.beatmap.fileMD5, self.gameMode])
