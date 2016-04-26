@@ -44,7 +44,7 @@ class handler(tornado.web.RequestHandler):
 
 			# Data to return
 			data = ""
-			data += bmap.getData()
+			data += bmap.getData(username)
 			data += lboard.getScoresData()
 			self.write(data)
 		except exceptions.invalidArgumentsException:
