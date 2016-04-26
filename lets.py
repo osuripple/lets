@@ -2,7 +2,6 @@
 import sys
 import os
 import glob
-import threading
 from helpers import consoleHelper
 from helpers import databaseHelper
 from helpers import config
@@ -15,7 +14,6 @@ from handlers import banchoConnectHandler
 from handlers import getReplayHandler
 from handlers import statusHandler
 from helpers import discordBotHelper
-from helpers import leaderboardHelper
 
 # Tornado
 import tornado.ioloop
@@ -79,8 +77,6 @@ if __name__ == "__main__":
 		print("> Using {}ripp v{}{} as PP calculator.".format(bcolors.GREEN, ripp.VERSION, bcolors.ENDC))
 	else:
 		consoleHelper.printColored("[!] No PP calculator found. PP are disabled.", bcolors.YELLOW)
-	
-	threading.Thread(target=leaderboardHelper.updateThread).start()
 
 	# Start the server
 	discordBotHelper.sendConfidential("TATOE! (lets started)")

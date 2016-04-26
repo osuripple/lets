@@ -6,7 +6,6 @@ from helpers import discordBotHelper
 from constants import bcolors
 import sys
 import traceback
-import time
 
 def getUserRank(userID, gameMode):
 	"""
@@ -60,24 +59,12 @@ def build():
 
 def update(userID, newScore, gameMode):
 	"""
-	Schedule leaderboard update
+	Update gamemode's leaderboard the leaderboard
 
 	userID --
 	newScore -- new score or pp
 	gameMode -- gameMode number
 	"""
-	updates.append((userID, newScore, gameMode))
-
-updates = []
-def updateThread():
-	while True:
-		if len(updates) > 0:
-			lastel = updates.pop()
-			print("updating leaderboard for ", lastel[0])
-			__actualUpdate(lastel[0], lastel[1], lastel[2])
-		time.sleep(0.1)
-
-def __actualUpdate(userID, newScore, gameMode):
 	try:
 		mode = scoreHelper.readableGameMode(gameMode)
 
@@ -108,25 +95,6 @@ def __actualUpdate(userID, newScore, gameMode):
 		if newPlayer == True:
 			glob.db.execute("UPDATE leaderboard_{} SET position = position + 1 WHERE position >= ? ORDER BY position DESC".format(mode), [newT])
 		else:
-			# logic for self:
-			# Assume we have a leaderboard like the following:
-			# 1. Howl
-			# 2. Nyo
-			# 3. avail
-			# 4. Shaural
-			# 5. marcostudios
-			# We are avail and we have to take Howl's place.
-			# target leaderboard:
-			# 1. avail
-			# 2. Howl
-			# 3. Nyo
-			# (same as before)
-			# So what we do?
-			# First thing, we get that Howl is the one right below or new score. e.g. Howl has 200pp, avail's old was 130, new's 230
-			# Target position: target["position"] (1) + plus (0) = 1
-			# So we first delete us from the leaderboard
-			# then we get all the users in the range 1..2 (target user..current position - 1)
-			# and then we insert us back.
 			glob.db.execute("DELETE FROM leaderboard_{} WHERE user = ?".format(mode), [userID])
 			glob.db.execute("UPDATE leaderboard_{} SET position = position + 1 WHERE position < ? AND position >= ? ORDER BY position DESC".format(mode), [us["position"], newT])
 
