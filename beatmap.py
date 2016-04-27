@@ -16,6 +16,7 @@ class beatmap:
 		self.songName = ""
 		self.fileMD5 = ""
 		self.rankedStatus = rankedStatuses.NOT_SUBMITTED
+		self.rankedStatusFreezed = 0
 		self.beatmapID = 0
 		self.beatmapSetID = 0
 		self.offset = 0		# Won't implement
@@ -85,6 +86,7 @@ class beatmap:
 		self.songName = data["song_name"]
 		self.fileMD5 = md5
 		self.rankedStatus = int(data["ranked"])
+		self.rankedStatusFreezed = int(data["ranked_status_freezed"])
 		self.beatmapID = int(data["beatmap_id"])
 		self.beatmapSetID = int(data["beatmapset_id"])
 		self.AR = float(data["ar"])
@@ -111,15 +113,18 @@ class beatmap:
 				# Still no data, beatmap is not submitted
 				return False
 			else:
-				# We have some data, but md5 doesn't match. Beatmap is outdated
-				self.rankedStatus = rankedStatuses.NEED_UPDATE
+				if self.rankedStatusFreezed == 0:
+					# We have some data, but md5 doesn't match. Beatmap is outdated
+					self.rankedStatus = rankedStatuses.NEED_UPDATE
 				return True
+			
 
 		# We have data from osu!api, set beatmap data
 		consoleHelper.printGetScoresMessage("Got beatmap data from osu!api")
 		self.songName = "{} - {} [{}]".format(data["artist"], data["title"], data["version"])
 		self.fileMD5 = md5
-		self.rankedStatus = int(convertRankedStatus(data["approved"]))
+		if self.rankedStatusFreezed == 0:
+			self.rankedStatus = int(convertRankedStatus(data["approved"]))
 		self.beatmapID = int(data["beatmap_id"])
 		self.beatmapSetID = int(data["beatmapset_id"])
 		self.AR = float(data["diff_approach"])
