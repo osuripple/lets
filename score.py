@@ -145,9 +145,6 @@ class score:
 
 	def getData(self, username):
 		"""Return score row relative to this score for getscores"""
-		# zebarkez shadowban
-		if username != "komjugin" and self.playerName == "komjugin":
-			return ""
 		return "{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|1\n".format(
 			self.scoreID,
 			self.playerName,
@@ -169,6 +166,7 @@ class score:
 		"""
 		Set this score completed status and rankedScoreIncrease
 		"""
+		self.completed = 0
 		if self.passed == True and scoreHelper.isRankable(self.mods):
 			# Get right "completed" value
 			personalBest = glob.db.fetch("SELECT id, score FROM scores WHERE username = ? AND beatmap_md5 = ? AND play_mode = ? AND completed = 3", [self.playerName, self.fileMd5, self.gameMode])
@@ -193,15 +191,16 @@ class score:
 		Save this score in DB (if passed and mods are valid)
 		"""
 		# Add this score
-		query = "INSERT INTO scores (id, beatmap_md5, username, score, max_combo, full_combo, mods, 300_count, 100_count, 50_count, katus_count, gekis_count, misses_count, time, play_mode, completed, accuracy, pp) VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"
-		glob.db.execute(query, [self.fileMd5, self.playerName, self.score, self.maxCombo, 1 if self.fullCombo == True else 0, self.mods, self.c300, self.c100, self.c50, self.cKatu, self.cGeki, self.cMiss, self.playDateTime, self.gameMode, self.completed, self.accuracy*100, self.pp])
+		if self.completed >= 2:
+			query = "INSERT INTO scores (id, beatmap_md5, username, score, max_combo, full_combo, mods, 300_count, 100_count, 50_count, katus_count, gekis_count, misses_count, time, play_mode, completed, accuracy, pp) VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"
+			glob.db.execute(query, [self.fileMd5, self.playerName, self.score, self.maxCombo, 1 if self.fullCombo == True else 0, self.mods, self.c300, self.c100, self.c50, self.cKatu, self.cGeki, self.cMiss, self.playDateTime, self.gameMode, self.completed, self.accuracy*100, self.pp])
 
-		# Set old personal best to completed = 2
-		if self.oldPersonalBest != 0:
-			glob.db.execute("UPDATE scores SET completed = 2 WHERE id = ?", [self.oldPersonalBest])
+			# Set old personal best to completed = 2
+			if self.oldPersonalBest != 0:
+				glob.db.execute("UPDATE scores SET completed = 2 WHERE id = ?", [self.oldPersonalBest])
 
-		# Get score id
-		self.scoreID = glob.db.connection.insert_id()
+			# Get score id
+			self.scoreID = glob.db.connection.insert_id()
 
 	def calculatePP(self, b = None):
 		"""

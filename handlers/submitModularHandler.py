@@ -90,7 +90,6 @@ class handler(tornado.web.RequestHandler):
 			if s.gameMode == gameModes.STD:
 				newScore = userHelper.getPP(userID, s.gameMode)
 			else:
-				discordBotHelper.sendConfidential("Non-std score submitted by {}. Gamemode: {}".format(s.playerName, s.gameMode))
 				newScore = userHelper.getRankedScore(userID, s.gameMode)
 
 			leaderboardHelper.update(userID, newScore, s.gameMode)

@@ -40,12 +40,12 @@ class handler(tornado.web.RequestHandler):
 			bmap = beatmap.beatmap(md5, beatmapSetID)
 
 			# Create leaderboard object, link it to bmap and get all scores
-			lboard = scoreboard.scoreboard(username, gameMode, bmap)
+			sboard = scoreboard.scoreboard(username, gameMode, bmap)
 
 			# Data to return
 			data = ""
 			data += bmap.getData()
-			data += lboard.getScoresData()
+			data += sboard.getScoresData()
 			self.write(data)
 		except exceptions.invalidArgumentsException:
 			pass
