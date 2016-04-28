@@ -330,3 +330,13 @@ def getPP(userID, gameMode):
 		return result["pp_{}".format(mode)]
 	else:
 		return 0
+
+def incrementReplaysWatched(userID, gameMode):
+	"""
+	Increment userID's replays watched by others relative to gameMode
+
+	userID -- user ID
+	gameMode -- int value, see gameModes
+	"""
+	mode = scoreHelper.readableGameMode(gameMode)
+	glob.db.execute("UPDATE users_stats SET replays_watched_{mode}=replays_watched_{mode}+1 WHERE id = ?".format(mode=mode), [userID])
