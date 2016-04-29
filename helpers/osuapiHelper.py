@@ -2,6 +2,8 @@ import requests
 import json
 from lets import glob
 from helpers import generalHelper
+from constants import bcolors
+from helpers import consoleHelper
 import glob
 
 def osuApiRequest(request, params):
