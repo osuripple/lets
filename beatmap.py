@@ -1,9 +1,12 @@
 from constants import rankedStatuses
 from constants import bcolors
 from helpers import osuapiHelper
+from helpers import consoleHelper
 import glob
 import time
-from helpers import consoleHelper
+import sys
+import traceback
+
 
 class beatmap:
 	def __init__(self, md5 = None, beatmapSetID = None):
@@ -40,7 +43,7 @@ class beatmap:
 		bid = glob.db.fetch("SELECT id FROM beatmaps WHERE beatmap_md5 = ?", [self.fileMD5])
 		if bid != None:
 			# This beatmap is already in db, remove old record
-			consoleHelper.printGetScoresMessage("Deleting old beatmap data")
+			consoleHelper.printGetScoresMessage("Deleting old beatmap data ({})".format(bid["id"]))
 			glob.db.execute("DELETE FROM beatmaps WHERE id = ?", [bid["id"]])
 
 		# Add new beatmap data
@@ -61,6 +64,8 @@ class beatmap:
 				int(time.time())
 			])
 		except:
+			discordBotHelper.sendConfidential("Error while saving beatmap data in db: {}".format(sys.exc_info()))
+			discordBotHelper.sendConfidential("Traceback: {}".format(traceback.format_exc()))
 			consoleHelper.printColored("[!] Error while saving beatmap data in db", bcolors.RED)
 
 	def setDataFromDB(self, md5):

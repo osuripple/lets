@@ -19,7 +19,7 @@ def osuApiRequest(request, params):
 
 	# Api request
 	try:
-		finalURL = "{}/{}?k={}&{}".format(glob.conf.config["osuapi"]["apiurl"], request, glob.conf.config["osuapi"]["apikey"], params)
+		finalURL = "{}/api/{}?k={}&{}".format(glob.conf.config["osuapi"]["apiurl"], request, glob.conf.config["osuapi"]["apikey"], params)
 		#print("Sending request to osu!api: {}".format(finalURL))
 		resp = requests.get(finalURL).text
 		#print("Got response: {}".format(resp))
@@ -29,4 +29,28 @@ def osuApiRequest(request, params):
 		else:
 			return None
 	except:
+		consoleHelper.printColored("[!] Error while contacting osu!api", bcolors.RED)
+		return None
+
+def getOsuFile(beatmapID):
+	"""
+	Send a request to osu! servers to download a .osu file
+	Used to update beatmaps
+
+	beatmapID -- ID of beatmap to download
+	return -- .osu file content if success, None if failed
+	"""
+	try:
+		# Make sure osuapi is enabled
+		if generalHelper.stringToBool(glob.conf.config["osuapi"]["enable"]) == False:
+			print("osuapi is disabled")
+			return None
+
+		# TODO: proxy
+		URL = "{}/osu/{}".format(glob.conf.config["osuapi"]["apiurl"], beatmapID)
+		consoleHelper.printColored(str(URL), bcolors.BLUE)
+		response = request.get(URL).text
+		return data
+	except:
+		consoleHelper.printColored("[!] Error while downloading .osu file", bcolors.RED)
 		return None

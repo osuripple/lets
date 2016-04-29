@@ -14,9 +14,9 @@ class handler(tornado.web.RequestHandler):
 	def get(self):
 		try:
 			# TODO: Debug stuff, remove
-			'''print("GET ARGS::")
+			print("GET ARGS::")
 			for i in self.request.arguments:
-				print ("{}={}".format(i, self.get_argument(i)))'''
+				print ("{}={}".format(i, self.get_argument(i)))
 
 			# TODO: Maintenance check
 

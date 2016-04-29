@@ -12,3 +12,7 @@ class loginFailedException(Exception):
 class userBannedException(Exception):
 	def __init__(self, handler, who):
 		consoleHelper.printColored("[{}] {} is banned".format(handler, who), bcolors.RED)
+
+class noBeatmapException(Exception):
+	def __init__(self, handler, what):
+		consoleHelper.printColored("[{}] Beatmap not found in db ({})".format(handler, what), bcolors.RED)

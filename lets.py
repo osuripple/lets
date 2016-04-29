@@ -7,6 +7,7 @@ from helpers import databaseHelper
 from helpers import config
 from helpers import generalHelper
 from constants import bcolors
+from helpers import discordBotHelper
 
 # Handlers
 from handlers import getScoresHandler
@@ -14,7 +15,7 @@ from handlers import submitModularHandler
 from handlers import banchoConnectHandler
 from handlers import getReplayHandler
 from handlers import statusHandler
-from helpers import discordBotHelper
+from handlers import mapsHandler
 
 # Tornado
 import tornado.ioloop
@@ -26,6 +27,7 @@ def make_app():
 		(r"/web/osu-osz2-getscores.php", getScoresHandler.handler),
 		(r"/web/osu-submit-modular.php", submitModularHandler.handler),
 		(r"/web/osu-getreplay.php", getReplayHandler.handler),
+		(r"/web/maps/(.*)", mapsHandler.handler),
 		(r"/status", statusHandler.handler)
 	])
 
