@@ -32,6 +32,7 @@ def osuApiRequest(request, params):
 			return None
 	except:
 		consoleHelper.printColored("[!] Error while contacting osu!api", bcolors.RED)
+		raise
 		return None
 
 def getOsuFile(beatmapID):
