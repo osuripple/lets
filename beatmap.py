@@ -78,8 +78,8 @@ class beatmap:
 			return False
 
 		# Make sure the beatmap data in db is not too old
-		if time.time() > data["latest_update"]+86400 and data["ranked_status_freezed"] == 0:
-			return False
+		#if time.time() > data["latest_update"]+86400 and data["ranked_status_freezed"] == 0:
+		#	return False
 
 		# Data in DB, set beatmap data
 		consoleHelper.printGetScoresMessage("Got beatmap data from db")
