@@ -49,7 +49,9 @@ class config:
 			self.config.get("db","pingtime")
 
 			self.config.get("server","port")
+			self.config.get("server", "beatmapcacheexpire")
 
+			self.config.get("osuapi","enable")
 			self.config.get("osuapi","apiurl")
 			self.config.get("osuapi","apikey")
 
@@ -77,8 +79,10 @@ class config:
 
 		self.config.add_section("server")
 		self.config.set("server", "port", "5002")
+		self.config.set("server", "beatmapcacheexpire", "86400")
 
 		self.config.add_section("osuapi")
+		self.config.set("osuapi", "enable", "True")
 		self.config.set("osuapi", "apiurl", "https://osu.ppy.sh/api")
 		self.config.set("osuapi", "apikey", "YOUR_OSU_API_KEY_HERE")
 

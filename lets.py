@@ -5,6 +5,7 @@ import glob
 from helpers import consoleHelper
 from helpers import databaseHelper
 from helpers import config
+from helpers import generalHelper
 from constants import bcolors
 
 # Handlers
@@ -77,6 +78,13 @@ if __name__ == "__main__":
 		print("> Using {}ripp v{}{} as PP calculator.".format(bcolors.GREEN, ripp.VERSION, bcolors.ENDC))
 	else:
 		consoleHelper.printColored("[!] No PP calculator found. PP are disabled.", bcolors.YELLOW)
+
+	# Check osuapi
+	if generalHelper.stringToBool(glob.conf.config["osuapi"]["enable"]) == False:
+		consoleHelper.printColored("[!] osu!api features are disabled. If you don't have a valid beatmaps table, all beatmaps will show as unranked", bcolors.YELLOW)
+		if int(glob.conf.config["server"]["beatmapcacheexpire"]) > 0:
+			consoleHelper.printColored("[!] IMPORTANT! Your beatmapcacheexpire in config.ini is > 0 and osu!api features are disabled.\nWe do not reccoment this, because too old beatmaps will be shown as unranked.\nSet beatmapcacheexpire to 0 to disable beatmap latest update check and fix that issue.", bcolors.YELLOW)
+
 
 	# Start the server
 	discordBotHelper.sendConfidential("TATOE! (lets started)")

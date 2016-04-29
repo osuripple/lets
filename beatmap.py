@@ -78,8 +78,8 @@ class beatmap:
 			return False
 
 		# Make sure the beatmap data in db is not too old
-		#if time.time() > data["latest_update"]+86400 and data["ranked_status_freezed"] == 0:
-		#	return False
+		if int(glob.conf.config["server"]["beatmapcacheexpire"]) > 0 and time.time() > data["latest_update"]+int(glob.conf.config["server"]["beatmapcacheexpire"]) and data["ranked_status_freezed"] == 0:
+			return False
 
 		# Data in DB, set beatmap data
 		consoleHelper.printGetScoresMessage("Got beatmap data from db")
@@ -105,6 +105,7 @@ class beatmap:
 		beatmapSetID -- beatmap set ID, used to check if a map is outdated
 		return -- True if set, False if not set
 		"""
+		# Check if osuapi is enabled
 		data = osuapiHelper.osuApiRequest("get_beatmaps", "h={}".format(md5))
 		if data == None:
 			# Error while retreiving data from MD5, check with beatmap set ID
