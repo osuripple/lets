@@ -27,8 +27,8 @@ def make_app():
 		(r"/web/osu-osz2-getscores.php", getScoresHandler.handler),
 		(r"/web/osu-submit-modular.php", submitModularHandler.handler),
 		(r"/web/osu-getreplay.php", getReplayHandler.handler),
-		(r"/web/maps/(.*)", mapsHandler.handler)
-		#(r"/status", statusHandler.handler)
+		#(r"/web/maps/(.*)", mapsHandler.handler)
+		(r"/status", statusHandler.handler)
 	])
 
 if __name__ == "__main__":
