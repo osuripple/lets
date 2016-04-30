@@ -2,6 +2,7 @@ import pymysql
 from constants import bcolors
 from helpers import consoleHelper
 import threading
+import glob
 
 class db:
 	"""A MySQL database connection"""
@@ -67,7 +68,10 @@ class db:
 					# New thing
 					cursor.execute(__query, tuple(__params))
 			finally:
-				print(__query)
+				# Debug
+				if glob.debug == True:
+					print(__query)
+
 				# Close this connection
 				cursor.close()
 
@@ -99,8 +103,11 @@ class db:
 				else:
 					return cursor.fetchall()
 			finally:
+				# Debug
+				if glob.debug == True:
+					print(__query)
+
 				# Close this connection
-				print(__query)
 				cursor.close()
 
 

@@ -49,6 +49,7 @@ class config:
 			self.config.get("db","pingtime")
 
 			self.config.get("server","port")
+			self.config.get("server", "debug")
 			self.config.get("server", "beatmapcacheexpire")
 
 			self.config.get("osuapi","enable")
@@ -79,6 +80,7 @@ class config:
 
 		self.config.add_section("server")
 		self.config.set("server", "port", "5002")
+		self.config.set("server", "debug", "False")
 		self.config.set("server", "beatmapcacheexpire", "86400")
 
 		self.config.add_section("osuapi")

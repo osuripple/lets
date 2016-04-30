@@ -13,3 +13,13 @@ def checkArguments(arguments, requiredArguments):
 		if i not in arguments:
 			return False
 	return True
+
+def printArguments(t):
+	"""
+	Print passed arguments, for debug purposes
+
+	t -- tornado object (self)
+	"""
+	print("ARGS::")
+	for i in t.request.arguments:
+		print ("{}={}".format(i, t.get_argument(i)))

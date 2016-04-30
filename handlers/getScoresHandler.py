@@ -1,6 +1,7 @@
 import beatmap
 import scoreboard
 import tornado.web
+import glob
 from helpers import consoleHelper
 from constants import bcolors
 from constants import exceptions
@@ -13,10 +14,9 @@ class handler(tornado.web.RequestHandler):
 	"""
 	def get(self):
 		try:
-			# TODO: Debug stuff, remove
-			'''print("GET ARGS::")
-			for i in self.request.arguments:
-				print ("{}={}".format(i, self.get_argument(i)))'''
+			# Print arguments
+			if glob.debug == True:
+				requestHelper.printArguments(self)
 
 			# TODO: Maintenance check
 

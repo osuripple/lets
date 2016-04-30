@@ -23,10 +23,9 @@ class handler(tornado.web.RequestHandler):
 	"""
 	def post(self):
 		try:
-			# TODO: Debug stuff, remove
-			'''print("POST ARGS::")
-			for i in self.request.arguments:
-				print ("{}={}".format(i, self.get_argument(i)))'''
+			# Print arguments
+			if glob.debug == True:
+				requestHelper.printArguments(self)
 
 			# Check arguments
 			if requestHelper.checkArguments(self.request.arguments, ["score", "iv", "pass"]) == False:

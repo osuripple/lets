@@ -87,6 +87,10 @@ if __name__ == "__main__":
 		if int(glob.conf.config["server"]["beatmapcacheexpire"]) > 0:
 			consoleHelper.printColored("[!] IMPORTANT! Your beatmapcacheexpire in config.ini is > 0 and osu!api features are disabled.\nWe do not reccoment this, because too old beatmaps will be shown as unranked.\nSet beatmapcacheexpire to 0 to disable beatmap latest update check and fix that issue.", bcolors.YELLOW)
 
+	# Check debug mods
+	glob.debug = generalHelper.stringToBool(glob.conf.config["server"]["debug"])
+	if glob.debug == True:
+		consoleHelper.printColored("[!] LETS is running in debug mode.", bcolors.YELLOW)
 
 	# Start the server
 	discordBotHelper.sendConfidential("TATOE! (lets started)")
