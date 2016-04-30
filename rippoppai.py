@@ -99,7 +99,7 @@ class oppai:
 			output = process.stdout.decode("utf-8")
 
 			# Last output line
-			pp = output.split("\r\n")
+			pp = output.split("\r\n" if UNIX else "\n")
 			pp = pp[len(pp)-2][:-2]
 			self.pp = float(pp)
 			consoleHelper.printRippoppaiMessage("PP: {}".format(self.pp))
