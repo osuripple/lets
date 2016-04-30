@@ -106,7 +106,6 @@ class oppai:
 			return self.pp
 		except:
 			consoleHelper.printColored("[!] Error while executing oppai.", bcolors.RED)
-			raise
 
 
 if __name__ == "__main__":
