@@ -72,10 +72,13 @@ def printSubmitModularMessage(message):
 	printColored("[submit_modular] {}".format(message), bcolors.YELLOW)
 
 def printBanchoConnectMessage(message):
-	printColored("[bancho_connect] {}".format(message), bcolors.GREEN)
+	printColored("[bancho_connect] {}".format(message), bcolors.YELLOW)
 
 def printGetReplayMessage(message):
-	printColored("[get_replay] {}".format(message), bcolors.GREEN)
+	printColored("[get_replay] {}".format(message), bcolors.PINK)
+
+def printMapsMessage(message):
+	printColored("[maps] {}".format(message), bcolors.PINK)
 
 def printRippMessage(message):
 	printColored("[ripp] {}".format(message), bcolors.GREEN)

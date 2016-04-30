@@ -5,6 +5,7 @@ from helpers import generalHelper
 from constants import bcolors
 from helpers import consoleHelper
 import glob
+from urllib.parse import quote
 
 def osuApiRequest(request, params):
 	"""
@@ -35,12 +36,12 @@ def osuApiRequest(request, params):
 		raise
 		return None
 
-def getOsuFile(beatmapID):
+def getOsuFile(fileName):
 	"""
 	Send a request to osu! servers to download a .osu file
 	Used to update beatmaps
 
-	beatmapID -- ID of beatmap to download
+	fileName -- .osu file name to download
 	return -- .osu file content if success, None if failed
 	"""
 	try:
@@ -49,11 +50,10 @@ def getOsuFile(beatmapID):
 			print("osuapi is disabled")
 			return None
 
-		# TODO: proxy
-		URL = "{}/osu/{}".format(glob.conf.config["osuapi"]["apiurl"], beatmapID)
-		consoleHelper.printColored(str(URL), bcolors.BLUE)
-		response = request.get(URL).text
-		return data
+		URL = "{}/web/maps/{}".format(glob.conf.config["osuapi"]["apiurl"], quote(fileName))
+		response = requests.get(URL).text
+		return response
 	except:
 		consoleHelper.printColored("[!] Error while downloading .osu file", bcolors.RED)
+		raise
 		return None

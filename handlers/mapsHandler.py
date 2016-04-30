@@ -16,21 +16,15 @@ class handler(tornado.web.RequestHandler):
 			if fileName == "":
 				raise exceptions.invalidArgumentsException(MODULE_NAME)
 
-			# Get beatmap id from file name
-			fileName = unquote(fileName)[:-4]
-			print(fileName)
-			beatmapID = glob.db.fetch("SELECT beatmap_id FROM beatmaps WHERE song_name = ?", [fileName])
-			if beatmapID == None:
-				raise exceptions.noBeatmapException(MODULE_NAME, fileName)
-			beatmapID = beatmapID["beatmap_id"]
+			fileNameShort = fileName[:32]+"..." if len(fileName) > 32 else fileName[:-4]
+			consoleHelper.printMapsMessage("Requested .osu file {}".format(fileNameShort))
 
-			# Get .osu file
-			fileContent = osuapiHelper.getOsuFile(beatmapID)
-			consoleHelper.printColored(str(fileContent), bcolors.GREEN)
+			# Get .osu file from osu! server
+			fileContent = osuapiHelper.getOsuFile(fileName)
+			if fileContent == None:
+				raise exceptions.osuApiFailException(MODULE_NAME)
 			self.write(str(fileContent))
 		except exceptions.invalidArgumentsException:
 			self.send_error()
-			pass
-		except exceptions.noBeatmapException:
+		except exceptions.osuApiFailException:
 			self.send_error()
-			pass
