@@ -23,3 +23,34 @@ def readableGameMode(gameMode):
 		return "ctb"
 	else:
 		return "mania"
+
+def readableMods(__mods):
+	"""
+	Return a string with readable std mods.
+	Used to convert a mods number for oppai
+
+	__mods -- mods bitwise number
+	return -- readable mods string, eg HDDT
+	"""
+	r = ""
+	if __mods == 0:
+		return "nomod"
+
+	if __mods & mods.NOFAIL > 0:
+		r += "NF"
+	if __mods & mods.EASY > 0:
+		r += "EZ"
+	if __mods & mods.HIDDEN > 0:
+		r += "HD"
+	if __mods & mods.HARDROCK > 0:
+		r += "HR"
+	if __mods & mods.DOUBLETIME > 0:
+		r += "DT"
+	if __mods & mods.HALFTIME > 0:
+		r += "HT"
+	if __mods & mods.FLASHLIGHT > 0:
+		r += "FL"
+	if __mods & mods.SPUNOUT > 0:
+		r += "SO"
+
+	return r

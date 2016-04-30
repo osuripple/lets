@@ -12,8 +12,8 @@ from constants import exceptions
 from helpers import requestHelper
 from helpers import leaderboardHelper
 
-if os.path.isfile("ripp.py"):
-	import ripp
+#if os.path.isfile("rippoppai.py"):
+#	import rippoppai
 
 
 MODULE_NAME = "submit_modular"
@@ -93,7 +93,6 @@ class handler(tornado.web.RequestHandler):
 
 			leaderboardHelper.update(userID, newScore, s.gameMode)
 
-			# TODO: Set country flag
 			# TODO: Update total hits and max combo
 
 			# Update latest activity

@@ -74,10 +74,9 @@ if __name__ == "__main__":
 	consoleHelper.printDone()
 
 	# Enable PP if this is the officialTM ripple server
-	if os.path.isfile("ripp.py"):
+	if os.path.isfile("rippoppai.py"):
 		glob.pp = True
-		import ripp
-		print("> Using {}ripp v{}{} as PP calculator.".format(bcolors.GREEN, ripp.VERSION, bcolors.ENDC))
+		print("> Using {}rippoppai{} as PP calculator.".format(bcolors.GREEN, bcolors.ENDC))
 	else:
 		consoleHelper.printColored("[!] No PP calculator found. PP are disabled.", bcolors.YELLOW)
 

@@ -5,8 +5,8 @@ from helpers import consoleHelper
 from helpers import generalHelper
 import beatmap
 import os
-if os.path.isfile("ripp.py"):
-	import ripp
+if os.path.isfile("rippoppai.py"):
+	import rippoppai
 
 class score:
 	def __init__(self, scoreID = None, rank = None):
@@ -110,6 +110,7 @@ class score:
 			self.rank = rank if rank != None else ""
 			self.date = data["time"]
 			self.fileMd5 = data["beatmap_md5"]
+			self.completed = data["completed"]
 			self.calculateAccuracy()
 
 	def setDataFromScoreData(self, scoreData):
@@ -204,13 +205,15 @@ class score:
 
 	def calculatePP(self, b = None):
 		"""
-		Calculate this score's pp value
+		Calculate this score's pp value if completed == 3
 		"""
-		# Create beatmap object
-		if b == None:
-			b = beatmap.beatmap(self.fileMd5, 0)
+		if self.completed == 3:
+			# Create beatmap object
+			if b == None:
+				b = beatmap.beatmap(self.fileMd5, 0)
 
-		# Create an instance of the magic pp calculator and calculate pp
-		fo = ripp.algo(b, self)
-		self.pp = fo.getPP()
-		consoleHelper.printRippMessage("PP: {:.2f} (aim::{:.2f} + spd::{:.2f} + acc::{:.2f})".format(self.pp, fo.aimValue, fo.speedValue, fo.accValue))
+			# Create an instance of the magic pp calculator and calculate pp
+			fo = rippoppai.oppai(b, self)
+			self.pp = fo.pp
+		else:
+			consoleHelper.printColored("[!] Completed status is {}. PP calc for this score skipped.".format(self.completed))

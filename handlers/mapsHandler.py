@@ -20,7 +20,7 @@ class handler(tornado.web.RequestHandler):
 			consoleHelper.printMapsMessage("Requested .osu file {}".format(fileNameShort))
 
 			# Get .osu file from osu! server
-			fileContent = osuapiHelper.getOsuFile(fileName)
+			fileContent = osuapiHelper.getOsuFileFromName(fileName)
 			if fileContent == None:
 				raise exceptions.osuApiFailException(MODULE_NAME)
 			self.write(str(fileContent))

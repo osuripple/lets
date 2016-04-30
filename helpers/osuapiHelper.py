@@ -36,9 +36,9 @@ def osuApiRequest(request, params):
 		raise
 		return None
 
-def getOsuFile(fileName):
+def getOsuFileFromName(fileName):
 	"""
-	Send a request to osu! servers to download a .osu file
+	Send a request to osu! servers to download a .osu file from file name
 	Used to update beatmaps
 
 	fileName -- .osu file name to download
@@ -54,6 +54,28 @@ def getOsuFile(fileName):
 		response = requests.get(URL).text
 		return response
 	except:
-		consoleHelper.printColored("[!] Error while downloading .osu file", bcolors.RED)
+		consoleHelper.printColored("[!] Error while downloading .osu file (name)", bcolors.RED)
+		raise
+		return None
+
+def getOsuFileFromID(beatmapID):
+	"""
+	Send a request to osu! servers to download a .osu file from beatmap ID
+	Used to get .osu files for oppai
+
+	beatmapID -- ID of beatmap (not beatmapset) to download
+	return -- .osu file content if success, None if failed
+	"""
+	try:
+		# Make sure osuapi is enabled
+		if generalHelper.stringToBool(glob.conf.config["osuapi"]["enable"]) == False:
+			print("osuapi is disabled")
+			return None
+
+		URL = "{}/osu/{}".format(glob.conf.config["osuapi"]["apiurl"], beatmapID)
+		response = requests.get(URL).text
+		return response
+	except:
+		consoleHelper.printColored("[!] Error while downloading .osu file (id)", bcolors.RED)
 		raise
 		return None

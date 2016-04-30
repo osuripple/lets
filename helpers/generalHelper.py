@@ -2,6 +2,8 @@ import string
 import random
 from datetime import datetime
 import time
+import hashlib
+from functools import partial
 
 def randomString(length = 8):
 	return ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(length))
@@ -25,3 +27,16 @@ def osuDateToUNIXTimestamp(osuDate):
 	unixtime = time.mktime(date_object.timetuple())
 	unixtime = int(unixtime)
 	return unixtime
+
+def fileMd5(filename):
+	"""
+	Return filename's md5
+
+	filename --
+	return -- file md5
+	"""
+	with open(filename, mode='rb') as f:
+		d = hashlib.md5()
+		for buf in iter(partial(f.read, 128), b''):
+			d.update(buf)
+	return d.hexdigest()

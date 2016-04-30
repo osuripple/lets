@@ -83,5 +83,8 @@ def printMapsMessage(message):
 def printRippMessage(message):
 	printColored("[ripp] {}".format(message), bcolors.GREEN)
 
+def printRippoppaiMessage(message):
+	printColored("[rippoppai] {}".format(message), bcolors.GREEN)
+
 def printDebugMessage(message):
 	printColored("[debug] {}".format(message), bcolors.BLUE)
