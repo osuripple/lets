@@ -1,3 +1,7 @@
+"""
+oppai interface for ripple 2 / LETS
+"""
+
 import subprocess
 import os
 from helpers import scoreHelper
@@ -11,10 +15,12 @@ import beatmap
 import argparse
 import math
 import time
-
+import glob
 import threading
 import signal
 
+# constants
+MAX_WORKERS = 32
 MODULE_NAME = "rippoppai"
 UNIX = True if os.name == "posix" else False
 
@@ -30,10 +36,19 @@ def fixPath(command):
 	return command.replace("/", "\\")
 
 class oppai:
+	"""
+	Oppai calculator
+	"""
+	# Folder where oppai is placed
 	OPPAI_FOLDER = "../oppai"
 
 	def __init__(self, __beatmap, __score):
-		# Params
+		"""
+		Set oppai params.
+
+		__beatmap -- beatmap object
+		__score -- score object
+		"""
 		self.score = __score
 		self.beatmap = __beatmap
 		self.map = "{}.osu".format(self.beatmap.beatmapID)
@@ -46,30 +61,34 @@ class oppai:
 
 	def getPP(self):
 		"""
-		Calculate total pp value and return it
+		Calculate total pp value with oppai and return it
 
 		return -- total pp
 		"""
 		try:
-			# Build .osu file path
+			# Build .osu map file path
 			mapFile = "{path}/maps/{map}".format(path=self.OPPAI_FOLDER, map=self.map)
 
 			try:
-				# Check if we have to download the file
+				# Check if we have to download the .osu file
 				download = False
 				if not os.path.isfile(mapFile):
 					# .osu file doesn't exist. We must download it
-					#consoleHelper.printColored("[!] {} doesn't exist".format(mapFile), bcolors.YELLOW)
+					if glob.debug == True:
+						consoleHelper.printColored("[!] {} doesn't exist".format(mapFile), bcolors.YELLOW)
 					download = True
 				else:
 					# File exists, check md5
 					if generalHelper.fileMd5(mapFile) != self.beatmap.fileMD5:
-						#consoleHelper.printColored("[!] Beatmaps md5 don't match".format(mapFile), bcolors.YELLOW)
+						# MD5 don't match, redownload .osu file
+						if glob.debug == True:
+							consoleHelper.printColored("[!] Beatmaps md5 don't match".format(mapFile), bcolors.YELLOW)
 						download = True
 
 				# Download .osu file if needed
 				if download == True:
-					#consoleHelper.printRippoppaiMessage("Downloading {} from osu! servers...".format(mapFile))
+					if glob.debug == True:
+						consoleHelper.printRippoppaiMessage("Downloading {} from osu! servers...".format(mapFile))
 
 					# Get .osu file from osu servers
 					fileContent = osuapiHelper.getOsuFileFromID(self.beatmap.beatmapID)
@@ -87,45 +106,48 @@ class oppai:
 						f.write(fileContent.encode("latin-1"))
 				else:
 					# Map file is already in folder
-					#consoleHelper.printRippoppaiMessage("Found beatmap file {}".format(mapFile))
-					pass
+					if glob.debug == True:
+						consoleHelper.printRippoppaiMessage("Found beatmap file {}".format(mapFile))
 			except exceptions.osuApiFailException:
 				pass
 
-			# Command
+			# Command with params
 			command = fixPath("{path}/oppai {mapFile} {acc}% +{mods} {combo}x {misses}xm".format(path=self.OPPAI_FOLDER, mapFile=mapFile, acc=self.acc, mods=self.mods, combo=self.combo, misses=self.misses))
-			#consoleHelper.printRippoppaiMessage("Executing {}".format(command))
+			if glob.debug == True:
+				consoleHelper.printRippoppaiMessage("Executing {}".format(command))
 
-			# Output
-			#output = oppaiThread(command, 3).Run()
+			# oppai output
 			process = subprocess.run(command, shell=True, stdout=subprocess.PIPE)
 			output = process.stdout.decode("utf-8")
 
-			# Last output line
+			# Last output line - last 2 characters (contains float pp value)
 			pp = output.split("\r\n" if UNIX == False else "\n")
 			pp = pp[len(pp)-2][:-2]
 			self.pp = float(pp)
-			#consoleHelper.printRippoppaiMessage("PP: {}".format(self.pp))
 			return self.pp
 		except:
+			# oppai or python error, set pp to 0
 			consoleHelper.printColored("[!] Error while executing oppai.", bcolors.RED)
 			self.pp = 0
 
 
 if __name__ == "__main__":
 	# Standalone imports
-	import glob
 	from helpers import config
 	from helpers import databaseHelper
 	from constants import rankedStatuses
+	from helpers import userHelper
 	import sys
+
+	# Verbose
+	glob.debug = False
 
 	def recalcFromScoreData(scoreData, lock):
 		"""
 		Recalculate pp value for a score.
 		Does every check, output and queries needed.
 
-		score -- score dictionary of score to recalc
+		score -- score+beatmap dictionary (returned from db with JOIN) of score to recalc
 		lock -- shared lock object
 		return -- calculated pp value or None
 		"""
@@ -135,7 +157,8 @@ if __name__ == "__main__":
 		s.setDataFromDict(scoreData)
 		if s.scoreID == 0:
 			# Make sure the score exists
-			consoleHelper.printColored("[!] No score with id {}".format(scoreData["id"]), bcolors.RED)
+			if glob.debug == True:
+				consoleHelper.printColored("[!] No score with id {}".format(scoreData["id"]), bcolors.RED)
 
 		# Create beatmap object
 		b = beatmap.beatmap()
@@ -152,88 +175,141 @@ if __name__ == "__main__":
 
 		# Make sure the beatmap is ranked
 		if b.rankedStatus != rankedStatuses.RANKED and b.rankedStatus != rankedStatuses.APPROVED and b.rankedStatus != rankedStatuses.QUALIFIED:
-			#consoleHelper.printColored("[!] Beatmap {} is not ranked ().".format(s.fileMd5), bcolors.RED)
+			if glob.debug == True:
+				consoleHelper.printColored("[!] Beatmap {} is not ranked ().".format(s.fileMd5), bcolors.RED)
+			# Don't calculate pp if the beatmap is not ranked
 			return False
 
 		# Calculate score pp
 		s.calculatePP(b)
 
-		# Update score pp
+		# Update score pp in dictionary
 		scoreData["pp"] = s.pp
 		return True
 
 	class worker:
+		"""
+		rippoppai recalculator worker
+		"""
 		def __init__(self, id, scores, lock):
+			"""
+			Instantiate a worker
+
+			id -- worker numeric id
+			scores -- list of scores+beatmaps dictionaries to recalc
+			lock -- shared lock object
+			"""
 			self.id = id
 			self.scores = scores
 			self.lock = lock
 			self.perc = 0.00
-			self.current = 1
+			self.current = 0
 			self.total = len(self.scores)
 			self.done = False
 
 		def doWork(self):
+			"""
+			Worker's work
+			Basically, calculate pp for scores inside self.scores
+			"""
+
+			# Make sure scores have been passed
 			if self.scores != None:
 				for i in self.scores:
+					# Loop through all scores
+					# Recalculate pp
 					recalcFromScoreData(i, self.lock)
+
+					# Calculate percentage
 					self.perc = (100*self.current)/self.total
-					#print("{} is Working".format(self.id))
-					#consoleHelper.printColored("[WORKER{}]\t{}/{}\t({:.2f}%)".format(self.id, c, tot, self.perc), bcolors.YELLOW)
+
+					# Update recalculated count
 					self.current+=1
 
+				# Recalculation finished, save new pp values in db
 				consoleHelper.printColored("[WORKER{}] PP calc for this worker finished. Saving results in db...".format(self.id), bcolors.PINK)
 				for i in self.scores:
+					# Loop through all scores and update pp in db
+					# we need to lock the thread because pymysql is not thread safe
 					self.lock.acquire()
 					glob.db.execute("UPDATE scores SET pp = ? WHERE id = ?", [i["pp"], i["id"]])
 					self.lock.release()
-				self.done = True
 
-	def massRecalc(scores):
+			# This worker has finished his work
+			self.done = True
+
+	def massRecalc(scores, workersNum = 0):
 		"""
 		Recalc pp for scores in scores dictionary.
 
 		scores -- dictionary returned from query. must contain id key with score id
+		workersNum -- number of workers. If 0, will spawn 1 worker every 200 scores up to MAX_WORKERS
 		"""
-		WORKERS = 32
+		# Get total scores number
 		totalScores = len(scores)
+
+		# Calculate number of workers if needed
+		if workersNum == 0:
+			workersNum = min(math.ceil(totalScores/200), MAX_WORKERS)
+
+		# Start from the first score
 		start = 0
 		end = 0
 
+		# Create lock object and workers list
 		lock = threading.Lock()
 		workers = []
-		for i in range(0,WORKERS):
-			start = end
-			end = start+math.floor(len(scores)/WORKERS)
 
+		# Spawn necessary workers
+		for i in range(0,workersNum):
+			# Set this worker's scores range
+			start = end
+			end = start+math.floor(len(scores)/workersNum)
 			consoleHelper.printColored("> Spawning worker {} ({}:{})".format(i, start, end), bcolors.PINK)
+
+			# Append a worker object to workers list, passing scores to recalc
 			workers.append(worker(i, scores[start:end], lock))
+
+			# Create this worker's thread and start it
 			t = threading.Thread(target=workers[i].doWork)
 			t.start()
 
+		# Infinite output loop
 		while True:
+			# Variables needed to calculate percentage
 			totalPerc = 0
 			scoresDone = 0
 			workersDone = 0
-			for i in range(0,WORKERS):
+
+			# Loop through all workers
+			for i in range(0,workersNum):
+				# Get percentage, calculated scores number and done status
 				totalPerc += workers[i].perc
 				scoresDone += workers[i].current
 				if workers[i].done == True:
 					workersDone += 1
-			consoleHelper.printColored("> Progress {perc:.2f}% ({done}/{total}) [{donew}/{workers}]".format(perc=totalPerc/WORKERS, done=scoresDone, total=totalScores, donew=workersDone, workers=WORKERS), bcolors.GREEN)
-			time.sleep(1)
 
-			if workersDone == WORKERS:
+			# Output global information
+			consoleHelper.printColored("> Progress {perc:.2f}% ({done}/{total}) [{donew}/{workers}]".format(perc=totalPerc/workersNum, done=scoresDone, total=totalScores, donew=workersDone, workers=workersNum), bcolors.YELLOW)
+
+			# Exit from the loop if every worker has finished its work
+			if workersDone == workersNum:
 				break
 
+			# Repeat after 1 second
+			time.sleep(1)
 
 	# CLI stuff
 	__author__ = "Nyo"
-	parser = argparse.ArgumentParser(description="pp calculator for ripple 2 / LETS")
-	parser.add_argument('-r','--recalc', help="recalculate pp for every score (std scores only)", required=False, action='store_true')
-	parser.add_argument('-z','--zero', help="calculate pp for 0 pp scores (std scores only)", required=False, action='store_true')
+	parser = argparse.ArgumentParser(description="oppai interface for ripple 2 / LETS")
+	parser.add_argument('-r','--recalc', help="recalculate pp for every score", required=False, action='store_true')
+	parser.add_argument('-z','--zero', help="calculate pp for 0 pp scores", required=False, action='store_true')
 	parser.add_argument('-i','--id', help="calculate pp for score with this id", required=False)
-	parser.add_argument('-m','--mods', help="calculate pp for scores with this mod (id)", required=False)
-	parser.add_argument('-v','--verbose', help="run ripp in verbose mode", required=False, action='store_true')
+	parser.add_argument('-m','--mods', help="calculate pp for scores with this mod (mod id)", required=False)
+	parser.add_argument('-u','--userid', help="calculate pp for scores played by a specific user (userID)", required=False)
+	parser.add_argument('-n','--username', help="calculate pp for scores played by a specific user (username)", required=False)
+	parser.add_argument('-w','--workers', help="force number of workers", required=False)
+	parser.add_argument('-v','--verbose', help="run ripp in verbose/debug mode", required=False, action='store_true')
 	args = parser.parse_args()
 
 	# Platform
@@ -255,30 +331,51 @@ if __name__ == "__main__":
 		consoleHelper.printColored("[!] Error while connection to database. Please check your config.ini and run the server again", bcolors.RED)
 		raise
 
+	# Get workers from arguments if set
+	workers = 0
+	if args.workers != None:
+		workers = int(args.workers)
+
+	# Set verbose
+	glob.debug = args.verbose
+
 	# Operations
 	if args.zero == True:
 		# 0pp recalc
 		print("> Recalculating pp for zero-pp scores")
-		scores = glob.db.fetchAll("SELECT id FROM scores WHERE pp = 0 AND play_mode = 0 AND completed = 3")
-		massRecalc(scores)
+		scores = glob.db.fetchAll("SELECT * FROM scores LEFT JOIN beatmaps ON scores.beatmap_md5 = beatmaps.beatmap_md5 WHERE scores.play_mode = '0' AND scores.completed = '3' AND scores.pp = '0' ORDER BY scores.id DESC;")
+		massRecalc(scores, workers)
 	elif args.recalc == True:
 		# Full recalc
 		print("> Recalculating pp for every score")
 		scores = glob.db.fetchAll("SELECT * FROM scores LEFT JOIN beatmaps ON scores.beatmap_md5 = beatmaps.beatmap_md5 WHERE scores.play_mode = '0' AND scores.completed = '3' ORDER BY scores.id DESC;")
-		massRecalc(scores)
+		massRecalc(scores, workers)
 	elif args.mods != None:
 		# Mods recalc
 		print("> Recalculating pp for scores with mods {}".format(args.mods))
-		allScores = glob.db.fetchAll("SELECT id, mods FROM scores WHERE pp = 0 AND play_mode = 0 AND completed = 3")
+		allScores = glob.db.fetchAll("SELECT * FROM scores LEFT JOIN beatmaps ON scores.beatmap_md5 = beatmaps.beatmap_md5 WHERE scores.play_mode = '0' AND scores.completed = '3' ORDER BY scores.id DESC;")
 		scores = []
 		for i in allScores:
 			if i["mods"] & int(args.mods) > 0:
-				consoleHelper.printColored("> PP for score {} will be recalculated (mods: {})".format(i["id"], i["mods"]), bcolors.GREEN)
+				#consoleHelper.printColored("> PP for score {} will be recalculated (mods: {})".format(i["id"], i["mods"]), bcolors.GREEN)
 				scores.append(i)
-		massRecalc(scores)
+		massRecalc(scores, workers)
 	elif args.id != None:
-		# ID recalc
-		#recalcFromScoreID(args.id)
-		pass
+		# Score ID recalc
+		scores = glob.db.fetchAll("SELECT * FROM scores LEFT JOIN beatmaps ON scores.beatmap_md5 = beatmaps.beatmap_md5 WHERE scores.play_mode = '0' AND scores.completed = '3' AND scores.id = ?;", [args.id])
+		massRecalc(scores, workers)
+	elif args.userid != None:
+		# User ID recalc
+		username = userHelper.getUsername(args.userid)
+		if username != None:
+			scores = glob.db.fetchAll("SELECT * FROM scores LEFT JOIN beatmaps ON scores.beatmap_md5 = beatmaps.beatmap_md5 WHERE scores.play_mode = '0' AND scores.completed = '3' AND scores.username = ?;", [username])
+			massRecalc(scores, workers)
+		else:
+			consoleHelper.printColored("[!] User with id {} doesn't exist".format(args.userid), bcolors.RED)
+	elif args.username != None:
+		# Username recalc
+		scores = glob.db.fetchAll("SELECT * FROM scores LEFT JOIN beatmaps ON scores.beatmap_md5 = beatmaps.beatmap_md5 WHERE scores.play_mode = '0' AND scores.completed = '3' AND scores.username = ?;", [args.username])
+		massRecalc(scores, workers)
 
+	# The endTM
 	consoleHelper.printColored("Done!", bcolors.GREEN)
