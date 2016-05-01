@@ -3,6 +3,7 @@ from helpers import userHelper
 from helpers import scoreHelper
 from helpers import consoleHelper
 from helpers import generalHelper
+from constants import bcolors
 import beatmap
 import os
 if os.path.isfile("rippoppai.py"):
@@ -227,4 +228,4 @@ class score:
 			fo = rippoppai.oppai(b, self)
 			self.pp = fo.pp
 		else:
-			consoleHelper.printColored("[!] Completed status is {}. PP calc for this score skipped.".format(self.completed))
+			consoleHelper.printColored("[!] Completed status is {}. PP calc for this score skipped.".format(self.completed), bcolors.YELLOW)
