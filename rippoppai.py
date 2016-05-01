@@ -9,6 +9,8 @@ from helpers import generalHelper
 import score
 import beatmap
 import argparse
+import math
+import time
 
 import threading
 import signal
@@ -57,17 +59,17 @@ class oppai:
 				download = False
 				if not os.path.isfile(mapFile):
 					# .osu file doesn't exist. We must download it
-					consoleHelper.printColored("[!] {} doesn't exist".format(mapFile), bcolors.YELLOW)
+					#consoleHelper.printColored("[!] {} doesn't exist".format(mapFile), bcolors.YELLOW)
 					download = True
 				else:
 					# File exists, check md5
 					if generalHelper.fileMd5(mapFile) != self.beatmap.fileMD5:
-						consoleHelper.printColored("[!] Beatmaps md5 don't match".format(mapFile), bcolors.YELLOW)
+						#consoleHelper.printColored("[!] Beatmaps md5 don't match".format(mapFile), bcolors.YELLOW)
 						download = True
 
 				# Download .osu file if needed
 				if download == True:
-					consoleHelper.printRippoppaiMessage("Downloading {} from osu! servers...".format(mapFile))
+					#consoleHelper.printRippoppaiMessage("Downloading {} from osu! servers...".format(mapFile))
 
 					# Get .osu file from osu servers
 					fileContent = osuapiHelper.getOsuFileFromID(self.beatmap.beatmapID)
@@ -85,13 +87,14 @@ class oppai:
 						f.write(fileContent.encode("latin-1"))
 				else:
 					# Map file is already in folder
-					consoleHelper.printRippoppaiMessage("Found beatmap file {}".format(mapFile))
+					#consoleHelper.printRippoppaiMessage("Found beatmap file {}".format(mapFile))
+					pass
 			except exceptions.osuApiFailException:
 				pass
 
 			# Command
 			command = fixPath("{path}/oppai {mapFile} {acc}% +{mods} {combo}x {misses}xm".format(path=self.OPPAI_FOLDER, mapFile=mapFile, acc=self.acc, mods=self.mods, combo=self.combo, misses=self.misses))
-			consoleHelper.printRippoppaiMessage("Executing {}".format(command))
+			#consoleHelper.printRippoppaiMessage("Executing {}".format(command))
 
 			# Output
 			#output = oppaiThread(command, 3).Run()
@@ -99,13 +102,14 @@ class oppai:
 			output = process.stdout.decode("utf-8")
 
 			# Last output line
-			pp = output.split("\r\n" if UNIX == True else "\n")
+			pp = output.split("\r\n" if UNIX == False else "\n")
 			pp = pp[len(pp)-2][:-2]
 			self.pp = float(pp)
-			consoleHelper.printRippoppaiMessage("PP: {}".format(self.pp))
+			#consoleHelper.printRippoppaiMessage("PP: {}".format(self.pp))
 			return self.pp
 		except:
 			consoleHelper.printColored("[!] Error while executing oppai.", bcolors.RED)
+			self.pp = 0
 
 
 if __name__ == "__main__":
@@ -116,41 +120,73 @@ if __name__ == "__main__":
 	from constants import rankedStatuses
 	import sys
 
-	def recalcFromScoreID(scoreID):
+	def recalcFromScoreData(scoreData, lock):
 		"""
-		Recalculate pp value for scoreID.
+		Recalculate pp value for a score.
 		Does every check, output and queries needed.
 
-		scoreID -- id of score to recalc
-		return -- True if success, False if failed
+		score -- score dictionary of score to recalc
+		lock -- shared lock object
+		return -- calculated pp value or None
 		"""
 
 		# Create score object and set its data
 		s = score.score()
-		s.setDataFromDB(scoreID)
+		s.setDataFromDict(scoreData)
 		if s.scoreID == 0:
 			# Make sure the score exists
-			consoleHelper.printColored("[!] No score with id {}".format(scoreID), bcolors.RED)
-			return False
+			consoleHelper.printColored("[!] No score with id {}".format(scoreData["id"]), bcolors.RED)
 
-		# Create beatmap object and set its data
+		# Create beatmap object
 		b = beatmap.beatmap()
-		b.setData(s.fileMd5, 0)
+
+		# Check if we have data for this song
+		if scoreData["song_name"] == None:
+			# If we don't have song data in scoreData, get with get_scores method (mysql, osuapi blabla)
+			lock.acquire()
+			b.setData(scoreData["beatmap_md5"], 0)
+			lock.release()
+		else:
+			# If we have data, set data from dict
+			b.setDataFromDict(scoreData)
+
+		# Make sure the beatmap is ranked
 		if b.rankedStatus != rankedStatuses.RANKED and b.rankedStatus != rankedStatuses.APPROVED and b.rankedStatus != rankedStatuses.QUALIFIED:
-			# Make sure the beatmap is ranked
-			consoleHelper.printColored("[!] Beatmap {} is not ranked ({}).".format(s.fileMd5, b.rankedStatus), bcolors.RED)
+			#consoleHelper.printColored("[!] Beatmap {} is not ranked ().".format(s.fileMd5), bcolors.RED)
 			return False
 
 		# Calculate score pp
 		s.calculatePP(b)
 
 		# Update score pp
-		try:
-			glob.db.execute("UPDATE scores SET pp = ? WHERE id = ?", [s.pp, s.scoreID])
-		except:
-			consoleHelper.printColored("[!] Error while executing query", bcolors.RED)
-			return False
+		scoreData["pp"] = s.pp
 		return True
+
+	class worker:
+		def __init__(self, id, scores, lock):
+			self.id = id
+			self.scores = scores
+			self.lock = lock
+			self.perc = 0.00
+			self.current = 1
+			self.total = len(self.scores)
+			self.done = False
+
+		def doWork(self):
+			if self.scores != None:
+				for i in self.scores:
+					recalcFromScoreData(i, self.lock)
+					self.perc = (100*self.current)/self.total
+					#print("{} is Working".format(self.id))
+					#consoleHelper.printColored("[WORKER{}]\t{}/{}\t({:.2f}%)".format(self.id, c, tot, self.perc), bcolors.YELLOW)
+					self.current+=1
+
+				consoleHelper.printColored("[WORKER{}] PP calc for this worker finished. Saving results in db...".format(self.id), bcolors.PINK)
+				for i in self.scores:
+					self.lock.acquire()
+					glob.db.execute("UPDATE scores SET pp = ? WHERE id = ?", [i["pp"], i["id"]])
+					self.lock.release()
+				self.done = True
 
 	def massRecalc(scores):
 		"""
@@ -158,14 +194,37 @@ if __name__ == "__main__":
 
 		scores -- dictionary returned from query. must contain id key with score id
 		"""
-		if scores != None:
-			tot = len(scores)
-			print("Found {} scores".format(tot))
-			c = 1
-			for i in scores:
-				recalcFromScoreID(i["id"])
-				consoleHelper.printColored("{}/{} ({:.2f}%)".format(c, tot, (100*c)/tot), bcolors.YELLOW)
-				c+=1
+		WORKERS = 32
+		totalScores = len(scores)
+		start = 0
+		end = 0
+
+		lock = threading.Lock()
+		workers = []
+		for i in range(0,WORKERS):
+			start = end
+			end = start+math.floor(len(scores)/WORKERS)
+
+			consoleHelper.printColored("> Spawning worker {} ({}:{})".format(i, start, end), bcolors.PINK)
+			workers.append(worker(i, scores[start:end], lock))
+			t = threading.Thread(target=workers[i].doWork)
+			t.start()
+
+		while True:
+			totalPerc = 0
+			scoresDone = 0
+			workersDone = 0
+			for i in range(0,WORKERS):
+				totalPerc += workers[i].perc
+				scoresDone += workers[i].current
+				if workers[i].done == True:
+					workersDone += 1
+			consoleHelper.printColored("> Progress {perc:.2f}% ({done}/{total}) [{donew}/{workers}]".format(perc=totalPerc/WORKERS, done=scoresDone, total=totalScores, donew=workersDone, workers=WORKERS), bcolors.GREEN)
+			time.sleep(1)
+
+			if workersDone == WORKERS:
+				break
+
 
 	# CLI stuff
 	__author__ = "Nyo"
@@ -183,6 +242,7 @@ if __name__ == "__main__":
 	# Load config
 	consoleHelper.printNoNl("> Reading config file... ")
 	glob.conf = config.config("config.ini")
+	glob.debug = generalHelper.stringToBool(glob.conf.config["server"]["debug"])
 	consoleHelper.printDone()
 
 	# Connect to MySQL
@@ -203,8 +263,8 @@ if __name__ == "__main__":
 		massRecalc(scores)
 	elif args.recalc == True:
 		# Full recalc
-		print("> Recalculating pp for every scores")
-		scores = glob.db.fetchAll("SELECT id FROM scores WHERE play_mode = 0 AND completed = 3")
+		print("> Recalculating pp for every score")
+		scores = glob.db.fetchAll("SELECT * FROM scores LEFT JOIN beatmaps ON scores.beatmap_md5 = beatmaps.beatmap_md5 WHERE scores.play_mode = '0' AND scores.completed = '3' ORDER BY scores.id DESC;")
 		massRecalc(scores)
 	elif args.mods != None:
 		# Mods recalc
@@ -218,21 +278,7 @@ if __name__ == "__main__":
 		massRecalc(scores)
 	elif args.id != None:
 		# ID recalc
-		recalcFromScoreID(args.id)
+		#recalcFromScoreID(args.id)
+		pass
 
 	consoleHelper.printColored("Done!", bcolors.GREEN)
-
-	# Some test values
-	'''b = beatmap.beatmap("d7e1002824cb188bf318326aa109469d", 0)
-	s = score.score()
-	s.c300 = 1150
-	s.c100 = 22
-	s.c50 = 0
-	s.cKatu = 244
-	s.cGeki = 16
-	s.cMiss = 1
-	s.maxCombo = 1769
-	s.mods = 64
-	s.calculateAccuracy()
-	o = oppai(b, s)
-	print(str(o.pp))'''

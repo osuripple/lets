@@ -88,30 +88,41 @@ class score:
 	def setDataFromDB(self, scoreID, rank = None):
 		"""
 		Set this object's score data from db
+		Sets playerUserID too
 
 		scoreID -- score ID
 		rank -- rank in scoreboard. Optional.
 		"""
 		data = glob.db.fetch("SELECT * FROM scores WHERE id = ?", [scoreID])
 		if data != None:
-			self.scoreID = scoreID
-			self.playerName = data["username"]
-			self.score = data["score"]
-			self.maxCombo = data["max_combo"]
-			self.c50 = data["50_count"]
-			self.c100 = data["100_count"]
-			self.c300 = data["300_count"]
-			self.cMiss = data["misses_count"]
-			self.cKatu = data["katus_count"]
-			self.cGeki = data["gekis_count"]
-			self.fullCombo = True if data["full_combo"] == 1 else False
-			self.mods = data["mods"]
+			self.setDataFromDict(data, rank)
 			self.playerUserID = userHelper.getID(self.playerName)
-			self.rank = rank if rank != None else ""
-			self.date = data["time"]
-			self.fileMd5 = data["beatmap_md5"]
-			self.completed = data["completed"]
-			self.calculateAccuracy()
+
+	def setDataFromDict(self, data, rank = None):
+		"""
+		Set this object's score data from dictionary
+		Doesn't set playerUserID
+
+		data -- score dictionarty
+		rank -- rank in scoreboard. Optional.
+		"""
+		self.scoreID = data["id"]
+		self.playerName = data["username"]
+		self.score = data["score"]
+		self.maxCombo = data["max_combo"]
+		self.c50 = data["50_count"]
+		self.c100 = data["100_count"]
+		self.c300 = data["300_count"]
+		self.cMiss = data["misses_count"]
+		self.cKatu = data["katus_count"]
+		self.cGeki = data["gekis_count"]
+		self.fullCombo = True if data["full_combo"] == 1 else False
+		self.mods = data["mods"]
+		self.rank = rank if rank != None else ""
+		self.date = data["time"]
+		self.fileMd5 = data["beatmap_md5"]
+		self.completed = data["completed"]
+		self.calculateAccuracy()
 
 	def setDataFromScoreData(self, scoreData):
 		"""

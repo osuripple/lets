@@ -89,8 +89,18 @@ class beatmap:
 
 		# Data in DB, set beatmap data
 		consoleHelper.printGetScoresMessage("Got beatmap data from db")
+		self.setDataFromDict(data)
+		return True
+
+	def setDataFromDict(self, data):
+		"""
+		Set this object's beatmap data from data dictionary.
+
+		data -- data dictionary
+		return -- True if set, False if not set
+		"""
 		self.songName = data["song_name"]
-		self.fileMD5 = md5
+		self.fileMD5 = data["beatmap_md5"]
 		self.rankedStatus = int(data["ranked"])
 		self.rankedStatusFrozen = int(data["ranked_status_freezed"])
 		self.beatmapID = int(data["beatmap_id"])
@@ -101,7 +111,6 @@ class beatmap:
 		self.maxCombo = int(data["max_combo"])
 		self.hitLength = int(data["hit_length"])
 		self.bpm = int(data["bpm"])
-		return True
 
 	def setDataFromOsuApi(self, md5, beatmapSetID):
 		"""
