@@ -2,6 +2,7 @@ from constants import rankedStatuses
 from constants import bcolors
 from helpers import osuapiHelper
 from helpers import consoleHelper
+#from helpers import discordBotHelper
 import glob
 import time
 import sys
@@ -64,8 +65,8 @@ class beatmap:
 				int(time.time())
 			])
 		except:
-			discordBotHelper.sendConfidential("Error while saving beatmap data in db: {}".format(sys.exc_info()))
-			discordBotHelper.sendConfidential("Traceback: {}".format(traceback.format_exc()))
+			#discordBotHelper.sendConfidential("Error while saving beatmap data in db: {}".format(sys.exc_info()))
+			#discordBotHelper.sendConfidential("Traceback: {}".format(traceback.format_exc()))
 			consoleHelper.printColored("[!] Error while saving beatmap data in db", bcolors.RED)
 
 	def setDataFromDB(self, md5):
