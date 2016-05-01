@@ -1,0 +1,36 @@
+import tornado.web
+import glob
+from constants import exceptions
+from helpers import generalHelper
+from helpers import consoleHelper
+import os
+
+MODULE_NAME = "screenshot"
+class handler(tornado.web.RequestHandler):
+	"""
+	Handler for /web/osu-screenshot.php
+	"""
+	def post(self):
+		try:
+			# Make sure screenshot file was passed
+			if "ss" not in self.request.files:
+				raise exceptions.invalidArgumentsException(MODULE_NAME)
+
+			# Get a random screenshot id
+			found = False
+			while found == False:
+				screenshotID = generalHelper.randomString(8)
+				if os.path.isfile(".data/screenshots/{}.jpg".format(screenshotID)) == False:
+					found = True
+
+			# Write screenshot file to .data folder
+			with open(".data/screenshots/{}.jpg".format(screenshotID), "wb") as f:
+				f.write(self.request.files["ss"][0]["body"])
+
+			# Output
+			consoleHelper.printScreenshotsMessage("New screenshot ({})".format(screenshotID))
+
+			# Return screenshot link
+			self.write("{}/ss/{}.jpg".format(glob.conf.config["server"]["serverurl"], screenshotID))
+		except exceptions.invalidArgumentsException:
+			pass

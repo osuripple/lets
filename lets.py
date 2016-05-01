@@ -16,6 +16,8 @@ from handlers import banchoConnectHandler
 from handlers import getReplayHandler
 from handlers import statusHandler
 from handlers import mapsHandler
+from handlers import uploadScreenshotHandler
+from handlers import getScreenshotHandler
 
 # Tornado
 import tornado.ioloop
@@ -27,6 +29,8 @@ def make_app():
 		(r"/web/osu-osz2-getscores.php", getScoresHandler.handler),
 		(r"/web/osu-submit-modular.php", submitModularHandler.handler),
 		(r"/web/osu-getreplay.php", getReplayHandler.handler),
+		(r"/web/osu-screenshot.php", uploadScreenshotHandler.handler),
+		(r"/ss/(.*)", getScreenshotHandler.handler),
 		(r"/web/maps/(.*)", mapsHandler.handler),
 		(r"/status", statusHandler.handler)
 	])
@@ -67,7 +71,7 @@ if __name__ == "__main__":
 
 	# Create data folder if needed
 	consoleHelper.printNoNl("> Checking folders... ")
-	paths = [".data", ".data/replays"]
+	paths = [".data", ".data/replays", ".data/screenshots"]
 	for i in paths:
 		if not os.path.exists(i):
 			os.makedirs(i, 0o770)

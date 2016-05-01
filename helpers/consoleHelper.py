@@ -88,3 +88,6 @@ def printRippoppaiMessage(message):
 
 def printDebugMessage(message):
 	printColored("[debug] {}".format(message), bcolors.BLUE)
+
+def printScreenshotsMessage(message):
+	printColored("[screenshots] {}".format(message), bcolors.YELLOW)

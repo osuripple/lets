@@ -16,3 +16,7 @@ class userBannedException(Exception):
 class osuApiFailException(Exception):
 	def __init__(self, handler):
 		consoleHelper.printColored("[{}] Invalid data from osu!api".format(handler), bcolors.RED)
+
+class fileNotFoundException(Exception):
+	def __init__(self, handler, file):
+		consoleHelper.printColored("[{}] File not found ({})".format(handler, file), bcolors.RED)
