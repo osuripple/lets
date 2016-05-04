@@ -24,7 +24,7 @@ def osuApiRequest(request, params):
 	try:
 		finalURL = "{}/api/{}?k={}&{}".format(glob.conf.config["osuapi"]["apiurl"], request, glob.conf.config["osuapi"]["apikey"], params)
 		#print("Sending request to osu!api: {}".format(finalURL))
-		resp = requests.get(finalURL).text
+		resp = requests.get(finalURL, timeout=5).text
 		#print("Got response: {}".format(resp))
 		data = json.loads(resp)
 		if len(data) >= 1:
@@ -51,7 +51,7 @@ def getOsuFileFromName(fileName):
 			return None
 
 		URL = "{}/web/maps/{}".format(glob.conf.config["osuapi"]["apiurl"], quote(fileName))
-		response = requests.get(URL).text
+		response = requests.get(URL, timeout=20).text
 		return response
 	except:
 		consoleHelper.printColored("[!] Error while downloading .osu file (name)", bcolors.RED)
@@ -73,7 +73,7 @@ def getOsuFileFromID(beatmapID):
 			return None
 
 		URL = "{}/osu/{}".format(glob.conf.config["osuapi"]["apiurl"], beatmapID)
-		response = requests.get(URL).text
+		response = requests.get(URL, timeout=20).text
 		return response
 	except:
 		consoleHelper.printColored("[!] Error while downloading .osu file (id)", bcolors.RED)
