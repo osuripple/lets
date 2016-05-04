@@ -6,6 +6,8 @@ from helpers import consoleHelper
 from constants import bcolors
 from constants import exceptions
 from helpers import requestHelper
+from helpers import discordBotHelper
+from helpers import userHelper
 
 MODULE_NAME = "get_scores"
 class handler(tornado.web.RequestHandler):
@@ -30,11 +32,26 @@ class handler(tornado.web.RequestHandler):
 			beatmapSetID = self.get_argument("i")
 			gameMode = self.get_argument("m")
 			username = self.get_argument("us")
+			password = self.get_argument("ha")
+
+			# Login and ban check
+			userID = userHelper.getID(username)
+			if userID == 0:
+				raise exceptions.loginFailedException(MODULE_NAME, userID)
+			if userHelper.checkLogin(userID, password) == False:
+				raise exceptions.loginFailedException(MODULE_NAME, username)
+			if userHelper.getAllowed(userID) == 0:
+				raise exceptions.userBannedException(MODULE_NAME, username)
+
+			# Hax check
+			if "a" in self.request.arguments:
+				if int(self.get_argument("a")) == 1:
+					discordBotHelper.sendConfidential("Found AQN folder on user {} ({})".format(username, userID))
+
+			# Console output
 			consoleHelper.printColored("----", bcolors.PINK)
 			fileNameShort = fileName[:32]+"..." if len(fileName) > 32 else fileName[:-4]
 			consoleHelper.printGetScoresMessage("Requested beatmap {} ({})".format(fileNameShort, md5))
-
-			# TODO: Login check
 
 			# Create beatmap object and set its data
 			bmap = beatmap.beatmap(md5, beatmapSetID)
@@ -48,6 +65,6 @@ class handler(tornado.web.RequestHandler):
 			data += sboard.getScoresData()
 			self.write(data)
 		except exceptions.invalidArgumentsException:
-			pass
+			self.write("error: ban")
 		except exceptions.loginFailedException:
-			pass
+			self.write("error: pass")

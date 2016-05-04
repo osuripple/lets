@@ -58,7 +58,6 @@ class handler(tornado.web.RequestHandler):
 				raise exceptions.loginFailedException(MODULE_NAME, username)
 			if userHelper.getAllowed(userID) == 0:
 				raise exceptions.userBannedException(MODULE_NAME, username)
-
 			# Create score object and set its data
 			consoleHelper.printSubmitModularMessage("Saving {}'s score on {}...".format(username, scoreData[0]))
 			s = score.score()
@@ -69,32 +68,46 @@ class handler(tornado.web.RequestHandler):
 			if glob.pp == True and s.gameMode == gameModes.STD:
 				s.calculatePP()
 
+			# Ban obvious cheaters
+			if s.pp >= 700:
+				userHelper.setAllowed(userID, 0)
+				discordBotHelper.sendConfidential("{} ({}) has been banned due to too high pp gain ({}pp)".format(username, userID, s.pp))
+
 			# Save score in db
 			s.saveScoreInDB()
 
+			# Make sure process list has been passed
+			if s.completed == 3 and "pl" not in self.request.arguments:
+				userHelper.setAllowed(userID, 0)
+				discordBotHelper.sendConfidential("{} ({}) has been banned due to missing process list".format(username, userID))
+
 			# Save replay
-			if s.passed == True and s.completed == 3 and "score" in self.request.files:
-				consoleHelper.printSubmitModularMessage("Saving replay ({})...".format(s.scoreID))
-				replay = self.request.files["score"][0]["body"]
-				with open(".data/replays/replay_{}.osr".format(s.scoreID), "wb") as f:
-					f.write(replay)
+			if s.passed == True and s.completed == 3:
+				if "score" not in self.request.files:
+					# Ban if no replay passed
+					userHelper.setAllowed(userID, 0)
+					discordBotHelper.sendConfidential("{} ({}) has been banned due to replay not found on map {}".format(username, userID, s.fileMd5))
+				else:
+					# Otherwise, save the replay
+					consoleHelper.printSubmitModularMessage("Saving replay ({})...".format(s.scoreID))
+					replay = self.request.files["score"][0]["body"]
+					with open(".data/replays/replay_{}.osr".format(s.scoreID), "wb") as f:
+						f.write(replay)
 
 			# Update users stats (total/ranked score, playcount, level and acc)
 			consoleHelper.printSubmitModularMessage("Updating {}'s stats...".format(username))
 			userHelper.updateStats(userID, s)
 
 			# Update leaderboard
-			#if glob.pp == True and s.gameMode == gameModes.STD:
-			# NOTE: gne gne meccanica gne gne fa click gne gne
-			if s.gameMode == gameModes.STD:
+			if glob.pp == True and s.gameMode == gameModes.STD:
 				newScore = userHelper.getPP(userID, s.gameMode)
 			else:
 				newScore = userHelper.getRankedScore(userID, s.gameMode)
 
+			# Update leaderboard
 			leaderboardHelper.update(userID, newScore, s.gameMode)
 
 			# TODO: Update total hits and max combo
-
 			# Update latest activity
 			userHelper.updateLatestActivity(userID)
 

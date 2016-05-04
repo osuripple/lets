@@ -340,3 +340,13 @@ def incrementReplaysWatched(userID, gameMode):
 	"""
 	mode = scoreHelper.readableGameMode(gameMode)
 	glob.db.execute("UPDATE users_stats SET replays_watched_{mode}=replays_watched_{mode}+1 WHERE id = ?".format(mode=mode), [userID])
+
+
+def setAllowed(userID, allowed):
+	"""
+	Set userID's allowed status
+
+	userID -- user
+	allowed -- allowed status. 1: normal, 0: banned
+	"""
+	glob.db.execute("UPDATE users SET allowed = ? WHERE id = ?", [allowed, userID])
