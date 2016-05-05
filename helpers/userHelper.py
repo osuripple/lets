@@ -350,3 +350,21 @@ def setAllowed(userID, allowed):
 	allowed -- allowed status. 1: normal, 0: banned
 	"""
 	glob.db.execute("UPDATE users SET allowed = ? WHERE id = ?", [allowed, userID])
+
+def getAqn(userID):
+	"""
+	Check if AQN folder was detected for userID
+
+	userID -- user
+	return -- True if hax, False if legit
+	"""
+	glob.db.fetch("SELECT aqn FROM users WHERE id = ?", [userID])
+
+def setAqn(userID, value = 1):
+	"""
+	Set AQN folder status for userID
+
+	userID -- user
+	value -- new aqn value, default = 1
+	"""
+	glob.db.fetch("UPDATE users SET aqn = ? WHERE id = ?", [value, userID])

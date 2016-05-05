@@ -45,8 +45,9 @@ class handler(tornado.web.RequestHandler):
 
 			# Hax check
 			if "a" in self.request.arguments:
-				if int(self.get_argument("a")) == 1:
+				if int(self.get_argument("a")) == 1 and not userHelper.getAqn(userID):
 					discordBotHelper.sendConfidential("Found AQN folder on user {} ({})".format(username, userID))
+					userHelper.setAqn(userID)
 
 			# Console output
 			consoleHelper.printColored("----", bcolors.PINK)
