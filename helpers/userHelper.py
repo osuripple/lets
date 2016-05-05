@@ -358,7 +358,11 @@ def getAqn(userID):
 	userID -- user
 	return -- True if hax, False if legit
 	"""
-	glob.db.fetch("SELECT aqn FROM users WHERE id = ?", [userID])
+	result = glob.db.fetch("SELECT aqn FROM users WHERE id = ?", [userID])
+	if result != None:
+		return True if int(result["aqn"]) == 1 else False
+	else:
+		return False
 
 def setAqn(userID, value = 1):
 	"""
