@@ -94,6 +94,11 @@ class handler(tornado.web.RequestHandler):
 					with open(".data/replays/replay_{}.osr".format(s.scoreID), "wb") as f:
 						f.write(replay)
 
+			# Make sure the replay has been saved (debug)
+			if not os.path.isfile(".data/replays/replay_{}.osr".format(s.scoreID)) and s.completed == 3:
+				discordBotHelper.sendConfidential("Replay for score {} not saved!!".format(s.scoreID))
+
+
 			# Update users stats (total/ranked score, playcount, level and acc)
 			consoleHelper.printSubmitModularMessage("Updating {}'s stats...".format(username))
 			userHelper.updateStats(userID, s)

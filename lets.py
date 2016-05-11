@@ -99,7 +99,7 @@ if __name__ == "__main__":
 	discordBotHelper.sendConfidential("TATOE! (lets started)")
 
 	serverPort = int(glob.conf.config["server"]["port"])
-	consoleHelper.printColored("> Starting L.E.T.S. on 127.0.0.1:{}...".format(serverPort), bcolors.GREEN)
+	consoleHelper.printColored("> L.E.T.S. is listening for clients on 127.0.0.1:{}...".format(serverPort), bcolors.GREEN)
 	app = make_app()
 	app.listen(serverPort)
 	tornado.ioloop.IOLoop.current().start()
