@@ -4,6 +4,7 @@ from helpers import scoreHelper
 from helpers import consoleHelper
 from helpers import generalHelper
 from constants import bcolors
+from constants import rankedStatuses
 import beatmap
 import os
 if os.path.isfile("rippoppai.py"):
@@ -190,7 +191,7 @@ class score:
 				self.oldPersonalBest = 0
 			else:
 				# Compare personal best's score with current score
-				if self.score > personalBest["score"]:
+				if self.score >= personalBest["score"]:
 					self.completed = 3
 					self.rankedScoreIncrease = self.score-personalBest["score"]
 					self.oldPersonalBest = personalBest["id"]
@@ -198,6 +199,7 @@ class score:
 					self.completed = 2
 					self.rankedScoreIncrease = 0
 					self.oldPersonalBest = 0
+		consoleHelper.printColored("COMPLETED STATUS IS {}".format(self.completed), bcolors.GREEN)
 
 	def saveScoreInDB(self):
 		"""
@@ -208,12 +210,13 @@ class score:
 			query = "INSERT INTO scores (id, beatmap_md5, username, score, max_combo, full_combo, mods, 300_count, 100_count, 50_count, katus_count, gekis_count, misses_count, time, play_mode, completed, accuracy, pp) VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"
 			glob.db.execute(query, [self.fileMd5, self.playerName, self.score, self.maxCombo, 1 if self.fullCombo == True else 0, self.mods, self.c300, self.c100, self.c50, self.cKatu, self.cGeki, self.cMiss, self.playDateTime, self.gameMode, self.completed, self.accuracy*100, self.pp])
 
+			# Get score id
+			self.scoreID = glob.db.connection.insert_id()
+			#self.scoreID = int(glob.db.fetch("SELECT id FROM scores ORDER BY id DESC LIMIT 1")["id"])
+
 			# Set old personal best to completed = 2
 			if self.oldPersonalBest != 0:
 				glob.db.execute("UPDATE scores SET completed = 2 WHERE id = ?", [self.oldPersonalBest])
-
-			# Get score id
-			self.scoreID = glob.db.connection.insert_id()
 
 	def calculatePP(self, b = None):
 		"""
@@ -225,7 +228,10 @@ class score:
 				b = beatmap.beatmap(self.fileMd5, 0)
 
 			# Create an instance of the magic pp calculator and calculate pp
-			fo = rippoppai.oppai(b, self)
-			self.pp = fo.pp
+			if b.rankedStatus >= rankedStatuses.RANKED and b.rankedStatus != rankedStatuses.UNKNOWN:
+				fo = rippoppai.oppai(b, self)
+				self.pp = fo.pp
+			else:
+				self.pp = 0
 		else:
 			consoleHelper.printColored("[!] Completed status is {}. PP calc for this score skipped.".format(self.completed), bcolors.YELLOW)
