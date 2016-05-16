@@ -19,13 +19,13 @@ class db:
 		__username -- MySQL username
 		__password -- MySQL password
 		__database -- MySQL database name
-		__pingTime -- MySQL database ping time (default: 600)
+		__pingTime -- MySQL database ping time (default: 600) (DISABLED!!)
 		"""
 
 		self.connection = pymysql.connect(host=__host, user=__username, password=__password, db=__database, cursorclass=pymysql.cursors.DictCursor, autocommit=True)
-		self.pingTime = __pingTime
-		if self.pingTime > 0:
-			self.pingLoop()
+		#self.pingTime = __pingTime
+		#if self.pingTime > 0:
+		#	self.pingLoop()
 
 
 	def bindParams(self, __query, __params):
@@ -125,11 +125,14 @@ class db:
 
 	def pingLoop(self):
 		"""
+		DISABLED BECAUSE PYMYSQL IS NOT THREAD SAFE AND MIGHT CAUSE ISSUES IF THERE ARE LOTS OF QUERIES/SEC!!
+
 		Pings MySQL server. We need to ping/execute a query at least once every 8 hours
 		or the connection will die.
 		If called once, will recall after 30 minutes and so on, forever
 		CALL THIS FUNCTION ONLY ONCE!
 		"""
+		return
 
 		# Default loop time
 		time = self.pingTime
