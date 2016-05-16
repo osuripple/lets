@@ -87,7 +87,7 @@ class config:
 
 		self.config.add_section("osuapi")
 		self.config.set("osuapi", "enable", "True")
-		self.config.set("osuapi", "apiurl", "https://osu.ppy.sh/api")
+		self.config.set("osuapi", "apiurl", "https://osu.ppy.sh")
 		self.config.set("osuapi", "apikey", "YOUR_OSU_API_KEY_HERE")
 
 		self.config.add_section("discord")
