@@ -11,6 +11,8 @@ from constants import gameModes
 from constants import exceptions
 from helpers import requestHelper
 from helpers import leaderboardHelper
+import sys
+import traceback
 
 #if os.path.isfile("rippoppai.py"):
 #	import rippoppai
@@ -125,3 +127,16 @@ class handler(tornado.web.RequestHandler):
 			self.write("error: pass")
 		except exceptions.userBannedException:
 			self.write("error: ban")
+		except:
+			# Try except block to avoid more errors
+			try:
+				msg = "UNKNOWN ERROR IN SCORE SUBMISSION!!!\n{}\n{}".format(sys.exc_info(), traceback.format_exc())
+				consoleHelper.printColored("[!] {}".format(msg), bcolors.RED)
+				discordBotHelper.sendConfidential("{}".format(msg))
+			except:
+				pass
+
+			# Every other exception returns a 408 error (timeout)
+			# This avoids lost scores due to score server crash
+			# because the client will send the score again after some time.
+			self.send_error(408)
