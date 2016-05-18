@@ -106,7 +106,7 @@ def getLevel(totalScore):
 		# Check if this is our level
 		if totalScore <= reqScore:
 			# Our level, return it and break
-			return level
+			return level - 1
 		else:
 			# Not our level, calculate score for next level
 			level+=1
