@@ -162,9 +162,8 @@ class oppai:
 			return self.pp
 		except:
 			# oppai or python error, set pp to 0
-			#consoleHelper.printColored("[!] Error while executing oppai.", bcolors.RED)
-			#self.pp = 0
-			pass
+			consoleHelper.printColored("[!] Error while executing oppai.", bcolors.RED)
+			self.pp = 0
 
 
 if __name__ == "__main__":
