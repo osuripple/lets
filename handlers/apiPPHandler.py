@@ -64,24 +64,20 @@ class handler(tornado.web.RequestHandler):
 			if bmap.hitLength > 900:
 				raise exceptions.beatmapTooLongException(MODULE_NAME)
 
-			# Make sure the beatmap is ranked
-			if bmap.rankedStatus >= rankedStatuses.RANKED:
-				# Create oppai instance
-				oppai = rippoppai.oppai(bmap, mods=modsEnum)
-				calculatedPP = []
+			# Create oppai instance
+			oppai = rippoppai.oppai(bmap, mods=modsEnum)
+			calculatedPP = []
 
-				# Calculate pp
-				if accuracy < 0:
-					# Generic acc
-					calculatedPP.append(oppai.pp)
-					calculatedPP.append(calculatePPFromAcc(oppai, 99.0))
-					calculatedPP.append(calculatePPFromAcc(oppai, 98.0))
-					calculatedPP.append(calculatePPFromAcc(oppai, 95.0))
-				else:
-					# Specific acc
-					calculatedPP.append(calculatePPFromAcc(oppai, 9.0))
+			# Calculate pp
+			if accuracy < 0:
+				# Generic acc
+				calculatedPP.append(oppai.pp)
+				calculatedPP.append(calculatePPFromAcc(oppai, 99.0))
+				calculatedPP.append(calculatePPFromAcc(oppai, 98.0))
+				calculatedPP.append(calculatePPFromAcc(oppai, 95.0))
 			else:
-				calculatedPP = [0,0,0,0]
+				# Specific acc
+				calculatedPP.append(calculatePPFromAcc(oppai, 9.0))
 
 			# Data to return
 			data = {
