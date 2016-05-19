@@ -91,3 +91,6 @@ def printDebugMessage(message):
 
 def printScreenshotsMessage(message):
 	printColored("[screenshots] {}".format(message), bcolors.YELLOW)
+
+def printApiMessage(module, message):
+	printColored("[{}] {}".format(module, message), bcolors.GREEN)

@@ -42,21 +42,40 @@ class oppai:
 	# Folder where oppai is placed
 	OPPAI_FOLDER = "../oppai"
 
-	def __init__(self, __beatmap, __score):
+	def __init__(self, __beatmap, __score = None, acc = 0, mods = 0):
 		"""
 		Set oppai params.
 
 		__beatmap -- beatmap object
 		__score -- score object
+		acc -- manual acc. Used in tillerino-like bot. You don't need this if you pass __score object
+		mods -- manual mods. Used in tillerino-like bot. You don't need this if you pass __score object
 		"""
-		self.score = __score
+		# Default values
+		self.pp = 0
+		self.score = None
+		self.acc = 0
+		self.mods = 0
+		self.combo = 0
+		self.misses = 0
+
+		# Beatmap object
 		self.beatmap = __beatmap
 		self.map = "{}.osu".format(self.beatmap.beatmapID)
-		self.acc = self.score.accuracy*100
-		self.mods = scoreHelper.readableMods(self.score.mods)
-		self.combo = self.score.maxCombo
-		self.misses = self.score.cMiss
-		self.pp = 0
+
+		# If passed, set everything from score object
+		if __score != None:
+			self.score = __score
+			self.acc = self.score.accuracy*100
+			self.mods = self.score.mods
+			self.combo = self.score.maxCombo
+			self.misses = self.score.cMiss
+		else:
+			# Otherwise, set acc and mods from params (tillerino)
+			self.acc = acc
+			self.mods = mods
+
+		# Calculate pp
 		self.getPP()
 
 	def getPP(self):
@@ -111,8 +130,20 @@ class oppai:
 			except exceptions.osuApiFailException:
 				pass
 
-			# Command with params
-			command = fixPath("{path}/oppai {mapFile} {acc}% +{mods} {combo}x {misses}xm".format(path=self.OPPAI_FOLDER, mapFile=mapFile, acc=self.acc, mods=self.mods, combo=self.combo, misses=self.misses))
+			# Base command
+			command = fixPath("{path}/oppai {mapFile}".format(path=self.OPPAI_FOLDER, mapFile=mapFile))
+
+			# Add params if needed
+			if self.acc > 0:
+				command += " {acc}%".format(acc=self.acc)
+			if self.mods > 0:
+				command += " +{mods}".format(mods=scoreHelper.readableMods(self.mods))
+			if self.combo > 0:
+				command += " {combo}x".format(combo=self.combo)
+			if self.misses > 0:
+				command += " {misses}xm".format(misses=self.misses)
+
+			# Debug output
 			if glob.debug == True:
 				consoleHelper.printRippoppaiMessage("Executing {}".format(command))
 
@@ -124,11 +155,16 @@ class oppai:
 			pp = output.split("\r\n" if UNIX == False else "\n")
 			pp = pp[len(pp)-2][:-2]
 			self.pp = float(pp)
+
+			if glob.debug == True:
+				consoleHelper.printRippoppaiMessage("Calculated pp: {}".format(self.pp))
+
 			return self.pp
 		except:
 			# oppai or python error, set pp to 0
-			consoleHelper.printColored("[!] Error while executing oppai.", bcolors.RED)
-			self.pp = 0
+			#consoleHelper.printColored("[!] Error while executing oppai.", bcolors.RED)
+			#self.pp = 0
+			pass
 
 
 if __name__ == "__main__":

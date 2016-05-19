@@ -7,6 +7,8 @@ from helpers import consoleHelper
 import glob
 from urllib.parse import quote
 
+import unicodedata
+
 def osuApiRequest(request, params):
 	"""
 	Send a request to osu!api.
@@ -79,3 +81,26 @@ def getOsuFileFromID(beatmapID):
 		consoleHelper.printColored("[!] Error while downloading .osu file (id)", bcolors.RED)
 		raise
 		return None
+
+def bloodcatRequest(URL):
+	try:
+		response = requests.get(URL, timeout=10).text
+		response = json.loads(response)
+		return response
+	except:
+		raise
+		return None
+
+def bloodcatToDirect(data, np = False):
+	s = ""
+	if np == True:
+		s = "{id}.osz|{artist}|{title}|{creator}|{status}|10.00000|{synced}|{id}|{id}|0|0|0|".format(**data)
+	else:
+		s = "{id}.osz|{artist}|{title}|{creator}|{status}|10.00000|{synced}|{id}".format(**data)
+		s += "{}|0|0|0||".format(data["beatmaps"][0]["id"])
+		for i in data["beatmaps"]:
+			s += "{name}@{mode},".format(**i)
+		s = s.strip(",")
+		s += '|'
+
+	return s

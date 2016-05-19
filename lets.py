@@ -14,10 +14,13 @@ from handlers import getScoresHandler
 from handlers import submitModularHandler
 from handlers import banchoConnectHandler
 from handlers import getReplayHandler
-from handlers import statusHandler
 from handlers import mapsHandler
 from handlers import uploadScreenshotHandler
 from handlers import getScreenshotHandler
+from handlers import osuSearchHandler
+
+from handlers import apiStatusHandler
+from handlers import apiPPHandler
 
 # Tornado
 import tornado.ioloop
@@ -30,9 +33,12 @@ def make_app():
 		(r"/web/osu-submit-modular.php", submitModularHandler.handler),
 		(r"/web/osu-getreplay.php", getReplayHandler.handler),
 		(r"/web/osu-screenshot.php", uploadScreenshotHandler.handler),
+		(r"/web/osu-search.php", osuSearchHandler.handler),
 		(r"/ss/(.*)", getScreenshotHandler.handler),
 		(r"/web/maps/(.*)", mapsHandler.handler),
-		(r"/status", statusHandler.handler)
+
+		(r"/api/v1/status", apiStatusHandler.handler),
+		(r"/api/v1/pp", apiPPHandler.handler)
 	])
 
 if __name__ == "__main__":

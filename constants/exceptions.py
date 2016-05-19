@@ -20,3 +20,10 @@ class osuApiFailException(Exception):
 class fileNotFoundException(Exception):
 	def __init__(self, handler, file):
 		consoleHelper.printColored("[{}] File not found ({})".format(handler, file), bcolors.RED)
+
+class invalidBeatmapException(Exception):
+	pass
+
+class beatmapTooLongException(Exception):
+	def __init__(self, handler):
+		consoleHelper.printColored("[{}] Requested beatmap is too long.".format(handler), bcolors.RED)

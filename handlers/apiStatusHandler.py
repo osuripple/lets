@@ -3,7 +3,7 @@ import json
 
 class handler(tornado.web.RequestHandler):
 	"""
-	Handler for /status
+	Handler for /api/v1/status
 	"""
 	def get(self):
-		self.write(json.dumps({"response": 200, "status": 1}))
+		self.write(json.dumps({"status": 200, "server_status": 1}))
