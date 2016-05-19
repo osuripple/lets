@@ -36,6 +36,16 @@ class handler(tornado.web.RequestHandler):
 			else:
 				modsEnum = 0
 
+			# Get acc
+			if "a" in self.request.arguments:
+				accuracy = self.get_argument("a")
+				try:
+					accuracy = float(accuracy)
+				except ValueError:
+					raise exceptions.invalidArgumentsException(MODULE_NAME)
+			else:
+				accuracy = -1.0
+
 			# Print message
 			consoleHelper.printApiMessage(MODULE_NAME, "Requested pp for beatmap {}".format(beatmapID))
 
@@ -59,10 +69,17 @@ class handler(tornado.web.RequestHandler):
 				# Create oppai instance
 				oppai = rippoppai.oppai(bmap, mods=modsEnum)
 				calculatedPP = []
-				calculatedPP.append(oppai.pp)
-				calculatedPP.append(calculatePPFromAcc(oppai, 99.0))
-				calculatedPP.append(calculatePPFromAcc(oppai, 98.0))
-				calculatedPP.append(calculatePPFromAcc(oppai, 95.0))
+
+				# Calculate pp
+				if accuracy < 0:
+					# Generic acc
+					calculatedPP.append(oppai.pp)
+					calculatedPP.append(calculatePPFromAcc(oppai, 99.0))
+					calculatedPP.append(calculatePPFromAcc(oppai, 98.0))
+					calculatedPP.append(calculatePPFromAcc(oppai, 95.0))
+				else:
+					# Specific acc
+					calculatedPP.append(calculatePPFromAcc(oppai, 9.0))
 			else:
 				calculatedPP = [0,0,0,0]
 
