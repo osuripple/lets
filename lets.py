@@ -3,7 +3,7 @@ import sys
 import os
 import glob
 from helpers import consoleHelper
-from helpers import databaseHelper
+from helpers import databaseHelperNew
 from helpers import config
 from helpers import generalHelper
 from constants import bcolors
@@ -66,8 +66,8 @@ if __name__ == "__main__":
 
 	# Connect to db
 	try:
-		consoleHelper.printNoNl("> Connecting to MySQL db... ")
-		glob.db = databaseHelper.db(glob.conf.config["db"]["host"], glob.conf.config["db"]["username"], glob.conf.config["db"]["password"], glob.conf.config["db"]["database"], int(glob.conf.config["db"]["pingtime"]))
+		consoleHelper.printNoNl("> Connecting to db with MySQLdb... ")
+		glob.db = databaseHelperNew.db(glob.conf.config["db"]["host"], glob.conf.config["db"]["username"], glob.conf.config["db"]["password"], glob.conf.config["db"]["database"])
 		consoleHelper.printDone()
 	except:
 		# Exception while connecting to db

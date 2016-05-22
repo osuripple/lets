@@ -36,7 +36,7 @@ class scoreboard:
 
 		# Find personal best score
 		if self.username != None:
-			personalBestScore = glob.db.fetch("SELECT id FROM scores WHERE username = ? AND beatmap_md5 = ? AND play_mode = ? AND completed = 3 ORDER BY score DESC LIMIT 1", [self.username, self.beatmap.fileMD5, self.gameMode])
+			personalBestScore = glob.db.fetch("SELECT id FROM scores WHERE username = %s AND beatmap_md5 = %s AND play_mode = %s AND completed = 3 ORDER BY score DESC LIMIT 1", [self.username, self.beatmap.fileMD5, self.gameMode])
 		else:
 			personalBestScore = None
 
@@ -49,7 +49,7 @@ class scoreboard:
 			self.scores[0] = -1
 
 		# Top 50 scores
-		topScores = glob.db.fetchAll("SELECT scores.id AS id FROM scores LEFT JOIN users ON scores.username = users.username WHERE beatmap_md5 = ? AND play_mode = ? AND completed = 3 AND users.allowed = '1' ORDER BY score DESC", [self.beatmap.fileMD5, self.gameMode])
+		topScores = glob.db.fetchAll("SELECT scores.id AS id FROM scores LEFT JOIN users ON scores.username = users.username WHERE beatmap_md5 = %s AND play_mode = %s AND completed = 3 AND users.allowed = '1' ORDER BY score DESC", [self.beatmap.fileMD5, self.gameMode])
 		c = 1
 		if topScores != None:
 			for i in topScores:
@@ -86,7 +86,7 @@ class scoreboard:
 			if self.personalBestRank == -1:
 				# ...but we don't know our rank in scoreboard. Get it.
 				c=1
-				scores = glob.db.fetchAll("SELECT DISTINCT username FROM scores WHERE beatmap_md5 = ? AND play_mode = ? AND completed = 3 ORDER BY score DESC", [self.beatmap.fileMD5, self.gameMode])
+				scores = glob.db.fetchAll("SELECT DISTINCT username FROM scores WHERE beatmap_md5 = %s AND play_mode = %s AND completed = 3 ORDER BY score DESC", [self.beatmap.fileMD5, self.gameMode])
 				if scores != None:
 					for i in scores:
 						if scores["username"] == self.username:

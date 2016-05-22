@@ -17,7 +17,6 @@ import math
 import time
 import glob
 import threading
-import signal
 
 # constants
 MAX_WORKERS = 32
@@ -267,7 +266,7 @@ if __name__ == "__main__":
 					# Loop through all scores and update pp in db
 					# we need to lock the thread because pymysql is not thread safe
 					self.lock.acquire()
-					glob.db.execute("UPDATE scores SET pp = ? WHERE id = ?", [i["pp"], i["id"]])
+					glob.db.execute("UPDATE scores SET pp = %s WHERE id = %s", [i["pp"], i["id"]])
 					self.lock.release()
 
 			# This worker has finished his work
@@ -397,19 +396,19 @@ if __name__ == "__main__":
 		massRecalc(scores, workers)
 	elif args.id != None:
 		# Score ID recalc
-		scores = glob.db.fetchAll("SELECT * FROM scores LEFT JOIN beatmaps ON scores.beatmap_md5 = beatmaps.beatmap_md5 WHERE scores.play_mode = '0' AND scores.completed = '3' AND scores.id = ?;", [args.id])
+		scores = glob.db.fetchAll("SELECT * FROM scores LEFT JOIN beatmaps ON scores.beatmap_md5 = beatmaps.beatmap_md5 WHERE scores.play_mode = '0' AND scores.completed = '3' AND scores.id = %s;", [args.id])
 		massRecalc(scores, workers)
 	elif args.userid != None:
 		# User ID recalc
 		username = userHelper.getUsername(args.userid)
 		if username != None:
-			scores = glob.db.fetchAll("SELECT * FROM scores LEFT JOIN beatmaps ON scores.beatmap_md5 = beatmaps.beatmap_md5 WHERE scores.play_mode = '0' AND scores.completed = '3' AND scores.username = ?;", [username])
+			scores = glob.db.fetchAll("SELECT * FROM scores LEFT JOIN beatmaps ON scores.beatmap_md5 = beatmaps.beatmap_md5 WHERE scores.play_mode = '0' AND scores.completed = '3' AND scores.username = %s;", [username])
 			massRecalc(scores, workers)
 		else:
 			consoleHelper.printColored("[!] User with id {} doesn't exist".format(args.userid), bcolors.RED)
 	elif args.username != None:
 		# Username recalc
-		scores = glob.db.fetchAll("SELECT * FROM scores LEFT JOIN beatmaps ON scores.beatmap_md5 = beatmaps.beatmap_md5 WHERE scores.play_mode = '0' AND scores.completed = '3' AND scores.username = ?;", [args.username])
+		scores = glob.db.fetchAll("SELECT * FROM scores LEFT JOIN beatmaps ON scores.beatmap_md5 = beatmaps.beatmap_md5 WHERE scores.play_mode = '0' AND scores.completed = '3' AND scores.username = %s;", [args.username])
 		massRecalc(scores, workers)
 
 	# The endTM

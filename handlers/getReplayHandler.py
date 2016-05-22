@@ -30,7 +30,7 @@ class handler(tornado.web.RequestHandler):
 				raise exceptions.loginFailedException(MODULE_NAME, username)
 
 			# Get user ID
-			replayData = glob.db.fetch("SELECT scores.*, users.id AS uid FROM scores LEFT JOIN users ON scores.username = users.username WHERE scores.id = ?", [replayID])
+			replayData = glob.db.fetch("SELECT scores.*, users.id AS uid FROM scores LEFT JOIN users ON scores.username = users.username WHERE scores.id = %s", [replayID])
 
 			# Increment 'replays watched by others' if needed
 			if replayData != None:

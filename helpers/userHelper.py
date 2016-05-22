@@ -14,8 +14,7 @@ def getID(username):
 	"""
 
 	# Get user ID from db
-	userID = glob.db.fetch("SELECT id FROM users WHERE username = ?", [username])
-
+	userID = glob.db.fetch("SELECT id FROM users WHERE username = %s", [username])
 	# Make sure the query returned something
 	if userID == None:
 		return 0
@@ -30,7 +29,7 @@ def getUsername(userID):
 	userID -- userID
 	return -- username or None
 	"""
-	result = glob.db.fetch("SELECT username FROM users WHERE id = ?", [userID])
+	result = glob.db.fetch("SELECT username FROM users WHERE id = %s", [userID])
 	if result == None:
 		return None
 	return result["username"]
@@ -42,7 +41,7 @@ def exists(userID):
 
 	userID -- user id to check
 	"""
-	return True if glob.db.fetch("SELECT id FROM users WHERE id = ?", [userID]) != None else False
+	return True if glob.db.fetch("SELECT id FROM users WHERE id = %s", [userID]) != None else False
 
 
 def checkLogin(userID, password):
@@ -55,7 +54,7 @@ def checkLogin(userID, password):
 	"""
 
 	# Get password data
-	passwordData = glob.db.fetch("SELECT password_md5, salt, password_version FROM users WHERE id = ?", [userID])
+	passwordData = glob.db.fetch("SELECT password_md5, salt, password_version FROM users WHERE id = %s", [userID])
 
 	# Make sure the query returned something
 	if passwordData == None:
@@ -68,7 +67,7 @@ def checkLogin(userID, password):
 		ok = passwordHelper.checkOldPassword(password, passwordData["salt"], passwordData["password_md5"])
 		if not ok: return False
 		newpass = passwordHelper.genBcrypt(password)
-		glob.db.execute("UPDATE users SET password_md5=?, salt='', password_version='2' WHERE id = ?", [newpass, userID])
+		glob.db.execute("UPDATE users SET password_md5=%s, salt='', password_version='2' WHERE id = %s", [newpass, userID])
 
 
 def getRequiredScoreForLevel(level):
@@ -119,9 +118,9 @@ def updateLevel(userID, gameMode):
 		return
 
 	mode = scoreHelper.readableGameMode(gameMode)
-	totalScore = glob.db.fetch("SELECT total_score_{m} FROM users_stats WHERE id = ?".format(m = mode), [userID])
+	totalScore = glob.db.fetch("SELECT total_score_{m} FROM users_stats WHERE id = %s".format(m = mode), [userID])
 	level = getLevel(totalScore["total_score_{m}".format(m = mode)])
-	glob.db.execute("UPDATE users_stats SET level_{m} = ? WHERE id = ?".format(m = mode), [level, userID])
+	glob.db.execute("UPDATE users_stats SET level_{m} = %s WHERE id = %s".format(m = mode), [level, userID])
 
 
 def calculateAccuracy(userID, gameMode):
@@ -138,7 +137,7 @@ def calculateAccuracy(userID, gameMode):
 		return 0
 
 	# Get best accuracy scores
-	bestAccScores = glob.db.fetchAll("SELECT accuracy FROM scores WHERE username = ? AND play_mode = ? AND completed = '3' ORDER BY accuracy DESC LIMIT 100", [username, gameMode])
+	bestAccScores = glob.db.fetchAll("SELECT accuracy FROM scores WHERE username = %s AND play_mode = %s AND completed = '3' ORDER BY accuracy DESC LIMIT 100", [username, gameMode])
 
 	v = 0
 	if bestAccScores != None:
@@ -173,7 +172,7 @@ def calculatePP(userID, gameMode):
 		return 0
 
 	# Get best pp scores
-	bestPPScores = glob.db.fetchAll("SELECT pp FROM scores WHERE username = ? AND play_mode = ? AND completed = '3' ORDER BY pp DESC LIMIT 100", [username, gameMode])
+	bestPPScores = glob.db.fetchAll("SELECT pp FROM scores WHERE username = %s AND play_mode = %s AND completed = '3' ORDER BY pp DESC LIMIT 100", [username, gameMode])
 
 	# Calculate weighted PP
 	totalPP = 0
@@ -201,7 +200,7 @@ def updateAccuracy(userID, gameMode):
 		return
 	newAcc = calculateAccuracy(userID, gameMode)
 	mode = scoreHelper.readableGameMode(gameMode)
-	glob.db.execute("UPDATE users_stats SET avg_accuracy_{m} = ? WHERE username = ?".format(m = mode), [newAcc, username])
+	glob.db.execute("UPDATE users_stats SET avg_accuracy_{m} = %s WHERE username = %s".format(m = mode), [newAcc, username])
 
 
 def updatePP(userID, gameMode):
@@ -219,7 +218,7 @@ def updatePP(userID, gameMode):
 	# Get new total PP and update db
 	newPP = calculatePP(userID, gameMode)
 	mode = scoreHelper.readableGameMode(gameMode)
-	glob.db.execute("UPDATE users_stats SET pp_{}=? WHERE id = ?".format(mode), [newPP, userID])
+	glob.db.execute("UPDATE users_stats SET pp_{}=%s WHERE id = %s".format(mode), [newPP, userID])
 
 
 def updateStats(userID, __score):
@@ -240,7 +239,7 @@ def updateStats(userID, __score):
 	mode = scoreHelper.readableGameMode(__score.gameMode)
 
 	# Update total score and playcount
-	glob.db.execute("UPDATE users_stats SET total_score_{m}=total_score_{m}+?, playcount_{m}=playcount_{m}+1 WHERE id = ?".format(m=mode), [__score.score, userID])
+	glob.db.execute("UPDATE users_stats SET total_score_{m}=total_score_{m}+%s, playcount_{m}=playcount_{m}+1 WHERE id = %s".format(m=mode), [__score.score, userID])
 
 	# Calculate new level and update it
 	updateLevel(userID, __score.gameMode)
@@ -248,7 +247,7 @@ def updateStats(userID, __score):
 	# Update level, accuracy and ranked score only if we have passed the song
 	if __score.passed == True:
 		# Update ranked score
-		glob.db.execute("UPDATE users_stats SET ranked_score_{m}=ranked_score_{m}+? WHERE id = ?".format(m=mode), [__score.rankedScoreIncrease, userID])
+		glob.db.execute("UPDATE users_stats SET ranked_score_{m}=ranked_score_{m}+%s WHERE id = %s".format(m=mode), [__score.rankedScoreIncrease, userID])
 
 		# Update accuracy
 		updateAccuracy(userID, __score.gameMode)
@@ -266,7 +265,7 @@ def getAllowed(userID):
 	return -- allowed int
 	"""
 
-	result = glob.db.fetch("SELECT allowed FROM users WHERE id = ?", [userID])
+	result = glob.db.fetch("SELECT allowed FROM users WHERE id = %s", [userID])
 	if result != None:
 		return result["allowed"]
 	else:
@@ -278,7 +277,7 @@ def updateLatestActivity(userID):
 
 	userID --
 	"""
-	glob.db.execute("UPDATE users SET latest_activity = ? WHERE id = ?", [int(time.time()), userID])
+	glob.db.execute("UPDATE users SET latest_activity = %s WHERE id = %s", [int(time.time()), userID])
 
 def getAllowedUsers(by = "username"):
 	"""
@@ -309,7 +308,7 @@ def getRankedScore(userID, gameMode):
 	"""
 
 	mode = scoreHelper.readableGameMode(gameMode)
-	result = glob.db.fetch("SELECT ranked_score_{} FROM users_stats WHERE id = ?".format(mode), [userID])
+	result = glob.db.fetch("SELECT ranked_score_{} FROM users_stats WHERE id = %s".format(mode), [userID])
 	if result != None:
 		return result["ranked_score_{}".format(mode)]
 	else:
@@ -325,7 +324,7 @@ def getPP(userID, gameMode):
 	"""
 
 	mode = scoreHelper.readableGameMode(gameMode)
-	result = glob.db.fetch("SELECT pp_{} FROM users_stats WHERE id = ?".format(mode), [userID])
+	result = glob.db.fetch("SELECT pp_{} FROM users_stats WHERE id = %s".format(mode), [userID])
 	if result != None:
 		return result["pp_{}".format(mode)]
 	else:
@@ -339,7 +338,7 @@ def incrementReplaysWatched(userID, gameMode):
 	gameMode -- int value, see gameModes
 	"""
 	mode = scoreHelper.readableGameMode(gameMode)
-	glob.db.execute("UPDATE users_stats SET replays_watched_{mode}=replays_watched_{mode}+1 WHERE id = ?".format(mode=mode), [userID])
+	glob.db.execute("UPDATE users_stats SET replays_watched_{mode}=replays_watched_{mode}+1 WHERE id = %s".format(mode=mode), [userID])
 
 
 def setAllowed(userID, allowed):
@@ -349,7 +348,7 @@ def setAllowed(userID, allowed):
 	userID -- user
 	allowed -- allowed status. 1: normal, 0: banned
 	"""
-	glob.db.execute("UPDATE users SET allowed = ? WHERE id = ?", [allowed, userID])
+	glob.db.execute("UPDATE users SET allowed = %s WHERE id = %s", [allowed, userID])
 
 def getAqn(userID):
 	"""
@@ -358,7 +357,7 @@ def getAqn(userID):
 	userID -- user
 	return -- True if hax, False if legit
 	"""
-	result = glob.db.fetch("SELECT aqn FROM users WHERE id = ?", [userID])
+	result = glob.db.fetch("SELECT aqn FROM users WHERE id = %s", [userID])
 	if result != None:
 		return True if int(result["aqn"]) == 1 else False
 	else:
@@ -371,4 +370,4 @@ def setAqn(userID, value = 1):
 	userID -- user
 	value -- new aqn value, default = 1
 	"""
-	glob.db.fetch("UPDATE users SET aqn = ? WHERE id = ?", [value, userID])
+	glob.db.fetch("UPDATE users SET aqn = %s WHERE id = %s", [value, userID])

@@ -95,7 +95,7 @@ class score:
 		scoreID -- score ID
 		rank -- rank in scoreboard. Optional.
 		"""
-		data = glob.db.fetch("SELECT * FROM scores WHERE id = ?", [scoreID])
+		data = glob.db.fetch("SELECT * FROM scores WHERE id = %s", [scoreID])
 		if data != None:
 			self.setDataFromDict(data, rank)
 			self.playerUserID = userHelper.getID(self.playerName)
@@ -135,7 +135,7 @@ class score:
 		if len(scoreData) >= 16:
 			self.fileMd5 = scoreData[0]
 			self.playerName = scoreData[1].strip()
-			# ??? = scoreData[2]
+			# %s%s%s = scoreData[2]
 			self.c300 = int(scoreData[3])
 			self.c100 = int(scoreData[4])
 			self.c50 = int(scoreData[5])
@@ -183,7 +183,7 @@ class score:
 		self.completed = 0
 		if self.passed == True and scoreHelper.isRankable(self.mods):
 			# Get right "completed" value
-			personalBest = glob.db.fetch("SELECT id, score FROM scores WHERE username = ? AND beatmap_md5 = ? AND play_mode = ? AND completed = 3", [self.playerName, self.fileMd5, self.gameMode])
+			personalBest = glob.db.fetch("SELECT id, score FROM scores WHERE username = %s AND beatmap_md5 = %s AND play_mode = %s AND completed = 3", [self.playerName, self.fileMd5, self.gameMode])
 			if personalBest == None:
 				# This is our first score on this map, so it's our best score
 				self.completed = 3
@@ -207,16 +207,16 @@ class score:
 		"""
 		# Add this score
 		if self.completed >= 2:
-			query = "INSERT INTO scores (id, beatmap_md5, username, score, max_combo, full_combo, mods, 300_count, 100_count, 50_count, katus_count, gekis_count, misses_count, time, play_mode, completed, accuracy, pp) VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"
+			query = "INSERT INTO scores (id, beatmap_md5, username, score, max_combo, full_combo, mods, 300_count, 100_count, 50_count, katus_count, gekis_count, misses_count, time, play_mode, completed, accuracy, pp) VALUES (NULL, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);"
 			glob.db.execute(query, [self.fileMd5, self.playerName, self.score, self.maxCombo, 1 if self.fullCombo == True else 0, self.mods, self.c300, self.c100, self.c50, self.cKatu, self.cGeki, self.cMiss, self.playDateTime, self.gameMode, self.completed, self.accuracy*100, self.pp])
 
 			# Get score id
-			self.scoreID = glob.db.connection.insert_id()
-			#self.scoreID = int(glob.db.fetch("SELECT id FROM scores ORDER BY id DESC LIMIT 1")["id"])
+			#self.scoreID = glob.db.connection.insert_id()
+			self.scoreID = int(glob.db.fetch("SELECT id FROM scores WHERE username = %s AND beatmap_md5 = %s ORDER BY id DESC LIMIT 1", (self.playerName, self.fileMd5))["id"])
 
 			# Set old personal best to completed = 2
 			if self.oldPersonalBest != 0:
-				glob.db.execute("UPDATE scores SET completed = 2 WHERE id = ?", [self.oldPersonalBest])
+				glob.db.execute("UPDATE scores SET completed = 2 WHERE id = %s", [self.oldPersonalBest])
 
 	def calculatePP(self, b = None):
 		"""

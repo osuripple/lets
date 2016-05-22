@@ -36,7 +36,7 @@ class handler(tornado.web.RequestHandler):
 			userHelper.updateLatestActivity(userID)
 
 			# Get country and output it
-			country = glob.db.fetch("SELECT country FROM users_stats WHERE id = ?", [userID])["country"]
+			country = glob.db.fetch("SELECT country FROM users_stats WHERE id = %s", [userID])["country"]
 			self.write(country)
 		except exceptions.invalidArgumentsException:
 			pass
