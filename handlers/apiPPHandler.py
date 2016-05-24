@@ -62,25 +62,43 @@ class handler(requestHelper.asyncRequestHandler):
 			if bmap.hitLength > 900:
 				raise exceptions.beatmapTooLongException(MODULE_NAME)
 
-			# Create oppai instance
-			oppai = rippoppai.oppai(bmap, mods=modsEnum)
-			calculatedPP = []
-
-			# Calculate pp
-			if accuracy < 0:
+			returnPP = []
+			if accuracy < 0 and modsEnum == 0:
 				# Generic acc
-				calculatedPP.append(oppai.pp)
-				calculatedPP.append(calculatePPFromAcc(oppai, 99.0))
-				calculatedPP.append(calculatePPFromAcc(oppai, 98.0))
-				calculatedPP.append(calculatePPFromAcc(oppai, 95.0))
+				# Get cached pp values
+				cachedPP = bmap.getCachedTillerinoPP()
+				if cachedPP != [0,0,0,0]:
+					consoleHelper.printApiMessage(MODULE_NAME, "Got cached pp.")
+					returnPP = cachedPP
+				else:
+					consoleHelper.printApiMessage(MODULE_NAME, "Cached pp not found. Calculating pp with oppai...")
+					# Cached pp not found, calculate them
+					oppai = rippoppai.oppai(bmap, mods=modsEnum)
+					returnPP.append(oppai.pp)
+					returnPP.append(calculatePPFromAcc(oppai, 99.0))
+					returnPP.append(calculatePPFromAcc(oppai, 98.0))
+					returnPP.append(calculatePPFromAcc(oppai, 95.0))
+
+					# Cache values in DB
+					consoleHelper.printApiMessage(MODULE_NAME, "Saving cached pp...")
+					bmap.saveCachedTillerinoPP(returnPP)
 			else:
-				# Specific acc
-				calculatedPP.append(calculatePPFromAcc(oppai, accuracy))
+				# Specific accuracy, calculate
+				# Create oppai instance
+				consoleHelper.printApiMessage(MODULE_NAME, "Specific request ({}%/{}). Calculating pp with oppai...".format(accuracy, modsEnum))
+				oppai = rippoppai.oppai(bmap, mods=modsEnum)
+				if accuracy < 0:
+					returnPP.append(oppai.pp)
+					returnPP.append(calculatePPFromAcc(oppai, 99.0))
+					returnPP.append(calculatePPFromAcc(oppai, 98.0))
+					returnPP.append(calculatePPFromAcc(oppai, 95.0))
+				else:
+					returnPP.append(calculatePPFromAcc(oppai, accuracy))
 
 			# Data to return
 			data = {
 				"song_name": bmap.songName,
-				"pp": calculatedPP,
+				"pp": returnPP,
 				"length": bmap.hitLength,
 				"stars": bmap.stars,
 				"ar": bmap.AR,

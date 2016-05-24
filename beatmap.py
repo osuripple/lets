@@ -189,6 +189,26 @@ class beatmap:
 		# Return the header
 		return data
 
+	def getCachedTillerinoPP(self):
+		"""
+		Returned cached pp values for 100, 99, 98 and 95 acc nomod
+		(used ONLY with Tillerino, pp is always calculated with oppai when submitting scores)
+
+		return -- list with pp values. [0,0,0,0] if not cached.
+		"""
+		data = glob.db.fetch("SELECT pp_100, pp_99, pp_98, pp_95 FROM beatmaps WHERE beatmap_md5 = %s", [self.fileMD5])
+		if data == None:
+			return [0,0,0,0]
+		return [data["pp_100"], data["pp_99"], data["pp_98"], data["pp_95"]]
+
+	def saveCachedTillerinoPP(self, l):
+		"""
+		Save cached pp for tillerino
+
+		l -- list with 4 default pp values ([100,99,98,95])
+		"""
+		glob.db.execute("UPDATE beatmaps SET pp_100 = %s, pp_99 = %s, pp_98 = %s, pp_95 = %s WHERE beatmap_md5 = %s", [l[0], l[1], l[2], l[3], self.fileMD5])
+
 def convertRankedStatus(approvedStatus):
 	"""
 	Convert approved_status (from osu!api) to ranked status (for getscores)
