@@ -46,6 +46,7 @@ class config:
 			self.config.get("db","username")
 			self.config.get("db","password")
 			self.config.get("db","database")
+			self.config.get("db","workers")
 
 			self.config.get("server","port")
 			self.config.get("server", "debug")
@@ -76,6 +77,7 @@ class config:
 		self.config.set("db", "username", "root")
 		self.config.set("db", "password", "")
 		self.config.set("db", "database", "ripple")
+		self.config.set("db", "workers", "16")
 
 		self.config.add_section("server")
 		self.config.set("server", "port", "5002")

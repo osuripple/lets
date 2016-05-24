@@ -1,7 +1,6 @@
 import MySQLdb
 import threading
 
-CONNECTIONS = 16
 class mysqlWorker:
 	"""
 	Instance of a pettirosso meme
@@ -27,7 +26,7 @@ class db:
 	A MySQL db connection with multiple workers
 	"""
 
-	def __init__(self, host, username, password, database):
+	def __init__(self, host, username, password, database, workers):
 		"""
 		Create MySQL workers aka pettirossi meme
 
@@ -35,13 +34,15 @@ class db:
 		username -- MySQL username
 		password -- MySQL password
 		database -- MySQL database name
+		workers -- Number of workers to spawn
 		"""
 		#self.lock = threading.Lock()
 		#self.connection = MySQLdb.connect(host, username, password, database)
 
 		self.workers = []
 		self.lastWorker = 0
-		for i in range(0,CONNECTIONS):
+		self.workersNumber = workers
+		for i in range(0,self.workersNumber):
 			print("> Spawning MySQL pettirosso meme {}".format(i))
 			self.workers.append(mysqlWorker(i, host, username, password, database))
 
@@ -51,7 +52,7 @@ class db:
 
 		return -- worker object
 		"""
-		if self.lastWorker >= CONNECTIONS-1:
+		if self.lastWorker >= self.workersNumber-1:
 			self.lastWorker = 0
 		else:
 			self.lastWorker += 1
