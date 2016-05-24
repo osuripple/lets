@@ -159,6 +159,7 @@ class score:
 
 	def getData(self, username):
 		"""Return score row relative to this score for getscores"""
+		print(str(self.date))
 		return "{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|1\n".format(
 			self.scoreID,
 			self.playerName,
@@ -208,11 +209,11 @@ class score:
 		# Add this score
 		if self.completed >= 2:
 			query = "INSERT INTO scores (id, beatmap_md5, username, score, max_combo, full_combo, mods, 300_count, 100_count, 50_count, katus_count, gekis_count, misses_count, time, play_mode, completed, accuracy, pp) VALUES (NULL, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);"
-			glob.db.execute(query, [self.fileMd5, self.playerName, self.score, self.maxCombo, 1 if self.fullCombo == True else 0, self.mods, self.c300, self.c100, self.c50, self.cKatu, self.cGeki, self.cMiss, self.playDateTime, self.gameMode, self.completed, self.accuracy*100, self.pp])
+			self.scoreID = int(glob.db.execute(query, [self.fileMd5, self.playerName, self.score, self.maxCombo, 1 if self.fullCombo == True else 0, self.mods, self.c300, self.c100, self.c50, self.cKatu, self.cGeki, self.cMiss, self.playDateTime, self.gameMode, self.completed, self.accuracy*100, self.pp]))
 
 			# Get score id
 			#self.scoreID = glob.db.connection.insert_id()
-			self.scoreID = int(glob.db.fetch("SELECT id FROM scores WHERE username = %s AND beatmap_md5 = %s ORDER BY id DESC LIMIT 1", (self.playerName, self.fileMd5))["id"])
+			#self.scoreID = int(glob.db.fetch("SELECT id FROM scores WHERE username = %s AND beatmap_md5 = %s ORDER BY id DESC LIMIT 1", (self.playerName, self.fileMd5))["id"])
 
 			# Set old personal best to completed = 2
 			if self.oldPersonalBest != 0:

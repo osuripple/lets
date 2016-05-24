@@ -87,9 +87,10 @@ class scoreboard:
 				# ...but we don't know our rank in scoreboard. Get it.
 				c=1
 				scores = glob.db.fetchAll("SELECT DISTINCT username FROM scores WHERE beatmap_md5 = %s AND play_mode = %s AND completed = 3 ORDER BY score DESC", [self.beatmap.fileMD5, self.gameMode])
+				print(str(scores))
 				if scores != None:
 					for i in scores:
-						if scores["username"] == self.username:
+						if i["username"] == self.username:
 							self.personalBestRank = c
 						c+=1
 

@@ -23,7 +23,7 @@ def osuDateToUNIXTimestamp(osuDate):
 
 	osuDate -- osudate
 	"""
-	date_object = datetime.strptime(osuDate, "%y%m%d%H%M%S")
+	date_object = datetime.strptime(str(osuDate), "%y%m%d%H%M%S")
 	unixtime = time.mktime(date_object.timetuple())
 	unixtime = int(unixtime)
 	return unixtime

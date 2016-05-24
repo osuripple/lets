@@ -25,6 +25,39 @@ from handlers import apiPPHandler
 # Tornado
 import tornado.ioloop
 import tornado.web
+import tornado.httpserver
+import tornado.gen
+
+from tornado.ioloop import IOLoop
+from multiprocessing.pool import ThreadPool
+
+pool = ThreadPool(10)
+
+def run_background(func, callback, args=(), kwargs={}):
+	def _callback(result):
+		IOLoop.instance().add_callback(lambda: callback(result))
+	pool.apply_async(func, args, kwargs, _callback)
+
+def blocking_task():
+	for i in range(1,10000):
+		res = glob.db.fetch("SELECT * FROM scores WHERE id = %s", [i])
+		print(str(res))
+
+class blockingHandler(tornado.web.RequestHandler):
+	@tornado.web.asynchronous
+	@tornado.gen.engine
+	def get(self):
+		print("Blocking request")
+		yield tornado.gen.Task(run_background, blocking_task)
+		self.write("ok")
+		self.finish()
+
+class AsyncHandler(tornado.web.RequestHandler):
+	@tornado.web.asynchronous
+	def get(self):
+		print("Async request")
+		self.write("yee")
+		self.finish()
 
 def make_app():
 	return tornado.web.Application([
@@ -38,7 +71,10 @@ def make_app():
 		(r"/web/maps/(.*)", mapsHandler.handler),
 
 		(r"/api/v1/status", apiStatusHandler.handler),
-		(r"/api/v1/pp", apiPPHandler.handler)
+		(r"/api/v1/pp", apiPPHandler.handler),
+
+		(r"/blocking", blockingHandler),
+		(r"/async", AsyncHandler)
 	])
 
 if __name__ == "__main__":
@@ -66,7 +102,7 @@ if __name__ == "__main__":
 
 	# Connect to db
 	try:
-		consoleHelper.printNoNl("> Connecting to db with MySQLdb... ")
+		print("> Connecting to db with MySQLdb... ")
 		glob.db = databaseHelperNew.db(glob.conf.config["db"]["host"], glob.conf.config["db"]["username"], glob.conf.config["db"]["password"], glob.conf.config["db"]["database"])
 		consoleHelper.printDone()
 	except:
@@ -106,6 +142,6 @@ if __name__ == "__main__":
 
 	serverPort = int(glob.conf.config["server"]["port"])
 	consoleHelper.printColored("> L.E.T.S. is listening for clients on 127.0.0.1:{}...".format(serverPort), bcolors.GREEN)
-	app = make_app()
+	app = tornado.httpserver.HTTPServer(make_app())
 	app.listen(serverPort)
-	tornado.ioloop.IOLoop.current().start()
+	tornado.ioloop.IOLoop.instance().start()
