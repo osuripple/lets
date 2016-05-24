@@ -1,16 +1,16 @@
-import tornado.web
 import glob
 from constants import exceptions
 from helpers import generalHelper
 from helpers import consoleHelper
+from helpers import requestHelper
 import os
 
 MODULE_NAME = "screenshot"
-class handler(tornado.web.RequestHandler):
+class handler(requestHelper.asyncRequestHandler):
 	"""
 	Handler for /web/osu-screenshot.php
 	"""
-	def post(self):
+	def asyncPost(self):
 		try:
 			# Make sure screenshot file was passed
 			if "ss" not in self.request.files:
@@ -34,3 +34,5 @@ class handler(tornado.web.RequestHandler):
 			self.write("{}/ss/{}.jpg".format(glob.conf.config["server"]["serverurl"], screenshotID))
 		except exceptions.invalidArgumentsException:
 			pass
+		finally:
+			self.finish()

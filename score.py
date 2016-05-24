@@ -159,7 +159,6 @@ class score:
 
 	def getData(self, username):
 		"""Return score row relative to this score for getscores"""
-		print(str(self.date))
 		return "{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|1\n".format(
 			self.scoreID,
 			self.playerName,

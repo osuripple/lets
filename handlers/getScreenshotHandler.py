@@ -1,15 +1,14 @@
-import tornado.web
 from constants import exceptions
-from helpers import generalHelper
 from helpers import consoleHelper
+from helpers import requestHelper
 import os
 
 MODULE_NAME = "screenshot"
-class handler(tornado.web.RequestHandler):
+class handler(requestHelper.asyncRequestHandler):
 	"""
 	Handler for /ss/
 	"""
-	def get(self, screenshotID = None):
+	def asyncGet(self, screenshotID = None):
 		try:
 			# Make sure the screenshot exists
 			if screenshotID == None or os.path.isfile(".data/screenshots/{}".format(screenshotID)) == False:
@@ -28,3 +27,5 @@ class handler(tornado.web.RequestHandler):
 			self.write(data)
 		except exceptions.fileNotFoundException:
 			self.send_error(404)
+		finally:
+			self.finish()

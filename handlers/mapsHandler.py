@@ -1,14 +1,11 @@
-import tornado.web
 from helpers import osuapiHelper
-import glob
 from constants import exceptions
-from urllib.parse import unquote
-from constants import bcolors
 from helpers import consoleHelper
+from helpers import requestHelper
 
 MODULE_NAME = "maps"
-class handler(tornado.web.RequestHandler):
-	def get(self, fileName = None):
+class handler(requestHelper.asyncRequestHandler):
+	def asyncGet(self, fileName = None):
 		try:
 			# Check arguments
 			if fileName == None:
@@ -28,3 +25,5 @@ class handler(tornado.web.RequestHandler):
 			self.send_error()
 		except exceptions.osuApiFailException:
 			self.send_error()
+		finally:
+			self.finish()

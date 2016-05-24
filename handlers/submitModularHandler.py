@@ -19,11 +19,11 @@ import traceback
 
 
 MODULE_NAME = "submit_modular"
-class handler(tornado.web.RequestHandler):
+class handler(requestHelper.asyncRequestHandler):
 	"""
 	Handler for /web/osu-submit-modular.php
 	"""
-	def post(self):
+	def asyncPost(self):
 		try:
 			# Print arguments
 			if glob.debug == True:
@@ -140,3 +140,5 @@ class handler(tornado.web.RequestHandler):
 			# This avoids lost scores due to score server crash
 			# because the client will send the score again after some time.
 			self.send_error(408)
+		finally:
+			self.finish()

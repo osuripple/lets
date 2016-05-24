@@ -1,4 +1,3 @@
-import tornado.web
 import json
 from helpers import requestHelper
 from constants import exceptions
@@ -6,15 +5,14 @@ import beatmap
 from helpers import osuapiHelper
 from helpers import consoleHelper
 import rippoppai
-from constants import rankedStatuses
 import glob
 
 MODULE_NAME = "api/pp"
-class handler(tornado.web.RequestHandler):
+class handler(requestHelper.asyncRequestHandler):
 	"""
 	Handler for /api/v1/pp
 	"""
-	def get(self):
+	def asyncGet(self):
 		statusCode = 400
 		data = {"message": "unknown error"}
 		try:

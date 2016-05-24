@@ -1,5 +1,4 @@
 import os
-import tornado.web
 from helpers import consoleHelper
 from helpers import requestHelper
 from helpers import userHelper
@@ -7,11 +6,11 @@ from constants import exceptions
 import glob
 
 MODULE_NAME = "get_replay"
-class handler(tornado.web.RequestHandler):
+class handler(requestHelper.asyncRequestHandler):
 	"""
 	Handler for osu-getreplay.php
 	"""
-	def get(self):
+	def asyncGet(self):
 		try:
 			# Check arguments
 			if requestHelper.checkArguments(self.request.arguments, ["c", "u", "h"]) == False:
@@ -50,3 +49,5 @@ class handler(tornado.web.RequestHandler):
 			pass
 		except exceptions.loginFailedException:
 			pass
+		finally:
+			self.finish()

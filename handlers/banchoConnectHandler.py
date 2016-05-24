@@ -1,5 +1,3 @@
-import tornado.web
-from helpers import discordBotHelper
 from helpers import userHelper
 from helpers import consoleHelper
 import glob
@@ -7,11 +5,11 @@ from constants import exceptions
 from helpers import requestHelper
 
 MODULE_NAME = "bancho_connect"
-class handler(tornado.web.RequestHandler):
+class handler(requestHelper.asyncRequestHandler):
 	"""
 	Handler for /web/bancho_connect.php
 	"""
-	def get(self):
+	def asyncGet(self):
 		try:
 			# Argument check
 			if requestHelper.checkArguments(self.request.arguments, ["u", "h"]) == False:
@@ -44,3 +42,5 @@ class handler(tornado.web.RequestHandler):
 			self.write("error: pass")
 		except exceptions.userBannedException:
 			pass
+		finally:
+			self.finish()

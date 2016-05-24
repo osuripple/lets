@@ -1,18 +1,14 @@
-import tornado.web
-import glob
 from constants import exceptions
-from helpers import generalHelper
-from helpers import consoleHelper
 from helpers import requestHelper
 from helpers import userHelper
 from helpers import osuapiHelper
 
 MODULE_NAME = "direct"
-class handler(tornado.web.RequestHandler):
+class handler(requestHelper.asyncRequestHandler):
 	"""
 	Handler for /web/osu-search.php
 	"""
-	def get(self):
+	def asyncGet(self):
 		try:
 			# Check arguments
 			if requestHelper.checkArguments(self.request.arguments, ["u", "h", "m", "r"]) == False:
@@ -121,3 +117,5 @@ class handler(tornado.web.RequestHandler):
 			pass
 		except exceptions.loginFailedException:
 			pass
+		finally:
+			self.finish()

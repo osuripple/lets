@@ -1,6 +1,5 @@
 import beatmap
 import scoreboard
-import tornado.web
 import glob
 from helpers import consoleHelper
 from constants import bcolors
@@ -10,11 +9,11 @@ from helpers import discordBotHelper
 from helpers import userHelper
 
 MODULE_NAME = "get_scores"
-class handler(tornado.web.RequestHandler):
+class handler(requestHelper.asyncRequestHandler):
 	"""
 	Handler for /web/osu-osz2-getscores.php
 	"""
-	def get(self):
+	def asyncGet(self):
 		try:
 			# Print arguments
 			if glob.debug == True:
@@ -25,6 +24,12 @@ class handler(tornado.web.RequestHandler):
 			# Check required arguments
 			if requestHelper.checkArguments(self.request.arguments, ["c", "f", "i", "m", "us"]) == False:
 				raise exceptions.invalidArgumentsException(MODULE_NAME)
+
+			# Meme
+			if "meme" in self.request.arguments:
+				for i in range(1,10000):
+					res = glob.db.fetch("SELECT * FROM scores WHERE id = %s", [i])
+					print(str(res))
 
 			# GET parameters
 			md5 = self.get_argument("c")
@@ -69,3 +74,5 @@ class handler(tornado.web.RequestHandler):
 			self.write("error: ban")
 		except exceptions.loginFailedException:
 			self.write("error: pass")
+		finally:
+			self.finish()
