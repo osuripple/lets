@@ -13,27 +13,28 @@ class asyncRequestHandler(tornado.web.RequestHandler):
 	"""
 	@tornado.web.asynchronous
 	@tornado.gen.engine
-	def get(self):
-		yield tornado.gen.Task(runBackground, self.asyncGet)
+	def get(self, *args, **kwargs):
+		yield tornado.gen.Task(runBackground, (self.asyncGet, tuple(args), dict(kwargs)))
 
 	@tornado.web.asynchronous
 	@tornado.gen.engine
-	def post(self):
-		yield tornado.gen.Task(runBackground, self.asyncPost)
+	def post(self, *args, **kwargs):
+		yield tornado.gen.Task(runBackground, (self.asyncPost, tuple(args), dict(kwargs)))
 
-	def asyncGet(self):
+	def asyncGet(self, *args, **kwargs):
 		self.send_error(405)
 		self.finish()
 
-	def asyncPost(self):
+	def asyncPost(self, *args, **kwargs):
 		self.send_error(405)
 		self.finish()
 
-def runBackground(func, callback, args=(), kwargs={}):
+def runBackground(data, callback):
 	"""
 	Run a function in the background.
 	Used to handle multiple requests at the same time
 	"""
+	func, args, kwargs = data
 	def _callback(result):
 		IOLoop.instance().add_callback(lambda: callback(result))
 	glob.pool.apply_async(func, args, kwargs, _callback)

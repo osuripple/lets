@@ -3,7 +3,7 @@ from helpers import consoleHelper
 from helpers import requestHelper
 import os
 
-MODULE_NAME = "screenshot"
+MODULE_NAME = "get_screenshot"
 class handler(requestHelper.asyncRequestHandler):
 	"""
 	Handler for /ss/
