@@ -75,7 +75,7 @@ class handler(requestHelper.asyncRequestHandler):
 				calculatedPP.append(calculatePPFromAcc(oppai, 95.0))
 			else:
 				# Specific acc
-				calculatedPP.append(calculatePPFromAcc(oppai, 9.0))
+				calculatedPP.append(calculatePPFromAcc(oppai, accuracy))
 
 			# Data to return
 			data = {
