@@ -8,6 +8,7 @@ from helpers import config
 from helpers import generalHelper
 from constants import bcolors
 from helpers import discordBotHelper
+from multiprocessing.pool import ThreadPool
 
 # Handlers
 from handlers import getScoresHandler
@@ -75,6 +76,15 @@ if __name__ == "__main__":
 		consoleHelper.printError()
 		consoleHelper.printColored("[!] Error while connection to database. Please check your config.ini and run the server again", bcolors.RED)
 		raise
+
+	# Create threads pool
+	try:
+		consoleHelper.printNoNl("> Creating threads pool... ")
+		glob.pool = ThreadPool(int(glob.conf.config["server"]["threads"]))
+		consoleHelper.printDone()
+	except:
+		consoleHelper.printError()
+		consoleHelper.printColored("[!] Error while creating threads pool. Please check your config.ini and run the server again", bcolors.RED)
 
 	# Create data folder if needed
 	consoleHelper.printNoNl("> Checking folders... ")
