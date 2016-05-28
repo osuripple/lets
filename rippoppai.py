@@ -403,16 +403,15 @@ if __name__ == "__main__":
 		massRecalc(scores, workers)
 	elif args.userid != None:
 		# User ID recalc
-		username = userHelper.getUsername(args.userid)
-		if username != None:
-			scores = glob.db.fetchAll("SELECT * FROM scores LEFT JOIN beatmaps ON scores.beatmap_md5 = beatmaps.beatmap_md5 WHERE scores.play_mode = '0' AND scores.completed = '3' AND scores.username = %s;", [username])
-			massRecalc(scores, workers)
-		else:
-			consoleHelper.printColored("[!] User with id {} doesn't exist".format(args.userid), bcolors.RED)
+		scores = glob.db.fetchAll("SELECT * FROM scores LEFT JOIN beatmaps ON scores.beatmap_md5 = beatmaps.beatmap_md5 WHERE scores.play_mode = '0' AND scores.completed = '3' AND scores.userid = %s;", [username])
+		massRecalc(scores, workers)
 	elif args.username != None:
 		# Username recalc
-		scores = glob.db.fetchAll("SELECT * FROM scores LEFT JOIN beatmaps ON scores.beatmap_md5 = beatmaps.beatmap_md5 WHERE scores.play_mode = '0' AND scores.completed = '3' AND scores.username = %s;", [args.username])
-		massRecalc(scores, workers)
+		uid = userHelper.getID(args.username)
+		if uid != 0:
+			scores = glob.db.fetchAll("SELECT * FROM scores LEFT JOIN beatmaps ON scores.beatmap_md5 = beatmaps.beatmap_md5 WHERE scores.play_mode = '0' AND scores.completed = '3' AND scores.userid = %s;", [uid])
+			massRecalc(scores, workers)
+		# TODO: error message xd
 
 	# The endTM
 	consoleHelper.printColored("Done!", bcolors.GREEN)

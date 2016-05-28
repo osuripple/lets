@@ -29,12 +29,12 @@ class handler(requestHelper.asyncRequestHandler):
 				raise exceptions.loginFailedException(MODULE_NAME, username)
 
 			# Get user ID
-			replayData = glob.db.fetch("SELECT scores.*, users.id AS uid FROM scores LEFT JOIN users ON scores.username = users.username WHERE scores.id = %s", [replayID])
+			replayData = glob.db.fetch("SELECT scores.*, users.username AS uname FROM scores LEFT JOIN users ON scores.userid = users.id WHERE scores.id = %s", [replayID])
 
 			# Increment 'replays watched by others' if needed
 			if replayData != None:
-				if username != replayData["username"]:
-					userHelper.incrementReplaysWatched(replayData["uid"], replayData["play_mode"])
+				if username != replayData["uname"]:
+					userHelper.incrementReplaysWatched(replayData["userid"], replayData["play_mode"])
 
 			# Serve replay
 			consoleHelper.printGetReplayMessage("Serving replay_{}.osr".format(replayID))
