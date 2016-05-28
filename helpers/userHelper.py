@@ -131,13 +131,8 @@ def calculateAccuracy(userID, gameMode):
 	gameMode -- gameMode number
 	return -- new accuracy
 	"""
-	# Get username and make sure the user exists
-	username = getUsername(userID)
-	if username == None:
-		return 0
-
 	# Get best accuracy scores
-	bestAccScores = glob.db.fetchAll("SELECT accuracy FROM scores WHERE username = %s AND play_mode = %s AND completed = '3' ORDER BY accuracy DESC LIMIT 100", [username, gameMode])
+	bestAccScores = glob.db.fetchAll("SELECT accuracy FROM scores WHERE userid = %s AND play_mode = %s AND completed = '3' ORDER BY accuracy DESC LIMIT 100", [userID, gameMode])
 
 	v = 0
 	if bestAccScores != None:
@@ -166,13 +161,8 @@ def calculatePP(userID, gameMode):
 	gameMode -- gameMode number
 	return -- total PP
 	"""
-	# Get username and make sure the user exists
-	username = getUsername(userID)
-	if username == None:
-		return 0
-
 	# Get best pp scores
-	bestPPScores = glob.db.fetchAll("SELECT pp FROM scores WHERE username = %s AND play_mode = %s AND completed = '3' ORDER BY pp DESC LIMIT 100", [username, gameMode])
+	bestPPScores = glob.db.fetchAll("SELECT pp FROM scores WHERE userid = %s AND play_mode = %s AND completed = '3' ORDER BY pp DESC LIMIT 100", [userID, gameMode])
 
 	# Calculate weighted PP
 	totalPP = 0
