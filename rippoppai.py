@@ -132,11 +132,14 @@ class oppai:
 			# Base command
 			command = fixPath("{path}/oppai {mapFile}".format(path=self.OPPAI_FOLDER, mapFile=mapFile))
 
+			# Use only mods supported by oppai.
+			modsFixed = self.mods & 5979
+
 			# Add params if needed
 			if self.acc > 0:
 				command += " {acc}%".format(acc=self.acc)
 			if self.mods > 0:
-				command += " +{mods}".format(mods=scoreHelper.readableMods(self.mods))
+				command += " +{mods}".format(mods=scoreHelper.readableMods(modsFixed))
 			if self.combo > 0:
 				command += " {combo}x".format(combo=self.combo)
 			if self.misses > 0:
@@ -168,7 +171,7 @@ class oppai:
 if __name__ == "__main__":
 	# Standalone imports
 	from helpers import config
-	from helpers import databaseHelper
+	from helpers import databaseHelperNew
 	from constants import rankedStatuses
 	from helpers import userHelper
 	import sys
@@ -358,7 +361,7 @@ if __name__ == "__main__":
 	# Connect to MySQL
 	try:
 		consoleHelper.printNoNl("> Connecting to MySQL db... ")
-		glob.db = databaseHelper.db(glob.conf.config["db"]["host"], glob.conf.config["db"]["username"], glob.conf.config["db"]["password"], glob.conf.config["db"]["database"], 0)
+		glob.db = databaseHelperNew.db(glob.conf.config["db"]["host"], glob.conf.config["db"]["username"], glob.conf.config["db"]["password"], glob.conf.config["db"]["database"], int(glob.conf.config["db"]["workers"]))
 		consoleHelper.printDone()
 	except:
 		consoleHelper.printError()
