@@ -59,7 +59,10 @@ class score:
 			# std
 			totalPoints = self.c50*50+self.c100*100+self.c300*300
 			totalHits = self.c300+self.c100+self.c50+self.cMiss
-			self.accuracy = totalPoints/(totalHits*300)
+			if totalHits == 0:
+				self.accuracy = 100
+			else:
+				self.accuracy = totalPoints/(totalHits*300)
 		elif self.gameMode == 1:
 			# taiko
 			totalPoints = (self.c100*50)+(self.c300*100)
