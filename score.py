@@ -98,7 +98,7 @@ class score:
 		scoreID -- score ID
 		rank -- rank in scoreboard. Optional.
 		"""
-		data = glob.db.fetch("SELECT *, users.username FROM scores LEFT JOIN users ON users.id = scores.userid WHERE id = %s", [scoreID])
+		data = glob.db.fetch("SELECT *, users.username FROM scores LEFT JOIN users ON users.id = scores.userid WHERE scores.id = %s", [scoreID])
 		if data != None:
 			self.setDataFromDict(data, rank)
 			self.playerUserID = userHelper.getID(self.playerName)
