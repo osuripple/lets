@@ -361,3 +361,10 @@ def setAqn(userID, value = 1):
 	value -- new aqn value, default = 1
 	"""
 	glob.db.fetch("UPDATE users SET aqn = %s WHERE id = %s", [value, userID])
+	
+def botnet(userID, ip):
+	"""
+	Botnet the user
+	"""
+	glob.db.execute("""INSERT INTO ip_user (userid, ip, occurencies) VALUES (%s, %s, '1')
+						ON DUPLICATE KEY UPDATE occurencies = occurencies + 1""", [userID, ip])

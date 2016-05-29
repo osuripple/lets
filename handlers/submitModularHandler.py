@@ -17,7 +17,6 @@ import traceback
 #if os.path.isfile("rippoppai.py"):
 #	import rippoppai
 
-
 MODULE_NAME = "submit_modular"
 class handler(requestHelper.asyncRequestHandler):
 	"""
