@@ -7,6 +7,8 @@ from constants import exceptions
 from helpers import requestHelper
 from helpers import discordBotHelper
 from helpers import userHelper
+import sys
+import traceback
 
 MODULE_NAME = "get_scores"
 class handler(requestHelper.asyncRequestHandler):
@@ -24,12 +26,6 @@ class handler(requestHelper.asyncRequestHandler):
 			# Check required arguments
 			if requestHelper.checkArguments(self.request.arguments, ["c", "f", "i", "m", "us"]) == False:
 				raise exceptions.invalidArgumentsException(MODULE_NAME)
-
-			# Meme
-			if "meme" in self.request.arguments:
-				for i in range(1,10000):
-					res = glob.db.fetch("SELECT * FROM scores WHERE id = %s", [i])
-					print(str(res))
 
 			# GET parameters
 			md5 = self.get_argument("c")
@@ -74,5 +70,9 @@ class handler(requestHelper.asyncRequestHandler):
 			self.write("error: ban")
 		except exceptions.loginFailedException:
 			self.write("error: pass")
+		except:
+			msg = "UNKNOWN ERROR IN GETSCORES!!!\n```{}\n{}```".format(sys.exc_info(), traceback.format_exc())
+			consoleHelper.printColored("[!] {}".format(msg), bcolors.RED)
+			discordBotHelper.sendConfidential("{}".format(msg))
 		finally:
 			self.finish()
