@@ -34,10 +34,11 @@ class handler(requestHelper.asyncRequestHandler):
 
 			# TODO: Maintenance check
 
-			# Get parameters
+			# Get parameters and IP
 			scoreDataEnc = self.get_argument("score")
 			iv = self.get_argument("iv")
 			password = self.get_argument("pass")
+			ip = self.getRequestIP()
 
 			# Get right AES Key
 			if "osuver" in self.request.arguments:
@@ -99,7 +100,6 @@ class handler(requestHelper.asyncRequestHandler):
 			if not os.path.isfile(".data/replays/replay_{}.osr".format(s.scoreID)) and s.completed == 3:
 				discordBotHelper.sendConfidential("Replay for score {} not saved!!".format(s.scoreID), True)
 
-
 			# Update users stats (total/ranked score, playcount, level and acc)
 			consoleHelper.printSubmitModularMessage("Updating {}'s stats...".format(username))
 			userHelper.updateStats(userID, s)
@@ -116,6 +116,9 @@ class handler(requestHelper.asyncRequestHandler):
 			# TODO: Update total hits and max combo
 			# Update latest activity
 			userHelper.updateLatestActivity(userID)
+
+			# IP botnet
+			userHelper.botnet(userID, ip)
 
 			# Done!
 			consoleHelper.printSubmitModularMessage("Done!")

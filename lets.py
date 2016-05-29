@@ -40,7 +40,7 @@ def make_app():
 		(r"/web/maps/(.*)", mapsHandler.handler),
 
 		(r"/api/v1/status", apiStatusHandler.handler),
-		(r"/api/v1/pp", apiPPHandler.handler)
+		(r"/api/v1/pp", apiPPHandler.handler),
 	])
 
 if __name__ == "__main__":

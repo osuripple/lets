@@ -29,6 +29,13 @@ class asyncRequestHandler(tornado.web.RequestHandler):
 		self.send_error(405)
 		self.finish()
 
+	def getRequestIP(self):
+		realIP = self.request.headers.get("X-Real-IP")
+		if realIP != None:
+			return realIP
+		return self.request.remote_ip
+
+
 def runBackground(data, callback):
 	"""
 	Run a function in the background.
