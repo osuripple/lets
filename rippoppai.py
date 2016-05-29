@@ -268,9 +268,9 @@ if __name__ == "__main__":
 				for i in self.scores:
 					# Loop through all scores and update pp in db
 					# we need to lock the thread because pymysql is not thread safe
-					self.lock.acquire()
+					#self.lock.acquire()
 					glob.db.execute("UPDATE scores SET pp = %s WHERE id = %s", [i["pp"], i["id"]])
-					self.lock.release()
+					#self.lock.release()
 
 			# This worker has finished his work
 			self.done = True
@@ -403,7 +403,7 @@ if __name__ == "__main__":
 		massRecalc(scores, workers)
 	elif args.userid != None:
 		# User ID recalc
-		scores = glob.db.fetchAll("SELECT * FROM scores LEFT JOIN beatmaps ON scores.beatmap_md5 = beatmaps.beatmap_md5 WHERE scores.play_mode = '0' AND scores.completed = '3' AND scores.userid = %s;", [username])
+		scores = glob.db.fetchAll("SELECT * FROM scores LEFT JOIN beatmaps ON scores.beatmap_md5 = beatmaps.beatmap_md5 WHERE scores.play_mode = '0' AND scores.completed = '3' AND scores.userid = %s;", [args.userid])
 		massRecalc(scores, workers)
 	elif args.username != None:
 		# Username recalc
