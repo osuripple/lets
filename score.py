@@ -112,7 +112,7 @@ class score:
 		rank -- rank in scoreboard. Optional.
 		"""
 		self.scoreID = data["id"]
-		self.playerName = data["username"]
+		self.playerName = userHelper.getUsername(data["userid"])
 		self.score = data["score"]
 		self.maxCombo = data["max_combo"]
 		self.c50 = data["50_count"]
