@@ -37,7 +37,7 @@ class scoreboard:
 		# Find personal best score
 		uid = userHelper.getID(self.username)
 		if uid != 0:
-			personalBestScore = glob.db.fetch("SELECT id FROM scores WHERE uid = %s AND beatmap_md5 = %s AND play_mode = %s AND completed = 3 ORDER BY score DESC LIMIT 1", [uid, self.beatmap.fileMD5, self.gameMode])
+			personalBestScore = glob.db.fetch("SELECT id FROM scores WHERE userid = %s AND beatmap_md5 = %s AND play_mode = %s AND completed = 3 ORDER BY score DESC LIMIT 1", [uid, self.beatmap.fileMD5, self.gameMode])
 		else:
 			personalBestScore = None
 
