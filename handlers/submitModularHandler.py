@@ -98,7 +98,7 @@ class handler(requestHelper.asyncRequestHandler):
 
 			# Make sure the replay has been saved (debug)
 			if not os.path.isfile(".data/replays/replay_{}.osr".format(s.scoreID)) and s.completed == 3:
-				discordBotHelper.sendConfidential("Replay for score {} not saved!!".format(s.scoreID))
+				discordBotHelper.sendConfidential("Replay for score {} not saved!!".format(s.scoreID), True)
 
 
 			# Update users stats (total/ranked score, playcount, level and acc)
@@ -130,9 +130,9 @@ class handler(requestHelper.asyncRequestHandler):
 		except:
 			# Try except block to avoid more errors
 			try:
-				msg = "UNKNOWN ERROR IN SCORE SUBMISSION!!!\n{}\n{}".format(sys.exc_info(), traceback.format_exc())
+				msg = "Unknown error in score submission!\n{}\n{}".format(sys.exc_info(), traceback.format_exc())
 				consoleHelper.printColored("[!] {}".format(msg), bcolors.RED)
-				discordBotHelper.sendConfidential("{}".format(msg))
+				discordBotHelper.sendConfidential(msg, True)
 			except:
 				pass
 

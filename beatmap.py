@@ -65,8 +65,6 @@ class beatmap:
 				int(time.time())
 			])
 		except:
-			#discordBotHelper.sendConfidential("Error while saving beatmap data in db: {}".format(sys.exc_info()))
-			#discordBotHelper.sendConfidential("Traceback: {}".format(traceback.format_exc()))
 			consoleHelper.printColored("[!] Error while saving beatmap data in db", bcolors.RED)
 			consoleHelper.printColored(sys.exc_info(), bcolors.RED)
 			consoleHelper.printColored(traceback.format_exc(), bcolors.RED)

@@ -60,6 +60,7 @@ class config:
 
 			self.config.get("discord","enable")
 			self.config.get("discord","boturl")
+			self.config.get("discord", "devgroup")
 			return True
 		except:
 			return False
@@ -95,6 +96,7 @@ class config:
 		self.config.add_section("discord")
 		self.config.set("discord", "enable", "False")
 		self.config.set("discord", "boturl", "")
+		self.config.set("discord", "devgroup", "")
 
 		# Write ini to file and close
 		self.config.write(f)

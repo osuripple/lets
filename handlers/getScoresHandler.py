@@ -71,8 +71,8 @@ class handler(requestHelper.asyncRequestHandler):
 		except exceptions.loginFailedException:
 			self.write("error: pass")
 		except:
-			msg = "UNKNOWN ERROR IN GETSCORES!!!\n```{}\n{}```".format(sys.exc_info(), traceback.format_exc())
+			msg = "Unknown error in get scores!\n```{}\n{}```".format(sys.exc_info(), traceback.format_exc())
 			consoleHelper.printColored("[!] {}".format(msg), bcolors.RED)
-			discordBotHelper.sendConfidential("{}".format(msg))
+			discordBotHelper.sendConfidential(msg, True)
 		finally:
 			self.finish()

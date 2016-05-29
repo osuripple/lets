@@ -99,11 +99,11 @@ def update(userID, newScore, gameMode):
 			glob.db.execute("UPDATE leaderboard_{} SET position = position + 1 WHERE position < %s AND position >= %s ORDER BY position DESC".format(mode), [us["position"], newT])
 
 		if newT <= 1:
-			discordBotHelper.sendConfidential("{} is now #{}".format(userID, newT))
+			discordBotHelper.sendConfidential("{} is now #{} ({})".format(userID, newT, mode))
 
 		# Finally, insert the user back.
 		glob.db.execute("INSERT INTO leaderboard_{} (position, user, v) VALUES (%s, %s, %s);".format(mode), [newT, userID, newScore])
 	except:
-		discordBotHelper.sendConfidential("Error while updating the leaderboard: {}".format(sys.exc_info()))
-		discordBotHelper.sendConfidential("Traceback: {}".format(traceback.format_exc()))
-		consoleHelper.printColored("[!] Error while updating leaderboard!", bcolors.RED)
+		msg = "Unknown error while updating the leaderboard!\n```{}\n{}```".format(sys.exc_info(), traceback.format_exc())
+		consoleHelper.printColored("[!] {}".format(msg), bcolors.RED)
+		discordBotHelper.sendConfidential(msg, True)
