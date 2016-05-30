@@ -177,7 +177,11 @@ class oppai:
 			if glob.debug == True:
 				consoleHelper.printRippoppaiMessage("Calculated pp: {}".format(self.pp))
 
-			return self.pp
+			# Track memes
+			if self.pp > 700:
+				raise exceptions.fuck
+
+			#return self.pp
 		except:
 			# oppai or python error, set pp to 0
 			msg = "Error while executing oppai!\n```{}\n{}```".format(sys.exc_info(), traceback.format_exc())
@@ -185,9 +189,12 @@ class oppai:
 				msg += "\n**command**: `{}`".format(command)
 			if output != None:
 				msg += "\n**oppai output**: `{}`".format(output)
+			msg += "\n**calculated pp**: `{}`".format(self.pp)
 			consoleHelper.printColored("[!] {}".format(msg), bcolors.RED)
 			discordBotHelper.sendConfidential(msg, True)
 			self.pp = 0
+		finally:
+			return self.pp
 
 
 if __name__ == "__main__":

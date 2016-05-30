@@ -27,3 +27,6 @@ class invalidBeatmapException(Exception):
 class beatmapTooLongException(Exception):
 	def __init__(self, handler):
 		consoleHelper.printColored("[{}] Requested beatmap is too long.".format(handler), bcolors.RED)
+
+class fuck(Exception):
+	pass
