@@ -6,6 +6,8 @@ from helpers import osuapiHelper
 from helpers import consoleHelper
 import rippoppai
 import glob
+import traceback
+import sys
 
 MODULE_NAME = "api/pp"
 class handler(requestHelper.asyncRequestHandler):
@@ -73,11 +75,8 @@ class handler(requestHelper.asyncRequestHandler):
 				else:
 					consoleHelper.printApiMessage(MODULE_NAME, "Cached pp not found. Calculating pp with oppai...")
 					# Cached pp not found, calculate them
-					oppai = rippoppai.oppai(bmap, mods=modsEnum)
-					returnPP.append(oppai.pp)
-					returnPP.append(calculatePPFromAcc(oppai, 99.0))
-					returnPP.append(calculatePPFromAcc(oppai, 98.0))
-					returnPP.append(calculatePPFromAcc(oppai, 95.0))
+					oppai = rippoppai.oppai(bmap, mods=modsEnum, tillerino=True)
+					returnPP = oppai.pp
 
 					# Cache values in DB
 					consoleHelper.printApiMessage(MODULE_NAME, "Saving cached pp...")
@@ -86,14 +85,11 @@ class handler(requestHelper.asyncRequestHandler):
 				# Specific accuracy, calculate
 				# Create oppai instance
 				consoleHelper.printApiMessage(MODULE_NAME, "Specific request ({}%/{}). Calculating pp with oppai...".format(accuracy, modsEnum))
-				oppai = rippoppai.oppai(bmap, mods=modsEnum)
-				if accuracy < 0:
-					returnPP.append(oppai.pp)
-					returnPP.append(calculatePPFromAcc(oppai, 99.0))
-					returnPP.append(calculatePPFromAcc(oppai, 98.0))
-					returnPP.append(calculatePPFromAcc(oppai, 95.0))
-				else:
+				oppai = rippoppai.oppai(bmap, mods=modsEnum, tillerino=True)
+				if accuracy > 0:
 					returnPP.append(calculatePPFromAcc(oppai, accuracy))
+				else:
+					returnPP = oppai.pp
 
 			# Data to return
 			data = {

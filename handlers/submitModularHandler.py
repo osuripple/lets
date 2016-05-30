@@ -71,9 +71,10 @@ class handler(requestHelper.asyncRequestHandler):
 				s.calculatePP()
 
 			# Ban obvious cheaters
-			if s.pp >= 700:
-				userHelper.setAllowed(userID, 0)
-				discordBotHelper.sendConfidential("{} ({}) has been banned due to too high pp gain ({}pp)".format(username, userID, s.pp))
+			# NOTE: Disabled due to oppai pipe bug, enable again when fixed.
+			#if s.pp >= 700:
+			#	userHelper.setAllowed(userID, 0)
+			#	discordBotHelper.sendConfidential("{} ({}) has been banned due to too high pp gain ({}pp)".format(username, userID, s.pp))
 
 			# Save score in db
 			s.saveScoreInDB()
@@ -132,7 +133,7 @@ class handler(requestHelper.asyncRequestHandler):
 		except:
 			# Try except block to avoid more errors
 			try:
-				msg = "Unknown error in score submission!\n{}\n{}".format(sys.exc_info(), traceback.format_exc())
+				msg = "Unknown error in score submission!\n```{}\n{}```".format(sys.exc_info(), traceback.format_exc())
 				consoleHelper.printColored("[!] {}".format(msg), bcolors.RED)
 				discordBotHelper.sendConfidential(msg, True)
 			except:

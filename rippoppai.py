@@ -6,6 +6,7 @@ import subprocess
 import os
 from helpers import scoreHelper
 from helpers import osuapiHelper
+from helpers import discordBotHelper
 from constants import exceptions
 from helpers import consoleHelper
 from constants import bcolors
@@ -17,6 +18,8 @@ import math
 import time
 import glob
 import threading
+import traceback
+import sys
 
 # constants
 MAX_WORKERS = 32
@@ -41,7 +44,7 @@ class oppai:
 	# Folder where oppai is placed
 	OPPAI_FOLDER = "../oppai"
 
-	def __init__(self, __beatmap, __score = None, acc = 0, mods = 0):
+	def __init__(self, __beatmap, __score = None, acc = 0, mods = 0, tillerino = False):
 		"""
 		Set oppai params.
 
@@ -49,6 +52,7 @@ class oppai:
 		__score -- score object
 		acc -- manual acc. Used in tillerino-like bot. You don't need this if you pass __score object
 		mods -- manual mods. Used in tillerino-like bot. You don't need this if you pass __score object
+		tillerino -- If True, self.pp will be a list with pp values for 100%, 99%, 98% and 95% acc. Optional.
 		"""
 		# Default values
 		self.pp = 0
@@ -75,14 +79,18 @@ class oppai:
 			self.mods = mods
 
 		# Calculate pp
-		self.getPP()
+		self.getPP(tillerino)
 
-	def getPP(self):
+	def getPP(self, tillerino = False):
 		"""
 		Calculate total pp value with oppai and return it
 
 		return -- total pp
 		"""
+		# Set variables
+		command = None
+		output = None
+		
 		try:
 			# Build .osu map file path
 			mapFile = "{path}/maps/{map}".format(path=self.OPPAI_FOLDER, map=self.map)
@@ -144,6 +152,8 @@ class oppai:
 				command += " {combo}x".format(combo=self.combo)
 			if self.misses > 0:
 				command += " {misses}xm".format(misses=self.misses)
+			if tillerino == True:
+				command += " tillerino"
 
 			# Debug output
 			if glob.debug == True:
@@ -153,10 +163,15 @@ class oppai:
 			process = subprocess.run(command, shell=True, stdout=subprocess.PIPE)
 			output = process.stdout.decode("utf-8")
 
-			# Last output line - last 2 characters (contains float pp value)
-			pp = output.split("\r\n" if UNIX == False else "\n")
-			pp = pp[len(pp)-2][:-2]
-			self.pp = float(pp)
+			# Get standard or tillerino output
+			if tillerino == True:
+				# Get tillerino output (multiple lines)
+				sep = "\n" if UNIX else "\r\n"
+				self.pp = output.split(sep)[:-1]	# -1 because there's an empty line at the end
+			else:
+				# Get standard output (:l to remove (/r)/n at the end)
+				l = -1 if UNIX else -2
+				self.pp = float(output[:l])
 
 			if glob.debug == True:
 				consoleHelper.printRippoppaiMessage("Calculated pp: {}".format(self.pp))
@@ -164,7 +179,13 @@ class oppai:
 			return self.pp
 		except:
 			# oppai or python error, set pp to 0
-			consoleHelper.printColored("[!] Error while executing oppai.", bcolors.RED)
+			msg = "Error while executing oppai!\n```{}\n{}```".format(sys.exc_info(), traceback.format_exc())
+			if command != None:
+				msg += "\n**command**: `{}`".format(command)
+			if output != None:
+				msg += "\n**oppai output**: `{}`".format(output)
+			consoleHelper.printColored("[!] {}".format(msg), bcolors.RED)
+			discordBotHelper.sendConfidential(msg, True)
 			self.pp = 0
 
 
