@@ -172,7 +172,7 @@ class oppai:
 				# Get standard output (:l to remove (/r)/n at the end)
 				l = -1 if UNIX else -2
 				output = output.split(sep)
-				self.pp = float(output[len(output)-1][:l])
+				self.pp = float(output[len(output)-2][:l])
 
 			if glob.debug == True:
 				consoleHelper.printRippoppaiMessage("Calculated pp: {}".format(self.pp))
