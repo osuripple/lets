@@ -145,7 +145,7 @@ class oppai:
 
 			# Add params if needed
 			if self.acc > 0:
-				command += " {acc}%".format(acc=self.acc)
+				command += " {acc:.2f}%".format(acc=self.acc)
 			if self.mods > 0:
 				command += " +{mods}".format(mods=scoreHelper.readableMods(modsFixed))
 			if self.combo > 0:
