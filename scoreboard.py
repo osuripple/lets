@@ -37,7 +37,7 @@ class scoreboard:
 		# Find personal best score
 		uid = userHelper.getID(self.username)
 		if uid != 0:
-			personalBestScore = glob.db.fetch("SELECT id FROM scores WHERE userid = %s AND beatmap_md5 = %s AND play_mode = %s AND completed = 3 ORDER BY score DESC LIMIT 1", [uid, self.beatmap.fileMD5, self.gameMode])
+			personalBestScore = glob.db.fetch("SELECT id, score FROM scores WHERE userid = %s AND beatmap_md5 = %s AND play_mode = %s AND completed = 3 ORDER BY score DESC LIMIT 1", [uid, self.beatmap.fileMD5, self.gameMode])
 		else:
 			personalBestScore = None
 
@@ -50,7 +50,7 @@ class scoreboard:
 			self.scores[0] = -1
 
 		# Top 50 scores
-		topScores = glob.db.fetchAll("SELECT scores.id AS id FROM scores LEFT JOIN users ON scores.userid = users.id WHERE beatmap_md5 = %s AND play_mode = %s AND completed = 3 AND users.allowed = '1' ORDER BY score DESC", [self.beatmap.fileMD5, self.gameMode])
+		topScores = glob.db.fetchAll("SELECT scores.id, score AS id FROM scores LEFT JOIN users ON scores.userid = users.id WHERE beatmap_md5 = %s AND play_mode = %s AND completed = 3 AND users.allowed = '1' ORDER BY score DESC", [self.beatmap.fileMD5, self.gameMode])
 		c = 1
 		if topScores != None:
 			for i in topScores:
