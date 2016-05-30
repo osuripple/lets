@@ -178,7 +178,7 @@ class oppai:
 				consoleHelper.printRippoppaiMessage("Calculated pp: {}".format(self.pp))
 
 			# Track memes
-			if self.pp > 700:
+			if tillerino == False and self.pp > 700:
 				raise exceptions.fuck
 
 			#return self.pp
