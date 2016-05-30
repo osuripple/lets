@@ -88,7 +88,7 @@ class scoreboard:
 				# ...but we don't know our rank in scoreboard. Get it.
 				c=1
 				uid = userHelper.getID(self.username)
-				scores = glob.db.fetchAll("SELECT DISTINCT userid FROM scores WHERE beatmap_md5 = %s AND play_mode = %s AND completed = 3 ORDER BY score DESC", [self.beatmap.fileMD5, self.gameMode])
+				scores = glob.db.fetchAll("SELECT DISTINCT userid, score FROM scores WHERE beatmap_md5 = %s AND play_mode = %s AND completed = 3 ORDER BY score DESC", [self.beatmap.fileMD5, self.gameMode])
 				if scores != None:
 					for i in scores:
 						if i["userid"] == uid:
