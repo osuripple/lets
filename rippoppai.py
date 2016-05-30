@@ -90,7 +90,7 @@ class oppai:
 		# Set variables
 		command = None
 		output = None
-		
+
 		try:
 			# Build .osu map file path
 			mapFile = "{path}/maps/{map}".format(path=self.OPPAI_FOLDER, map=self.map)
@@ -164,14 +164,15 @@ class oppai:
 			output = process.stdout.decode("utf-8")
 
 			# Get standard or tillerino output
+			sep = "\n" if UNIX else "\r\n"
 			if tillerino == True:
 				# Get tillerino output (multiple lines)
-				sep = "\n" if UNIX else "\r\n"
 				self.pp = output.split(sep)[:-1]	# -1 because there's an empty line at the end
 			else:
 				# Get standard output (:l to remove (/r)/n at the end)
 				l = -1 if UNIX else -2
-				self.pp = float(output[:l])
+				output = output.split(sep)
+				self.pp = float(output[len(output)-1][:l])
 
 			if glob.debug == True:
 				consoleHelper.printRippoppaiMessage("Calculated pp: {}".format(self.pp))
