@@ -174,14 +174,9 @@ class oppai:
 				output = output.split(sep)
 				self.pp = float(output[len(output)-2][:l])
 
+			# Debug output
 			if glob.debug == True:
 				consoleHelper.printRippoppaiMessage("Calculated pp: {}".format(self.pp))
-
-			# Track memes
-			if tillerino == False and self.pp > 700:
-				raise exceptions.fuck
-
-			#return self.pp
 		except:
 			# oppai or python error, set pp to 0
 			msg = "Error while executing oppai!\n```{}\n{}```".format(sys.exc_info(), traceback.format_exc())

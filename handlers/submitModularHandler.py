@@ -71,10 +71,9 @@ class handler(requestHelper.asyncRequestHandler):
 				s.calculatePP()
 
 			# Ban obvious cheaters
-			# NOTE: Disabled due to oppai pipe bug, enable again when fixed.
-			#if s.pp >= 700:
-			#	userHelper.setAllowed(userID, 0)
-			#	discordBotHelper.sendConfidential("{} ({}) has been banned due to too high pp gain ({}pp)".format(username, userID, s.pp))
+			if s.pp >= 700:
+				userHelper.setAllowed(userID, 0)
+				discordBotHelper.sendConfidential("{} ({}) has been banned due to too high pp gain ({}pp)".format(username, userID, s.pp))
 
 			# Save score in db
 			s.saveScoreInDB()
