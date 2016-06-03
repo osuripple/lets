@@ -11,20 +11,20 @@ class handler(requestHelper.asyncRequestHandler):
 	def asyncGet(self):
 		try:
 			# Check arguments
-			if requestHelper.checkArguments(self.request.arguments, ["u", "h", "m", "r"]) == False:
-				raise exceptions.invalidArgumentsException(MODULE_NAME)
+			#if requestHelper.checkArguments(self.request.arguments, ["u", "h", "m", "r"]) == False:
+			#	raise exceptions.invalidArgumentsException(MODULE_NAME)
 
 			# Get arguments
-			username = self.get_argument("u")
-			password = self.get_argument("h")
+			#username = self.get_argument("u")
+			#password = self.get_argument("h")
 			gameMode = self.get_argument("m")
 			rankedStatus = self.get_argument("r")
 
 			# Login check
-			userID = userHelper.getID(username)
-			if userID == 0:
-				raise exceptions.loginFailedException(MODULE_NAME, username)
-			userHelper.checkLogin(userID, password)
+			#userID = userHelper.getID(username)
+			#if userID == 0:
+			#	raise exceptions.loginFailedException(MODULE_NAME, username)
+			#userHelper.checkLogin(userID, password)
 
 			# Default values for bloodcat query
 			bcM = "0"
@@ -94,7 +94,6 @@ class handler(requestHelper.asyncRequestHandler):
 
 			# Get data from bloodcat API
 			bcData = osuapiHelper.bloodcatRequest(bcURL)
-			print(type(bcData))
 
 			# Show 101 if we have >= 40 results (bloodcat maps per page)
 			# or osu! won't load next pages
@@ -107,11 +106,13 @@ class handler(requestHelper.asyncRequestHandler):
 			output += "\n"
 
 			# Add to output beatmap info for each song
-			#for i in bcData:
-			output += osuapiHelper.bloodcatToDirect(bcData[0])+"\n"
+			for i in bcData:
+				output += osuapiHelper.bloodcatToDirect(i)+"\r\n"
+
+			# Old memes
+			output += "\r\n"
 
 			# Return response
-			print(output)
 			self.write(output)
 		except exceptions.invalidArgumentsException:
 			pass

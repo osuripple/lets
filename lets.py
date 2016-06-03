@@ -21,6 +21,7 @@ from handlers import getScreenshotHandler
 from handlers import osuSearchHandler
 from handlers import apiStatusHandler
 from handlers import apiPPHandler
+from handlers import downloadMapHandler
 
 # Tornado
 import tornado.ioloop
@@ -38,6 +39,7 @@ def make_app():
 		(r"/web/osu-search.php", osuSearchHandler.handler),
 		(r"/ss/(.*)", getScreenshotHandler.handler),
 		(r"/web/maps/(.*)", mapsHandler.handler),
+		(r"/d/(.*)", downloadMapHandler.handler),
 
 		(r"/api/v1/status", apiStatusHandler.handler),
 		(r"/api/v1/pp", apiPPHandler.handler),
