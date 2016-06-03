@@ -67,6 +67,8 @@ class handler(requestHelper.asyncRequestHandler):
 			data += sboard.getScoresData()
 			self.write(data)
 		except exceptions.invalidArgumentsException:
+			self.write("error: meme")
+		except exceptions.userBannedException:
 			self.write("error: ban")
 		except exceptions.loginFailedException:
 			self.write("error: pass")
