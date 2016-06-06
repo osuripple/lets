@@ -9,7 +9,8 @@ class handler(requestHelper.asyncRequestHandler):
 	def asyncGet(self, bid):
 		try:
 			self.set_status(302)
-			url = "http://m.zxq.co/vinococco.php?id={}".format(bid)
+			url = "http://m.zxq.co/{}.osz".format(bid)
+			#url = "https://bloodcat.com/osu/s/{}".format(bid)
 			self.add_header("location", url)
 			print(url)
 			#f = requests.get(url)

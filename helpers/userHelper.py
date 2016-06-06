@@ -338,7 +338,8 @@ def setAllowed(userID, allowed):
 	userID -- user
 	allowed -- allowed status. 1: normal, 0: banned
 	"""
-	glob.db.execute("UPDATE users SET allowed = %s WHERE id = %s", [allowed, userID])
+	banDateTime = int(time.time()) if allowed == 0 else 0
+	glob.db.execute("UPDATE users SET allowed = %s, ban_datetime = %s WHERE id = %s", [allowed, banDateTime, userID])
 
 def getAqn(userID):
 	"""
@@ -361,7 +362,7 @@ def setAqn(userID, value = 1):
 	value -- new aqn value, default = 1
 	"""
 	glob.db.fetch("UPDATE users SET aqn = %s WHERE id = %s", [value, userID])
-	
+
 def botnet(userID, ip):
 	"""
 	Botnet the user
