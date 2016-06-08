@@ -42,7 +42,7 @@ def make_app():
 		(r"/web/maps/(.*)", mapsHandler.handler),
 		(r"/d/(.*)", downloadMapHandler.handler),
 		(r"/s/(.*)", downloadMapHandler.handler),
-		(r"/replay/(.*)", getFullReplayHandler.handler),
+		(r"/web/replays/(.*)", getFullReplayHandler.handler),
 
 		(r"/api/v1/status", apiStatusHandler.handler),
 		(r"/api/v1/pp", apiPPHandler.handler),
