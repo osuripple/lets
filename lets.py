@@ -22,6 +22,7 @@ from handlers import osuSearchHandler
 from handlers import apiStatusHandler
 from handlers import apiPPHandler
 from handlers import downloadMapHandler
+from handlers import getFullReplayHandler
 
 # Tornado
 import tornado.ioloop
@@ -41,6 +42,7 @@ def make_app():
 		(r"/web/maps/(.*)", mapsHandler.handler),
 		(r"/d/(.*)", downloadMapHandler.handler),
 		(r"/s/(.*)", downloadMapHandler.handler),
+		(r"/replay/(.*)", getFullReplayHandler.handler),
 
 		(r"/api/v1/status", apiStatusHandler.handler),
 		(r"/api/v1/pp", apiPPHandler.handler),
