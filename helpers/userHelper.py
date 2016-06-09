@@ -132,7 +132,7 @@ def calculateAccuracy(userID, gameMode):
 	return -- new accuracy
 	"""
 	# Select what to sort by
-	if gamemode == 0:
+	if gameMode == 0:
 		sortby = "pp"
 	else:
 		sortby = "accuracy"
