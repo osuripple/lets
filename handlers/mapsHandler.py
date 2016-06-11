@@ -6,7 +6,7 @@ from helpers.exceptionsTracker import trackExceptions
 
 MODULE_NAME = "maps"
 class handler(requestHelper.asyncRequestHandler):
-	@trackExceptions(MODULE_NAME)
+	#@trackExceptions(MODULE_NAME)
 	def asyncGet(self, fileName = None):
 		try:
 			# Check arguments

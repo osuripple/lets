@@ -13,7 +13,7 @@ class handler(requestHelper.asyncRequestHandler):
 	"""
 	Handler for /replay/
 	"""
-	@trackExceptions(MODULE_NAME)
+	#@trackExceptions(MODULE_NAME)
 	def asyncGet(self, replayID):
 		try:
 			# Make sure the score exists

@@ -14,7 +14,7 @@ class handler(requestHelper.asyncRequestHandler):
 	"""
 	Handler for /api/v1/pp
 	"""
-	@trackExceptions(MODULE_NAME)
+	#@trackExceptions(MODULE_NAME)
 	def asyncGet(self):
 		statusCode = 400
 		data = {"message": "unknown error"}

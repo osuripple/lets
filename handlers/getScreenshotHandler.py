@@ -9,7 +9,7 @@ class handler(requestHelper.asyncRequestHandler):
 	"""
 	Handler for /ss/
 	"""
-	@trackExceptions(MODULE_NAME)
+	#@trackExceptions(MODULE_NAME)
 	def asyncGet(self, screenshotID = None):
 		try:
 			# Make sure the screenshot exists

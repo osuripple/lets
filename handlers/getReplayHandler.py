@@ -13,7 +13,7 @@ class handler(requestHelper.asyncRequestHandler):
 	"""
 	Handler for osu-getreplay.php
 	"""
-	@trackExceptions(MODULE_NAME)
+	#@trackExceptions(MODULE_NAME)
 	def asyncGet(self):
 		try:
 			# Get request ip

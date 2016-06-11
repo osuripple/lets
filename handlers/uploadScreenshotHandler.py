@@ -11,7 +11,7 @@ class handler(requestHelper.asyncRequestHandler):
 	"""
 	Handler for /web/osu-screenshot.php
 	"""
-	@trackExceptions(MODULE_NAME)
+	#@trackExceptions(MODULE_NAME)
 	def asyncPost(self):
 		try:
 			# Make sure screenshot file was passed

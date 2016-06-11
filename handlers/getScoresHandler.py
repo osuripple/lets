@@ -15,7 +15,7 @@ class handler(requestHelper.asyncRequestHandler):
 	"""
 	Handler for /web/osu-osz2-getscores.php
 	"""
-	@trackExceptions(MODULE_NAME)
+	#@trackExceptions(MODULE_NAME)
 	def asyncGet(self):
 		try:
 			# Get request ip
