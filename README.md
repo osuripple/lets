@@ -1,9 +1,9 @@
 # LETS
 ## Latest Essential Tatoe Server
 ### aka ripple's new score server
-This server handles every non-real time client feature, so:
+This server handles every non real time client feature, so:
 - Ingame scoreboards
-- Score submission (and PP calculation)
+- Score submission (and PP calculation through `oppai`)
 - Screenshots
 - Replays
 - osu!direct
