@@ -11,6 +11,9 @@ class handler(requestHelper.asyncRequestHandler):
 	"""
 	def asyncGet(self):
 		try:
+			# Get request ip
+			ip = self.getRequestIP()
+
 			# Argument check
 			if requestHelper.checkArguments(self.request.arguments, ["u", "h"]) == False:
 				raise exceptions.invalidArgumentsException(MODULE_NAME)
@@ -23,7 +26,7 @@ class handler(requestHelper.asyncRequestHandler):
 
 			# Check login
 			consoleHelper.printBanchoConnectMessage("{} ({}) wants to connect".format(username, userID))
-			if userHelper.checkLogin(userID, self.get_argument("h")) == False:
+			if userHelper.checkLogin(userID, self.get_argument("h"), ip) == False:
 				raise exceptions.loginFailedException(MODULE_NAME, username)
 
 			# Ban check

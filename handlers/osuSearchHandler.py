@@ -10,6 +10,9 @@ class handler(requestHelper.asyncRequestHandler):
 	"""
 	def asyncGet(self):
 		try:
+			# Get request ip
+			ip = self.getRequestIP()
+
 			# Check arguments
 			#if requestHelper.checkArguments(self.request.arguments, ["u", "h", "m", "r"]) == False:
 			#	raise exceptions.invalidArgumentsException(MODULE_NAME)
@@ -24,7 +27,7 @@ class handler(requestHelper.asyncRequestHandler):
 			#userID = userHelper.getID(username)
 			#if userID == 0:
 			#	raise exceptions.loginFailedException(MODULE_NAME, username)
-			#userHelper.checkLogin(userID, password)
+			#userHelper.checkLogin(userID, password, ip)
 
 			# Default values for bloodcat query
 			bcM = "0"

@@ -44,15 +44,26 @@ def exists(userID):
 	return True if glob.db.fetch("SELECT id FROM users WHERE id = %s", [userID]) != None else False
 
 
-def checkLogin(userID, password):
+def checkLogin(userID, password, ip = ""):
 	"""
 	Check userID's login with specified password
 
 	userID -- user id
 	password -- plain md5 password
+	ip -- request IP (used to check bancho active sessions). Optional.
 	return -- True or False
 	"""
+	# Check cached bancho session
+	banchoSession = False
+	if ip != "":
+		banchoSession = checkBanchoSession(userID, ip)
 
+	# Return True if there's a bancho session for this user from that ip
+	if banchoSession == True:
+		print("CACHED BANCHO SESSION FOUND!")
+		return True
+
+	# Otherwise, check password
 	# Get password data
 	passwordData = glob.db.fetch("SELECT password_md5, salt, password_version FROM users WHERE id = %s", [userID])
 
@@ -369,3 +380,14 @@ def botnet(userID, ip):
 	"""
 	glob.db.execute("""INSERT INTO ip_user (userid, ip, occurencies) VALUES (%s, %s, '1')
 						ON DUPLICATE KEY UPDATE occurencies = occurencies + 1""", [userID, ip])
+
+def checkBanchoSession(userID, ip):
+	"""
+	Return True if there is a bancho session for userID from ip
+
+	userID --
+	ip --
+	return -- True/False
+	"""
+	result = glob.db.fetch("SELECT id FROM bancho_sessions WHERE userid = %s AND ip = %s", [userID, ip])
+	return False if result == None else True

@@ -12,6 +12,9 @@ class handler(requestHelper.asyncRequestHandler):
 	"""
 	def asyncGet(self):
 		try:
+			# Get request ip
+			ip = self.getRequestIP()
+
 			# Check arguments
 			if requestHelper.checkArguments(self.request.arguments, ["c", "u", "h"]) == False:
 				raise exceptions.invalidArgumentsException(MODULE_NAME)
@@ -25,7 +28,7 @@ class handler(requestHelper.asyncRequestHandler):
 			userID = userHelper.getID(username)
 			if userID == 0:
 				raise exceptions.loginFailedException(MODULE_NAME, userID)
-			if userHelper.checkLogin(userID, password) == False:
+			if userHelper.checkLogin(userID, password, ip) == False:
 				raise exceptions.loginFailedException(MODULE_NAME, username)
 
 			# Get user ID

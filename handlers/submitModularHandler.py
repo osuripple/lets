@@ -24,6 +24,9 @@ class handler(requestHelper.asyncRequestHandler):
 	"""
 	def asyncPost(self):
 		try:
+			# Get request ip
+			ip = self.getRequestIP()
+
 			# Print arguments
 			if glob.debug == True:
 				requestHelper.printArguments(self)
@@ -56,10 +59,16 @@ class handler(requestHelper.asyncRequestHandler):
 			userID = userHelper.getID(username)
 			if userID == 0:
 				raise exceptions.loginFailedException(MODULE_NAME, userID)
-			if userHelper.checkLogin(userID, password) == False:
+			if userHelper.checkLogin(userID, password, ip) == False:
 				raise exceptions.loginFailedException(MODULE_NAME, username)
 			if userHelper.getAllowed(userID) == 0:
 				raise exceptions.userBannedException(MODULE_NAME, username)
+
+			# Check active bancho session
+			if userHelper.checkBanchoSession(userID, ip) == False:
+				# TODO: Ban (see except exceptions.noBanchoSessionException block)
+				raise exceptions.noBanchoSessionException(MODULE_NAME, username)
+
 			# Create score object and set its data
 			consoleHelper.printSubmitModularMessage("Saving {}'s score on {}...".format(username, scoreData[0]))
 			s = score.score()
@@ -129,6 +138,15 @@ class handler(requestHelper.asyncRequestHandler):
 			self.write("error: pass")
 		except exceptions.userBannedException:
 			self.write("error: ban")
+		except exceptions.noBanchoSessionException:
+			# We don't have an active bancho session.
+			# Don't ban the user but tell the client to send the score again.
+			# Once we are sure that this error doesn't get triggered when it
+			# shouldn't (eg: bancho restart), we'll ban users that submit
+			# scores without an active bancho session.
+			# We only log through schiavo atm (see exceptions.py).
+			self.write("error: pass")
+			self.send_error(408)
 		except:
 			# Try except block to avoid more errors
 			try:

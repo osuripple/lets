@@ -1,5 +1,6 @@
 from helpers import consoleHelper
 from constants import bcolors
+from helpers import discordBotHelper
 
 class invalidArgumentsException(Exception):
 	def __init__(self, handler):
@@ -12,6 +13,11 @@ class loginFailedException(Exception):
 class userBannedException(Exception):
 	def __init__(self, handler, who):
 		consoleHelper.printColored("[{}] {} is banned".format(handler, who), bcolors.RED)
+
+class noBanchoSessionException(Exception):
+	def __init__(self, handler, who):
+		consoleHelper.printColored("[{}] {} has no active bancho session".format(handler, who), bcolors.RED)
+		discordBotHelper.sendConfidential("{username} has tried to submit a score without an active bancho session. If this happens ofter, {username} is trying to use a score submitter.".format(username=who))
 
 class osuApiFailException(Exception):
 	def __init__(self, handler):
