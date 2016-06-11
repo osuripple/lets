@@ -26,7 +26,7 @@ $ pip install bcrypt
 then, run LETS once to create the default config file and edit it
 ```
 $ python3 lets.py
-$ nano lets.py
+$ nano config.ini
 ```
 finally, configure oppai as described below
 
