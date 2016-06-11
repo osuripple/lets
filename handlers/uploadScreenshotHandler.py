@@ -1,15 +1,17 @@
 import glob
 from constants import exceptions
 from helpers import generalHelper
-from helpers import consoleHelper
 from helpers import requestHelper
 import os
+from helpers import logHelper as log
+from helpers.exceptionsTracker import trackExceptions
 
 MODULE_NAME = "screenshot"
 class handler(requestHelper.asyncRequestHandler):
 	"""
 	Handler for /web/osu-screenshot.php
 	"""
+	@trackExceptions(MODULE_NAME)
 	def asyncPost(self):
 		try:
 			# Make sure screenshot file was passed
@@ -28,7 +30,7 @@ class handler(requestHelper.asyncRequestHandler):
 				f.write(self.request.files["ss"][0]["body"])
 
 			# Output
-			consoleHelper.printScreenshotsMessage("New screenshot ({})".format(screenshotID))
+			log.info("New screenshot ({})".format(screenshotID))
 
 			# Return screenshot link
 			self.write("{}/ss/{}.jpg".format(glob.conf.config["server"]["serverurl"], screenshotID))

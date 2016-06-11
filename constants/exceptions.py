@@ -1,38 +1,32 @@
-from helpers import consoleHelper
-from constants import bcolors
-from helpers import discordBotHelper
+from helpers import logHelper as log
 
 class invalidArgumentsException(Exception):
 	def __init__(self, handler):
-		consoleHelper.printColored("[{}] Invalid arguments".format(handler), bcolors.RED)
+		log.warning("{} - Invalid arguments".format(handler))
 
 class loginFailedException(Exception):
 	def __init__(self, handler, who):
-		consoleHelper.printColored("[{}] {}'s Login failed".format(handler, who), bcolors.RED)
+		log.warning("{} - {}'s Login failed".format(handler, who))
 
 class userBannedException(Exception):
 	def __init__(self, handler, who):
-		consoleHelper.printColored("[{}] {} is banned".format(handler, who), bcolors.RED)
+		log.warning("{} - {} is banned".format(handler, who))
 
 class noBanchoSessionException(Exception):
-	def __init__(self, handler, who):
-		consoleHelper.printColored("[{}] {} has no active bancho session".format(handler, who), bcolors.RED)
-		discordBotHelper.sendConfidential("{username} has tried to submit a score without an active bancho session. If this happens ofter, {username} is trying to use a score submitter.".format(username=who))
+	def __init__(self, handler, who, ip):
+		log.warning("{handler} - {username} has tried to submit a score from {ip} without an active bancho session from that ip. If this happens often, {username} is trying to use a score submitter.".format(handler=handler, ip=ip, username=who), True)
 
 class osuApiFailException(Exception):
-	def __init__(self, handler):
-		consoleHelper.printColored("[{}] Invalid data from osu!api".format(handler), bcolors.RED)
+	def __init__(self):
+		log.warning("{} - Invalid data from osu!api".format(handler))
 
 class fileNotFoundException(Exception):
-	def __init__(self, handler, file):
-		consoleHelper.printColored("[{}] File not found ({})".format(handler, file), bcolors.RED)
+	def __init__(self, file):
+		log.warning("{} - File not found ({})".format(handler, file))
 
 class invalidBeatmapException(Exception):
 	pass
 
 class beatmapTooLongException(Exception):
 	def __init__(self, handler):
-		consoleHelper.printColored("[{}] Requested beatmap is too long.".format(handler), bcolors.RED)
-
-class fuck(Exception):
-	pass
+		log.warning("{} - Requested beatmap is too long.".format(handler))

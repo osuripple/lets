@@ -1,9 +1,5 @@
-import tornado.web
-from helpers import consoleHelper
-from constants import bcolors
 from helpers import aeshelper
 from helpers import userHelper
-from helpers import discordBotHelper
 import score
 import os
 import glob
@@ -13,15 +9,16 @@ from helpers import requestHelper
 from helpers import leaderboardHelper
 import sys
 import traceback
-
-#if os.path.isfile("rippoppai.py"):
-#	import rippoppai
+from helpers import logHelper as log
+from helpers.exceptionsTracker import trackExceptions
 
 MODULE_NAME = "submit_modular"
 class handler(requestHelper.asyncRequestHandler):
 	"""
 	Handler for /web/osu-submit-modular.php
 	"""
+	#@trackExceptions(MODULE_NAME)
+	# nope, we track exceptions manually here
 	def asyncPost(self):
 		try:
 			# Get request ip
@@ -50,8 +47,7 @@ class handler(requestHelper.asyncRequestHandler):
 				aeskey = "h89f2-890h2h89b34g-h80g134n90133"
 
 			# Get score data
-			consoleHelper.printColored("----", bcolors.YELLOW)
-			consoleHelper.printSubmitModularMessage("Decrypting score data...")
+			log.debug("Decrypting score data...")
 			scoreData = aeshelper.decryptRinjdael(aeskey, iv, scoreDataEnc, True).split(":")
 			username = scoreData[1].strip()
 
@@ -67,10 +63,10 @@ class handler(requestHelper.asyncRequestHandler):
 			# Check active bancho session
 			if userHelper.checkBanchoSession(userID, ip) == False:
 				# TODO: Ban (see except exceptions.noBanchoSessionException block)
-				raise exceptions.noBanchoSessionException(MODULE_NAME, username)
+				raise exceptions.noBanchoSessionException(MODULE_NAME, username, ip)
 
 			# Create score object and set its data
-			consoleHelper.printSubmitModularMessage("Saving {}'s score on {}...".format(username, scoreData[0]))
+			log.info("{} has submitted a score on {}...".format(username, scoreData[0]))
 			s = score.score()
 			s.setDataFromScoreData(scoreData)
 
@@ -82,7 +78,7 @@ class handler(requestHelper.asyncRequestHandler):
 			# Ban obvious cheaters
 			if s.pp >= 700:
 				userHelper.setAllowed(userID, 0)
-				discordBotHelper.sendConfidential("{} ({}) has been banned due to too high pp gain ({}pp)".format(username, userID, s.pp))
+				log.warning("{} ({}) has been banned due to too high pp gain ({}pp)".format(username, userID, s.pp), True)
 
 			# Save score in db
 			s.saveScoreInDB()
@@ -90,27 +86,27 @@ class handler(requestHelper.asyncRequestHandler):
 			# Make sure process list has been passed
 			if s.completed == 3 and "pl" not in self.request.arguments:
 				userHelper.setAllowed(userID, 0)
-				discordBotHelper.sendConfidential("{} ({}) has been banned due to missing process list".format(username, userID))
+				log.warning("{} ({}) has been banned due to missing process list".format(username, userID), True)
 
 			# Save replay
 			if s.passed == True and s.completed == 3:
 				if "score" not in self.request.files:
 					# Ban if no replay passed
 					userHelper.setAllowed(userID, 0)
-					discordBotHelper.sendConfidential("{} ({}) has been banned due to replay not found on map {}".format(username, userID, s.fileMd5))
+					log.warning("{} ({}) has been banned due to replay not found on map {}".format(username, userID, s.fileMd5), True)
 				else:
 					# Otherwise, save the replay
-					consoleHelper.printSubmitModularMessage("Saving replay ({})...".format(s.scoreID))
+					log.debug("Saving replay ({})...".format(s.scoreID))
 					replay = self.request.files["score"][0]["body"]
 					with open(".data/replays/replay_{}.osr".format(s.scoreID), "wb") as f:
 						f.write(replay)
 
 			# Make sure the replay has been saved (debug)
 			if not os.path.isfile(".data/replays/replay_{}.osr".format(s.scoreID)) and s.completed == 3:
-				discordBotHelper.sendConfidential("Replay for score {} not saved!!".format(s.scoreID), True)
+				log.error("Replay for score {} not saved!!".format(s.scoreID), True)
 
 			# Update users stats (total/ranked score, playcount, level and acc)
-			consoleHelper.printSubmitModularMessage("Updating {}'s stats...".format(username))
+			log.debug("Updating {}'s stats...".format(username))
 			userHelper.updateStats(userID, s)
 
 			# Update leaderboard
@@ -130,7 +126,7 @@ class handler(requestHelper.asyncRequestHandler):
 			userHelper.botnet(userID, ip)
 
 			# Done!
-			consoleHelper.printSubmitModularMessage("Done!")
+			log.debug("Done!")
 			self.write("ok")
 		except exceptions.invalidArgumentsException:
 			pass
@@ -150,9 +146,7 @@ class handler(requestHelper.asyncRequestHandler):
 		except:
 			# Try except block to avoid more errors
 			try:
-				msg = "Unknown error in score submission!\n```{}\n{}```".format(sys.exc_info(), traceback.format_exc())
-				consoleHelper.printColored("[!] {}".format(msg), bcolors.RED)
-				discordBotHelper.sendConfidential(msg, True)
+				log.error("Unknown error in {}!\n```{}\n{}```".format(MODULE_NAME, sys.exc_info(), traceback.format_exc()), True)
 			except:
 				pass
 

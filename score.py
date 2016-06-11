@@ -1,12 +1,11 @@
 from lets import glob
 from helpers import userHelper
 from helpers import scoreHelper
-from helpers import consoleHelper
 from helpers import generalHelper
-from constants import bcolors
 from constants import rankedStatuses
 import beatmap
 import os
+from helpers import logHelper as log
 if os.path.isfile("rippoppai.py"):
 	import rippoppai
 
@@ -215,7 +214,7 @@ class score:
 					self.rankedScoreIncrease = 0
 					self.oldPersonalBest = 0
 
-		consoleHelper.printColored("COMPLETED STATUS IS {}".format(self.completed), bcolors.GREEN)
+		log.debug("Completed status: {}".format(self.completed))
 
 	def saveScoreInDB(self):
 		"""
@@ -246,4 +245,4 @@ class score:
 			else:
 				self.pp = 0
 		else:
-			consoleHelper.printColored("[!] Completed status is {}. PP calc for this score skipped.".format(self.completed), bcolors.YELLOW)
+			log.debug("Completed status is {}. PP calc for this score skipped.".format(self.completed))

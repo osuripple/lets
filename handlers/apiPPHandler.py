@@ -3,17 +3,18 @@ from helpers import requestHelper
 from constants import exceptions
 import beatmap
 from helpers import osuapiHelper
-from helpers import consoleHelper
 import rippoppai
-import glob
 import traceback
 import sys
+from helpers import logHelper as log
+from helpers.exceptionsTracker import trackExceptions
 
 MODULE_NAME = "api/pp"
 class handler(requestHelper.asyncRequestHandler):
 	"""
 	Handler for /api/v1/pp
 	"""
+	@trackExceptions(MODULE_NAME)
 	def asyncGet(self):
 		statusCode = 400
 		data = {"message": "unknown error"}
@@ -47,7 +48,7 @@ class handler(requestHelper.asyncRequestHandler):
 				accuracy = -1.0
 
 			# Print message
-			consoleHelper.printApiMessage(MODULE_NAME, "Requested pp for beatmap {}".format(beatmapID))
+			log.info("Requested pp for beatmap {}".format(beatmapID))
 
 			# Get beatmap md5 from osuapi
 			# TODO: Move this to beatmap object
@@ -70,21 +71,21 @@ class handler(requestHelper.asyncRequestHandler):
 				# Get cached pp values
 				cachedPP = bmap.getCachedTillerinoPP()
 				if cachedPP != [0,0,0,0]:
-					consoleHelper.printApiMessage(MODULE_NAME, "Got cached pp.")
+					log.debug("Got cached pp.")
 					returnPP = cachedPP
 				else:
-					consoleHelper.printApiMessage(MODULE_NAME, "Cached pp not found. Calculating pp with oppai...")
+					log.debug("Cached pp not found. Calculating pp with oppai...")
 					# Cached pp not found, calculate them
 					oppai = rippoppai.oppai(bmap, mods=modsEnum, tillerino=True)
 					returnPP = oppai.pp
 
 					# Cache values in DB
-					consoleHelper.printApiMessage(MODULE_NAME, "Saving cached pp...")
+					log.debug("Saving cached pp...")
 					bmap.saveCachedTillerinoPP(returnPP)
 			else:
 				# Specific accuracy, calculate
 				# Create oppai instance
-				consoleHelper.printApiMessage(MODULE_NAME, "Specific request ({}%/{}). Calculating pp with oppai...".format(accuracy, modsEnum))
+				log.debug("Specific request ({}%/{}). Calculating pp with oppai...".format(accuracy, modsEnum))
 				oppai = rippoppai.oppai(bmap, mods=modsEnum, tillerino=True)
 				if accuracy > 0:
 					returnPP.append(calculatePPFromAcc(oppai, accuracy))
@@ -119,8 +120,7 @@ class handler(requestHelper.asyncRequestHandler):
 			data["status"] = statusCode
 
 			# Debug output
-			if glob.debug == True:
-				print(str(data))
+			log.debug(str(data))
 
 			# Send response
 			self.clear()

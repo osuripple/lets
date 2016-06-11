@@ -1,15 +1,19 @@
 import os
-from helpers import consoleHelper
 from helpers import requestHelper
 from helpers import userHelper
 from constants import exceptions
 import glob
+import sys
+import traceback
+from helpers import logHelper as log
+from helpers.exceptionsTracker import trackExceptions
 
 MODULE_NAME = "get_replay"
 class handler(requestHelper.asyncRequestHandler):
 	"""
 	Handler for osu-getreplay.php
 	"""
+	@trackExceptions(MODULE_NAME)
 	def asyncGet(self):
 		try:
 			# Get request ip
@@ -40,13 +44,14 @@ class handler(requestHelper.asyncRequestHandler):
 					userHelper.incrementReplaysWatched(replayData["userid"], replayData["play_mode"])
 
 			# Serve replay
-			consoleHelper.printGetReplayMessage("Serving replay_{}.osr".format(replayID))
+			log.info("Serving replay_{}.osr".format(replayID))
 			fileName = ".data/replays/replay_{}.osr".format(replayID)
 			if os.path.isfile(fileName):
 				with open(fileName, "rb") as f:
 					fileContent = f.read()
 				self.write(fileContent)
 			else:
+				log.warning("Replay {} doesn't exist".format(replayID))
 				self.write("")
 		except exceptions.invalidArgumentsException:
 			pass

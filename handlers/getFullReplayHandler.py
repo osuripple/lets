@@ -1,19 +1,19 @@
 import os
-from helpers import consoleHelper
 from helpers import requestHelper
-from helpers import userHelper
 from constants import exceptions
 import glob
 
 from helpers import binaryHelper
 from constants import dataTypes
 from helpers import generalHelper
+from helpers.exceptionsTracker import trackExceptions
 
 MODULE_NAME = "get_full_replay"
 class handler(requestHelper.asyncRequestHandler):
 	"""
 	Handler for /replay/
 	"""
+	@trackExceptions(MODULE_NAME)
 	def asyncGet(self, replayID):
 		try:
 			# Make sure the score exists

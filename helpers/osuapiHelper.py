@@ -2,12 +2,11 @@ import requests
 import json
 from lets import glob
 from helpers import generalHelper
-from constants import bcolors
-from helpers import consoleHelper
 import glob
 from urllib.parse import quote
-
-import unicodedata
+from helpers import logHelper as log
+import sys
+import traceback
 
 def osuApiRequest(request, params):
 	"""
@@ -34,8 +33,7 @@ def osuApiRequest(request, params):
 		else:
 			return None
 	except:
-		consoleHelper.printColored("[!] Error while contacting osu!api", bcolors.RED)
-		raise
+		log.error("Unknown error while contacting osu! api!\n```{}\n{}```".format(sys.exc_info(), traceback.format_exc()), True)
 		return None
 
 def getOsuFileFromName(fileName):
@@ -56,8 +54,7 @@ def getOsuFileFromName(fileName):
 		response = requests.get(URL, timeout=20).text
 		return response
 	except:
-		consoleHelper.printColored("[!] Error while downloading .osu file (name)", bcolors.RED)
-		raise
+		log.error("Unknown error while downloading {}.osu!\n```{}\n{}```".format(fileName, sys.exc_info(), traceback.format_exc()), True)
 		return None
 
 def getOsuFileFromID(beatmapID):
@@ -78,8 +75,7 @@ def getOsuFileFromID(beatmapID):
 		response = requests.get(URL, timeout=20).text
 		return response
 	except:
-		consoleHelper.printColored("[!] Error while downloading .osu file (id)", bcolors.RED)
-		raise
+		log.error("Unknown error while downloading {}.osu!\n```{}\n{}```".format(beatmapID, sys.exc_info(), traceback.format_exc()), True)
 		return None
 
 def bloodcatRequest(URL):
@@ -88,7 +84,7 @@ def bloodcatRequest(URL):
 		response = json.loads(response)
 		return response
 	except:
-		raise
+		log.error("Unknown error while contacting Bloodcat!\n```{}\n{}```".format(sys.exc_info(), traceback.format_exc()), True)
 		return None
 
 def bloodcatToDirect(data, np = False):

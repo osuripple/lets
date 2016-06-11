@@ -7,7 +7,7 @@ from helpers import databaseHelperNew
 from helpers import config
 from helpers import generalHelper
 from constants import bcolors
-from helpers import discordBotHelper
+from helpers import logHelper as log
 from multiprocessing.pool import ThreadPool
 
 # Handlers
@@ -112,13 +112,18 @@ if __name__ == "__main__":
 		if int(glob.conf.config["server"]["beatmapcacheexpire"]) > 0:
 			consoleHelper.printColored("[!] IMPORTANT! Your beatmapcacheexpire in config.ini is > 0 and osu!api features are disabled.\nWe do not reccoment this, because too old beatmaps will be shown as unranked.\nSet beatmapcacheexpire to 0 to disable beatmap latest update check and fix that issue.", bcolors.YELLOW)
 
+	# Discord
+	glob.discord = generalHelper.stringToBool(glob.conf.config["discord"]["enable"])
+	if glob.discord == False:
+		consoleHelper.printColored("[!] Warning! Discord logging is disabled!", bcolors.YELLOW)
+
 	# Check debug mods
 	glob.debug = generalHelper.stringToBool(glob.conf.config["server"]["debug"])
 	if glob.debug == True:
-		consoleHelper.printColored("[!] LETS is running in debug mode.", bcolors.YELLOW)
+		consoleHelper.printColored("[!] Warning! Server running in debug mode!", bcolors.YELLOW)
 
 	# Start the server
-	discordBotHelper.sendConfidential("TATOE! (lets started)")
+	log.logMessage("Server started!", discord=True, of="info.txt", stdout=False)
 
 	serverPort = int(glob.conf.config["server"]["port"])
 	consoleHelper.printColored("> L.E.T.S. is listening for clients on 127.0.0.1:{}...".format(serverPort), bcolors.GREEN)

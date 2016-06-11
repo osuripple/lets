@@ -1,9 +1,7 @@
 import glob
 from helpers import scoreHelper
 from helpers import userHelper
-from helpers import consoleHelper
-from helpers import discordBotHelper
-from constants import bcolors
+from helpers import logHelper as log
 import sys
 import traceback
 
@@ -71,7 +69,6 @@ def update(userID, newScore, gameMode):
 		newPlayer = False
 		us = glob.db.fetch("SELECT * FROM leaderboard_{} WHERE user=%s".format(mode), [userID])
 		if us == None:
-			consoleHelper.printDebugMessage("New player")
 			newPlayer = True
 
 		# Find player who is right below our score
@@ -99,11 +96,10 @@ def update(userID, newScore, gameMode):
 			glob.db.execute("UPDATE leaderboard_{} SET position = position + 1 WHERE position < %s AND position >= %s ORDER BY position DESC".format(mode), [us["position"], newT])
 
 		if newT <= 1:
-			discordBotHelper.sendConfidential("{} is now #{} ({})".format(userID, newT, mode))
+			log.info("{} is now #{} ({})".format(userID, newT, mode), True)
 
 		# Finally, insert the user back.
 		glob.db.execute("INSERT INTO leaderboard_{} (position, user, v) VALUES (%s, %s, %s);".format(mode), [newT, userID, newScore])
 	except:
 		msg = "Unknown error while updating the leaderboard!\n```{}\n{}```".format(sys.exc_info(), traceback.format_exc())
-		consoleHelper.printColored("[!] {}".format(msg), bcolors.RED)
-		discordBotHelper.sendConfidential(msg, True)
+		log.error("{}".format(msg), True)

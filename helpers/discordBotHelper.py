@@ -1,9 +1,8 @@
 import requests
-from lets import glob
-from helpers import generalHelper
+import glob
 from urllib.parse import urlencode
 
-def sendDiscordMessage(channel, message, alertDev = False):
+def sendDiscordMessage(channel, message, alertDev = False, prefix = "**LETS**"):
 	"""
 	Send a message to a discord server.
 	This is used with ripple's schiavobot.
@@ -11,11 +10,12 @@ def sendDiscordMessage(channel, message, alertDev = False):
 	channel -- bunk, staff or general
 	message -- message to send
 	alertDev -- if True, hl developers group
+	prefix -- string to prepend to message
 	"""
-	if generalHelper.stringToBool(glob.conf.config["discord"]["enable"]) == True:
+	if glob.discord == True:
 		for _ in range(0,20):
 			try:
-				finalMsg = message if alertDev == False else "{} - {}".format(glob.conf.config["discord"]["devgroup"], message)
+				finalMsg = "{prefix} {message}".format(prefix=prefix, message=message) if alertDev == False else "{prefix} {hl} - {message}".format(prefix=prefix, hl=glob.conf.config["discord"]["devgroup"], message=message)
 				requests.get("{}/{}?{}".format(glob.conf.config["discord"]["boturl"], channel, urlencode({ "message": finalMsg })))
 				break
 			except:
@@ -47,3 +47,12 @@ def sendGeneral(message):
 	message -- message to send
 	"""
 	sendDiscordMessage("general", message)
+
+
+def sendChatlog(message):
+	"""
+	Send a message to #chatlog
+
+	message -- message to send
+	"""
+	sendDiscordMessage("chatlog", message, prefix="")

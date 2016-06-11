@@ -67,6 +67,7 @@ def printArguments(t):
 
 	t -- tornado object (self)
 	"""
-	print("ARGS::")
+	msg = "ARGS::"
 	for i in t.request.arguments:
-		print ("{}={}".format(i, t.get_argument(i)))
+		msg += "{}={}\r\n".format(i, t.get_argument(i))
+	log.debug(msg)

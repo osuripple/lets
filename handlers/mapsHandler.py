@@ -1,10 +1,12 @@
 from helpers import osuapiHelper
 from constants import exceptions
-from helpers import consoleHelper
 from helpers import requestHelper
+from helpers import logHelper as log
+from helpers.exceptionsTracker import trackExceptions
 
 MODULE_NAME = "maps"
 class handler(requestHelper.asyncRequestHandler):
+	@trackExceptions(MODULE_NAME)
 	def asyncGet(self, fileName = None):
 		try:
 			# Check arguments
@@ -14,7 +16,7 @@ class handler(requestHelper.asyncRequestHandler):
 				raise exceptions.invalidArgumentsException(MODULE_NAME)
 
 			fileNameShort = fileName[:32]+"..." if len(fileName) > 32 else fileName[:-4]
-			consoleHelper.printMapsMessage("Requested .osu file {}".format(fileNameShort))
+			log.info("Requested .osu file {}".format(fileNameShort))
 
 			# Get .osu file from osu! server
 			fileContent = osuapiHelper.getOsuFileFromName(fileName)

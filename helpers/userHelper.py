@@ -1,9 +1,8 @@
 from lets import glob
 from helpers import scoreHelper
-from helpers import consoleHelper
-from constants import bcolors
 from helpers import passwordHelper
 import time
+from helpers import logHelper as log
 
 def getID(username):
 	"""
@@ -60,7 +59,7 @@ def checkLogin(userID, password, ip = ""):
 
 	# Return True if there's a bancho session for this user from that ip
 	if banchoSession == True:
-		print("CACHED BANCHO SESSION FOUND!")
+		log.debug("Found cached bancho session")
 		return True
 
 	# Otherwise, check password
@@ -238,7 +237,7 @@ def updateStats(userID, __score):
 
 	# Make sure the user exists
 	if not exists(userID):
-		consoleHelper.printColored("[!] User {} doesn't exist.".format(userID), bcolors.RED)
+		log.warning("User {} doesn't exist.".format(userID))
 		return
 
 	# Get gamemode for db

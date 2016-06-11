@@ -1,14 +1,16 @@
 from helpers import userHelper
-from helpers import consoleHelper
 import glob
 from constants import exceptions
 from helpers import requestHelper
+from helpers import logHelper as log
+from helpers.exceptionsTracker import trackExceptions
 
 MODULE_NAME = "bancho_connect"
 class handler(requestHelper.asyncRequestHandler):
 	"""
 	Handler for /web/bancho_connect.php
 	"""
+	@trackExceptions(MODULE_NAME)
 	def asyncGet(self):
 		try:
 			# Get request ip
@@ -25,7 +27,7 @@ class handler(requestHelper.asyncRequestHandler):
 				raise exceptions.loginFailedException(MODULE_NAME, username)
 
 			# Check login
-			consoleHelper.printBanchoConnectMessage("{} ({}) wants to connect".format(username, userID))
+			log.info("{} ({}) wants to connect".format(username, userID))
 			if userHelper.checkLogin(userID, self.get_argument("h"), ip) == False:
 				raise exceptions.loginFailedException(MODULE_NAME, username)
 

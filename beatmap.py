@@ -1,7 +1,6 @@
 from constants import rankedStatuses
-from constants import bcolors
 from helpers import osuapiHelper
-from helpers import consoleHelper
+from helpers import logHelper as log
 #from helpers import discordBotHelper
 import glob
 import time
@@ -44,12 +43,12 @@ class beatmap:
 		bid = glob.db.fetch("SELECT id FROM beatmaps WHERE beatmap_md5 = %s", [self.fileMD5])
 		if bid != None:
 			# This beatmap is already in db, remove old record
-			consoleHelper.printGetScoresMessage("Deleting old beatmap data ({})".format(bid["id"]))
+			log.debug("Deleting old beatmap data ({})".format(bid["id"]))
 			glob.db.execute("DELETE FROM beatmaps WHERE id = %s", [bid["id"]])
 
 		# Add new beatmap data
 		try:
-			consoleHelper.printGetScoresMessage("Saving beatmap data in db...")
+			log.debug("Saving beatmap data in db...")
 			glob.db.execute("INSERT INTO `beatmaps` (`id`, `beatmap_id`, `beatmapset_id`, `beatmap_md5`, `song_name`, `ar`, `od`, `difficulty`, `max_combo`, `hit_length`, `bpm`, `ranked`, `latest_update`) VALUES (NULL, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);", [
 				self.beatmapID,
 				self.beatmapSetID,
@@ -65,9 +64,8 @@ class beatmap:
 				int(time.time())
 			])
 		except:
-			consoleHelper.printColored("[!] Error while saving beatmap data in db", bcolors.RED)
-			consoleHelper.printColored(sys.exc_info(), bcolors.RED)
-			consoleHelper.printColored(traceback.format_exc(), bcolors.RED)
+			msg = "Error while saving beatmap data in db```\r\n{}\r\n{}```".format(sys.exc_info(), traceback.format_exc())
+			log.error(msg, True)
 
 	def setDataFromDB(self, md5):
 		"""
@@ -88,7 +86,7 @@ class beatmap:
 			return False
 
 		# Data in DB, set beatmap data
-		consoleHelper.printGetScoresMessage("Got beatmap data from db")
+		log.debug("Got beatmap data from db")
 		self.setDataFromDict(data)
 		return True
 
@@ -135,7 +133,7 @@ class beatmap:
 
 
 		# We have data from osu!api, set beatmap data
-		consoleHelper.printGetScoresMessage("Got beatmap data from osu!api")
+		log.debug("Got beatmap data from osu!api")
 		self.songName = "{} - {} [{}]".format(data["artist"], data["title"], data["version"])
 		self.fileMD5 = md5
 		self.rankedStatus = int(convertRankedStatus(data["approved"]))

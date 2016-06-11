@@ -1,13 +1,15 @@
 from constants import exceptions
-from helpers import consoleHelper
 from helpers import requestHelper
+from helpers import logHelper as log
 import os
+from helpers.exceptionsTracker import trackExceptions
 
 MODULE_NAME = "get_screenshot"
 class handler(requestHelper.asyncRequestHandler):
 	"""
 	Handler for /ss/
 	"""
+	@trackExceptions(MODULE_NAME)
 	def asyncGet(self, screenshotID = None):
 		try:
 			# Make sure the screenshot exists
@@ -19,7 +21,7 @@ class handler(requestHelper.asyncRequestHandler):
 				data = f.read()
 
 			# Output
-			consoleHelper.printScreenshotsMessage("Served screenshot {}".format(screenshotID))
+			log.info("Served screenshot {}".format(screenshotID))
 
 			# Display screenshot
 			self.set_header("Content-type", "image/jpg")

@@ -5,6 +5,7 @@ import time
 import hashlib
 from functools import partial
 from constants import mods
+from time import gmtime, strftime
 
 def randomString(length = 8):
 	return ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(length))
@@ -116,3 +117,11 @@ def getRank(gameMode, __mods, acc, c300, c100, c50, cmiss):
 		return "D"
 
 	return "A"
+
+
+def getTimestamp():
+	"""
+	Return current time in YYYY-MM-DD HH:MM:SS format.
+	Used in logs.
+	"""
+	return strftime("%Y-%m-%d %H:%M:%S", gmtime())

@@ -1,20 +1,21 @@
 import beatmap
 import scoreboard
 import glob
-from helpers import consoleHelper
-from constants import bcolors
 from constants import exceptions
 from helpers import requestHelper
 from helpers import discordBotHelper
 from helpers import userHelper
 import sys
 import traceback
+from helpers import logHelper as log
+from helpers.exceptionsTracker import trackExceptions
 
 MODULE_NAME = "get_scores"
 class handler(requestHelper.asyncRequestHandler):
 	"""
 	Handler for /web/osu-osz2-getscores.php
 	"""
+	@trackExceptions(MODULE_NAME)
 	def asyncGet(self):
 		try:
 			# Get request ip
@@ -50,13 +51,12 @@ class handler(requestHelper.asyncRequestHandler):
 			# Hax check
 			if "a" in self.request.arguments:
 				if int(self.get_argument("a")) == 1 and not userHelper.getAqn(userID):
-					discordBotHelper.sendConfidential("Found AQN folder on user {} ({})".format(username, userID))
+					log.warning("Found AQN folder on user {} ({})".format(username, userID), True)
 					userHelper.setAqn(userID)
 
 			# Console output
-			consoleHelper.printColored("----", bcolors.PINK)
 			fileNameShort = fileName[:32]+"..." if len(fileName) > 32 else fileName[:-4]
-			consoleHelper.printGetScoresMessage("Requested beatmap {} ({})".format(fileNameShort, md5))
+			log.info("Requested beatmap {} ({})".format(fileNameShort, md5))
 
 			# Create beatmap object and set its data
 			bmap = beatmap.beatmap(md5, beatmapSetID)
@@ -75,9 +75,5 @@ class handler(requestHelper.asyncRequestHandler):
 			self.write("error: ban")
 		except exceptions.loginFailedException:
 			self.write("error: pass")
-		except:
-			msg = "Unknown error in get scores!\n```{}\n{}```".format(sys.exc_info(), traceback.format_exc())
-			consoleHelper.printColored("[!] {}".format(msg), bcolors.RED)
-			discordBotHelper.sendConfidential(msg, True)
 		finally:
 			self.finish()
