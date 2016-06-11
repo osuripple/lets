@@ -60,8 +60,8 @@ class handler(requestHelper.asyncRequestHandler):
 			if userHelper.getAllowed(userID) == 0:
 				raise exceptions.userBannedException(MODULE_NAME, username)
 
-			# Check active bancho session
-			if userHelper.checkBanchoSession(userID, ip) == False:
+			# Check active bancho session (NOTE: it searches only by userID, not ip)
+			if userHelper.checkBanchoSession(userID) == False:
 				# TODO: Ban (see except exceptions.noBanchoSessionException block)
 				raise exceptions.noBanchoSessionException(MODULE_NAME, username, ip)
 

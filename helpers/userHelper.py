@@ -385,13 +385,17 @@ def botnet(userID, ip):
 	glob.db.execute("""INSERT INTO ip_user (userid, ip, occurencies) VALUES (%s, %s, '1')
 						ON DUPLICATE KEY UPDATE occurencies = occurencies + 1""", [userID, ip])
 
-def checkBanchoSession(userID, ip):
+def checkBanchoSession(userID, ip = ""):
 	"""
 	Return True if there is a bancho session for userID from ip
 
 	userID --
-	ip --
+	ip -- optional
 	return -- True/False
 	"""
-	result = glob.db.fetch("SELECT id FROM bancho_sessions WHERE userid = %s AND ip = %s", [userID, ip])
+	if ip != "":
+		result = glob.db.fetch("SELECT id FROM bancho_sessions WHERE userid = %s AND ip = %s", [userID, ip])
+	else:
+		result = glob.db.fetch("SELECT id FROM bancho_sessions WHERE userid = %s", [userID])
+
 	return False if result == None else True
