@@ -115,6 +115,8 @@ class handler(requestHelper.asyncRequestHandler):
 		except exceptions.beatmapTooLongException:
 			statusCode = 400
 			data["message"] = "requested beatmap is too long"
+		except:
+			log.error("Unknown error in {}!\n```{}\n{}```".format(MODULE_NAME, sys.exc_info(), traceback.format_exc()), True)
 		finally:
 			# Add status code to data
 			data["status"] = statusCode
