@@ -23,6 +23,7 @@ from handlers import apiStatusHandler
 from handlers import apiPPHandler
 from handlers import downloadMapHandler
 from handlers import getFullReplayHandler
+from handlers import verifyHandler
 
 # Tornado
 import tornado.ioloop
@@ -43,6 +44,7 @@ def make_app():
 		(r"/d/(.*)", downloadMapHandler.handler),
 		(r"/s/(.*)", downloadMapHandler.handler),
 		(r"/web/replays/(.*)", getFullReplayHandler.handler),
+		(r"/p/verify", verifyHandler.handler),
 
 		(r"/api/v1/status", apiStatusHandler.handler),
 		(r"/api/v1/pp", apiPPHandler.handler),

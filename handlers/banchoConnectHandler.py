@@ -35,6 +35,10 @@ class handler(requestHelper.asyncRequestHandler):
 			if userHelper.getAllowed(userID) == 0:
 				raise exceptions.userBannedException(MODULE_NAME, username)
 
+			# 2FA check
+			if userHelper.check2FA(userID, ip):
+				raise exceptions.need2FAException(MODULE_NAME, username)
+
 			# Update latest activity
 			userHelper.updateLatestActivity(userID)
 
@@ -44,8 +48,10 @@ class handler(requestHelper.asyncRequestHandler):
 		except exceptions.invalidArgumentsException:
 			pass
 		except exceptions.loginFailedException:
-			self.write("error: pass")
+			self.write("error: pass\n")
 		except exceptions.userBannedException:
 			pass
+		except exceptions.need2FAException:
+			self.write("error: verify\n")
 		finally:
 			self.finish()
