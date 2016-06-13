@@ -3,6 +3,7 @@ import tornado.web
 import tornado.gen
 from tornado.ioloop import IOLoop
 import glob
+from helpers import logHelper as log
 
 class asyncRequestHandler(tornado.web.RequestHandler):
 	"""
