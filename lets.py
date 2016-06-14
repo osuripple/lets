@@ -19,6 +19,7 @@ from handlers import mapsHandler
 from handlers import uploadScreenshotHandler
 from handlers import getScreenshotHandler
 from handlers import osuSearchHandler
+from handlers import osuSearchSetHandler
 from handlers import apiStatusHandler
 from handlers import apiPPHandler
 from handlers import downloadMapHandler
@@ -39,6 +40,7 @@ def make_app():
 		(r"/web/osu-getreplay.php", getReplayHandler.handler),
 		(r"/web/osu-screenshot.php", uploadScreenshotHandler.handler),
 		(r"/web/osu-search.php", osuSearchHandler.handler),
+		(r"/web/osu-search-set.php", osuSearchSetHandler.handler),
 		(r"/ss/(.*)", getScreenshotHandler.handler),
 		(r"/web/maps/(.*)", mapsHandler.handler),
 		(r"/d/(.*)", downloadMapHandler.handler),
