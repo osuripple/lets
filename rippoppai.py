@@ -44,7 +44,7 @@ class oppai:
 	# Folder where oppai is placed
 	OPPAI_FOLDER = "../oppai"
 
-	def __init__(self, __beatmap, __score = None, acc = 0, mods = 0, tillerino = False):
+	def __init__(self, __beatmap, __score = None, acc = 0, mods = 0, tillerino = False, stars = False):
 		"""
 		Set oppai params.
 
@@ -53,6 +53,7 @@ class oppai:
 		acc -- manual acc. Used in tillerino-like bot. You don't need this if you pass __score object
 		mods -- manual mods. Used in tillerino-like bot. You don't need this if you pass __score object
 		tillerino -- If True, self.pp will be a list with pp values for 100%, 99%, 98% and 95% acc. Optional.
+		stars -- If True, self.stars will be the star difficulty for the map (including mods)
 		"""
 		# Default values
 		self.pp = 0
@@ -61,6 +62,7 @@ class oppai:
 		self.mods = 0
 		self.combo = 0
 		self.misses = 0
+		self.stars = 0
 
 		# Beatmap object
 		self.beatmap = __beatmap
@@ -79,9 +81,9 @@ class oppai:
 			self.mods = mods
 
 		# Calculate pp
-		self.getPP(tillerino)
+		self.getPP(tillerino, stars)
 
-	def getPP(self, tillerino = False):
+	def getPP(self, tillerino = False, stars = False):
 		"""
 		Calculate total pp value with oppai and return it
 
@@ -154,6 +156,8 @@ class oppai:
 				command += " {misses}xm".format(misses=self.misses)
 			if tillerino == True:
 				command += " tillerino"
+			if stars == True:
+				command += " stars"
 
 			# Debug output
 			if glob.debug == True:
@@ -167,12 +171,21 @@ class oppai:
 			sep = "\n" if UNIX else "\r\n"
 			if tillerino == True:
 				# Get tillerino output (multiple lines)
-				self.pp = output.split(sep)[:-1]	# -1 because there's an empty line at the end
+				output = output.split(sep)
+				if stars == True:
+					self.pp = output[:-2]
+					self.stars = float(output[-2])
+				else:
+					self.pp = output.split(sep)[:-1]	# -1 because there's an empty line at the end
 			else:
 				# Get standard output (:l to remove (/r)/n at the end)
 				l = -1 if UNIX else -2
 				output = output.split(sep)
-				self.pp = float(output[len(output)-2][:l])
+				if stars == True:
+					self.pp = float(output[len(output)-2][:l-1])
+					print(output)
+				else:
+					self.pp = float(output[len(output)-2][:l])
 
 			# Debug output
 			if glob.debug == True:
