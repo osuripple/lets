@@ -7,6 +7,7 @@ from helpers import binaryHelper
 from constants import dataTypes
 from helpers import generalHelper
 from helpers.exceptionsTracker import trackExceptions
+from helpers import logHelper as log
 
 # Exception tracking
 import tornado.web
