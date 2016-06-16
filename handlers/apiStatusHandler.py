@@ -7,4 +7,4 @@ class handler(requestHelper.asyncRequestHandler):
 	"""
 	def asyncGet(self):
 		self.write(json.dumps({"status": 200, "server_status": 1}))
-		self.finish()
+		#self.finish()

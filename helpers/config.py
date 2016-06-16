@@ -54,6 +54,9 @@ class config:
 			self.config.get("server", "serverurl")
 			self.config.get("server", "threads")
 
+			self.config.get("sentry","enable")
+			self.config.get("sentry","dns")
+
 			self.config.get("osuapi","enable")
 			self.config.get("osuapi","apiurl")
 			self.config.get("osuapi","apikey")
@@ -87,6 +90,10 @@ class config:
 		self.config.set("server", "beatmapcacheexpire", "86400")
 		self.config.set("server", "serverurl", "http://127.0.0.1:5001")
 		self.config.set("server", "threads", "16")
+
+		self.config.add_section("sentry")
+		self.config.set("sentry", "enable", "False")
+		self.config.set("sentry", "dns", "")
 
 		self.config.add_section("osuapi")
 		self.config.set("osuapi", "enable", "True")

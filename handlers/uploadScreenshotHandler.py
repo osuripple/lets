@@ -6,12 +6,18 @@ import os
 from helpers import logHelper as log
 from helpers.exceptionsTracker import trackExceptions
 
+# Exception tracking
+import tornado.web
+import tornado.gen
+from raven.contrib.tornado import SentryMixin
+
 MODULE_NAME = "screenshot"
-class handler(requestHelper.asyncRequestHandler):
+class handler(SentryMixin, requestHelper.asyncRequestHandler):
 	"""
 	Handler for /web/osu-screenshot.php
 	"""
-	#@trackExceptions(MODULE_NAME)
+	@tornado.web.asynchronous
+	@tornado.gen.engine
 	def asyncPost(self):
 		try:
 			# Make sure screenshot file was passed
@@ -36,5 +42,9 @@ class handler(requestHelper.asyncRequestHandler):
 			self.write("{}/ss/{}.jpg".format(glob.conf.config["server"]["serverurl"], screenshotID))
 		except exceptions.invalidArgumentsException:
 			pass
-		finally:
-			self.finish()
+		except:
+			log.error("Unknown error in {}!\n```{}\n{}```".format(MODULE_NAME, sys.exc_info(), traceback.format_exc()))
+			if glob.sentry:
+				yield tornado.gen.Task(self.captureException, exc_info=True)
+		#finally:
+		#	self.finish()

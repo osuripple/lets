@@ -9,12 +9,18 @@ import sys
 from helpers import logHelper as log
 from helpers.exceptionsTracker import trackExceptions
 
+# Exception tracking
+import tornado.web
+import tornado.gen
+from raven.contrib.tornado import SentryMixin
+
 MODULE_NAME = "api/pp"
-class handler(requestHelper.asyncRequestHandler):
+class handler(SentryMixin, requestHelper.asyncRequestHandler):
 	"""
 	Handler for /api/v1/pp
 	"""
-	#@trackExceptions(MODULE_NAME)
+	@tornado.web.asynchronous
+	@tornado.gen.engine
 	def asyncGet(self):
 		statusCode = 400
 		data = {"message": "unknown error"}
@@ -116,7 +122,9 @@ class handler(requestHelper.asyncRequestHandler):
 			statusCode = 400
 			data["message"] = "requested beatmap is too long"
 		except:
-			log.error("Unknown error in {}!\n```{}\n{}```".format(MODULE_NAME, sys.exc_info(), traceback.format_exc()), True)
+			log.error("Unknown error in {}!\n```{}\n{}```".format(MODULE_NAME, sys.exc_info(), traceback.format_exc()))
+			if glob.sentry:
+				yield tornado.gen.Task(self.captureException, exc_info=True)
 		finally:
 			# Add status code to data
 			data["status"] = statusCode
@@ -125,9 +133,9 @@ class handler(requestHelper.asyncRequestHandler):
 			log.debug(str(data))
 
 			# Send response
-			self.clear()
+			#self.clear()
+			self.write(json.dumps(data))
 			self.set_status(statusCode)
-			self.finish(json.dumps(data))
 
 def calculatePPFromAcc(ppcalc, acc):
 	ppcalc.acc = acc

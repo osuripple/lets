@@ -3,10 +3,17 @@ from constants import exceptions
 from helpers import requestHelper
 from helpers import logHelper as log
 from helpers.exceptionsTracker import trackExceptions
+import glob
+
+# Exception tracking
+import tornado.web
+import tornado.gen
+from raven.contrib.tornado import SentryMixin
 
 MODULE_NAME = "maps"
-class handler(requestHelper.asyncRequestHandler):
-	#@trackExceptions(MODULE_NAME)
+class handler(SentryMixin, requestHelper.asyncRequestHandler):
+	@tornado.web.asynchronous
+	@tornado.gen.engine
 	def asyncGet(self, fileName = None):
 		try:
 			# Check arguments
@@ -26,6 +33,10 @@ class handler(requestHelper.asyncRequestHandler):
 		except exceptions.invalidArgumentsException:
 			self.send_error()
 		except exceptions.osuApiFailException:
-			self.send_error()
-		finally:
-			self.finish()
+			self.send_error
+		except:
+			log.error("Unknown error in {}!\n```{}\n{}```".format(MODULE_NAME, sys.exc_info(), traceback.format_exc()))
+			if glob.sentry:
+				yield tornado.gen.Task(self.captureException, exc_info=True)
+		#finally:
+		#	self.finish()
