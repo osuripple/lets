@@ -38,7 +38,7 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 				query = self.get_argument("s")
 				searchby = "s"
 			else:
-				raise exceptions.invalidArgumentsException
+				raise exceptions.invalidArgumentsException(MODULE_NAME)
 
 			# Login check
 			#userID = userHelper.getID(username)
