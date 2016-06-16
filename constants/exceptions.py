@@ -21,7 +21,7 @@ class osuApiFailException(Exception):
 		log.warning("{} - Invalid data from osu!api".format(handler))
 
 class fileNotFoundException(Exception):
-	def __init__(self, file):
+	def __init__(self, handler, file):
 		log.warning("{} - File not found ({})".format(handler, file))
 
 class invalidBeatmapException(Exception):
