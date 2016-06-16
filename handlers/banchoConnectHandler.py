@@ -8,6 +8,8 @@ from helpers.exceptionsTracker import trackExceptions
 # Exception tracking
 import tornado.web
 import tornado.gen
+import sys
+import traceback
 from raven.contrib.tornado import SentryMixin
 
 MODULE_NAME = "bancho_connect"
