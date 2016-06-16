@@ -82,8 +82,9 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 				else:
 					log.debug("Cached pp not found. Calculating pp with oppai...")
 					# Cached pp not found, calculate them
-					oppai = rippoppai.oppai(bmap, mods=modsEnum, tillerino=True)
+					oppai = rippoppai.oppai(bmap, mods=modsEnum, tillerino=True, stars=True)
 					returnPP = oppai.pp
+					bmap.stars = oppai.stars
 
 					# Cache values in DB
 					log.debug("Saving cached pp...")
@@ -92,7 +93,8 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 				# Specific accuracy, calculate
 				# Create oppai instance
 				log.debug("Specific request ({}%/{}). Calculating pp with oppai...".format(accuracy, modsEnum))
-				oppai = rippoppai.oppai(bmap, mods=modsEnum, tillerino=True)
+				oppai = rippoppai.oppai(bmap, mods=modsEnum, tillerino=True, stars=True)
+				bmap.stars = oppai.stars
 				if accuracy > 0:
 					returnPP.append(calculatePPFromAcc(oppai, accuracy))
 				else:
@@ -135,6 +137,7 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 			# Send response
 			#self.clear()
 			self.write(json.dumps(data))
+			self.set_header("Content-Type", "application/json")
 			self.set_status(statusCode)
 
 def calculatePPFromAcc(ppcalc, acc):
