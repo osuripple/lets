@@ -47,25 +47,21 @@ class beatmap:
 			glob.db.execute("DELETE FROM beatmaps WHERE id = %s", [bid["id"]])
 
 		# Add new beatmap data
-		try:
-			log.debug("Saving beatmap data in db...")
-			glob.db.execute("INSERT INTO `beatmaps` (`id`, `beatmap_id`, `beatmapset_id`, `beatmap_md5`, `song_name`, `ar`, `od`, `difficulty`, `max_combo`, `hit_length`, `bpm`, `ranked`, `latest_update`) VALUES (NULL, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);", [
-				self.beatmapID,
-				self.beatmapSetID,
-				self.fileMD5,
-				self.songName,
-				self.AR,
-				self.OD,
-				self.stars,
-				self.maxCombo,
-				self.hitLength,
-				self.bpm,
-				self.rankedStatus,
-				int(time.time())
-			])
-		except:
-			msg = "Error while saving beatmap data in db```\r\n{}\r\n{}```".format(sys.exc_info(), traceback.format_exc())
-			log.error(msg, True)
+		log.debug("Saving beatmap data in db...")
+		glob.db.execute("INSERT INTO `beatmaps` (`id`, `beatmap_id`, `beatmapset_id`, `beatmap_md5`, `song_name`, `ar`, `od`, `difficulty`, `max_combo`, `hit_length`, `bpm`, `ranked`, `latest_update`) VALUES (NULL, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);", [
+			self.beatmapID,
+			self.beatmapSetID,
+			self.fileMD5,
+			self.songName,
+			self.AR,
+			self.OD,
+			self.stars,
+			self.maxCombo,
+			self.hitLength,
+			self.bpm,
+			self.rankedStatus,
+			int(time.time())
+		])
 
 	def setDataFromDB(self, md5):
 		"""

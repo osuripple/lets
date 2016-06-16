@@ -92,7 +92,7 @@ class oppai:
 		# Set variables
 		command = None
 		output = None
-
+		self.pp = 0
 		try:
 			# Build .osu map file path
 			mapFile = "{path}/maps/{map}".format(path=self.OPPAI_FOLDER, map=self.map)
@@ -195,17 +195,17 @@ class oppai:
 			# Debug output
 			if glob.debug == True:
 				consoleHelper.printRippoppaiMessage("Calculated pp: {}".format(self.pp))
-		except:
+		#except:
 			# oppai or python error, set pp to 0
-			msg = "Error while executing oppai!\n```{}\n{}```".format(sys.exc_info(), traceback.format_exc())
-			if command != None:
-				msg += "\n**command**: `{}`".format(command)
-			if output != None:
-				msg += "\n**oppai output**: `{}`".format(output)
-			msg += "\n**calculated pp**: `{}`".format(self.pp)
-			consoleHelper.printColored("[!] {}".format(msg), bcolors.RED)
-			discordBotHelper.sendConfidential(msg, True)
-			self.pp = 0
+			#msg = "Error while executing oppai!\n```{}\n{}```".format(sys.exc_info(), traceback.format_exc())
+			#if command != None:
+			#	msg += "\n**command**: `{}`".format(command)
+			#if output != None:
+			#	msg += "\n**oppai output**: `{}`".format(output)
+			#msg += "\n**calculated pp**: `{}`".format(self.pp)
+			#consoleHelper.printColored("[!] {}".format(msg), bcolors.RED)
+			#discordBotHelper.sendConfidential(msg, True)
+			#self.pp = 0
 		finally:
 			return self.pp
 
