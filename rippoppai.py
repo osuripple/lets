@@ -169,6 +169,12 @@ class oppai:
 
 			# Get standard or tillerino output
 			sep = "\n" if UNIX else "\r\n"
+			if output == ['']:
+				# This happens if mode not supported or something
+				self.pp = 0
+				self.stars = None
+				return self.pp
+
 			if tillerino == True:
 				# Get tillerino output (multiple lines)
 				output = output.split(sep)
@@ -183,7 +189,6 @@ class oppai:
 				output = output.split(sep)
 				if stars == True:
 					self.pp = float(output[len(output)-2][:l-1])
-					print(output)
 				else:
 					self.pp = float(output[len(output)-2][:l])
 
