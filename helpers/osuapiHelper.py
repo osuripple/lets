@@ -18,21 +18,19 @@ def osuApiRequest(request, params):
 	"""
 	# Make sure osuapi is enabled
 	if generalHelper.stringToBool(glob.conf.config["osuapi"]["enable"]) == False:
-		print("osuapi is disabled")
+		log.warning("osu!api is disabled")
 		return None
 
 	# Api request
-	response = None
+	resp = None
 	try:
 		finalURL = "{}/api/{}?k={}&{}".format(glob.conf.config["osuapi"]["apiurl"], request, glob.conf.config["osuapi"]["apikey"], params)
 		resp = requests.get(finalURL, timeout=5).text
 		data = json.loads(resp)
 		if len(data) >= 1:
-			return data[0]
-		else:
-			return None
+			resp = data[0]
 	finally:
-		return response
+		return resp
 
 def getOsuFileFromName(fileName):
 	"""

@@ -117,6 +117,7 @@ class beatmap:
 		# Check if osuapi is enabled
 		data = osuapiHelper.osuApiRequest("get_beatmaps", "h={}".format(md5))
 		if data == None:
+			log.debug("osu!api data is None")
 			# Error while retreiving data from MD5, check with beatmap set ID
 			data = osuapiHelper.osuApiRequest("get_beatmaps", "s={}".format(beatmapSetID))
 			if data == None:
@@ -157,6 +158,7 @@ class beatmap:
 		dbResult = self.setDataFromDB(md5)
 
 		if dbResult == False:
+			log.debug("Beatmap not found in db")
 			# If this beatmap is not in db, get it from osu!api
 			apiResult = self.setDataFromOsuApi(md5, beatmapSetID)
 			if apiResult == False:
@@ -165,6 +167,8 @@ class beatmap:
 			elif self.rankedStatus != rankedStatuses.NOT_SUBMITTED and self.rankedStatus != rankedStatuses.NEED_UPDATE:
 				# We get beatmap data from osu!api, save it in db
 				self.addBeatmapToDB()
+		else:
+			log.debug("Beatmap found in db")
 
 	def getData(self):
 		"""
