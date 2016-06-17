@@ -188,7 +188,7 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 		except:
 			# Try except block to avoid more errors
 			try:
-				log.error("Unknown error in {}!\n```{}\n{}```".format(MODULE_NAME, sys.exc_info(), traceback.format_exc()), True)
+				log.error("Unknown error in {}!\n```{}\n{}```".format(MODULE_NAME, sys.exc_info(), traceback.format_exc()))
 				if glob.sentry:
 					yield tornado.gen.Task(self.captureException, exc_info=True)
 			except:

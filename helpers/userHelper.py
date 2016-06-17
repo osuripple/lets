@@ -23,7 +23,7 @@ def getID(username):
 		userID = glob.db.fetch("SELECT id FROM users WHERE username = %s", [username])
 		if userID == None:
 			return 0
-		glob.userIDCache[username] = result
+		glob.userIDCache[username] = userID
 
 	# Get userID from cache
 	return glob.userIDCache[username]
