@@ -17,7 +17,7 @@ class noBanchoSessionException(Exception):
 		log.warning("{handler} - {username} has tried to submit a score from {ip} without an active bancho session from that ip. If this happens often, {username} is trying to use a score submitter.".format(handler=handler, ip=ip, username=who), True)
 
 class osuApiFailException(Exception):
-	def __init__(self):
+	def __init__(self, handler):
 		log.warning("{} - Invalid data from osu!api".format(handler))
 
 class fileNotFoundException(Exception):

@@ -53,9 +53,9 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 			# Get data from bloodcat API
 			bcData = osuapiHelper.bloodcatRequest(bcURL)
 			if bcData == None:
-				raise exceptions.osuApiFailException
+				raise exceptions.osuApiFailException(MODULE_NAME)
 			if len(bcData) == 0:
-				raise exceptions.osuApiFailException
+				raise exceptions.osuApiFailException(MODULE_NAME)
 
 			# Output string
 			log.debug(str(bcData[0]))
