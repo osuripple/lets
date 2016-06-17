@@ -3,6 +3,7 @@ from helpers import requestHelper
 from helpers import userHelper
 from helpers import osuapiHelper
 import glob
+from helpers import logHelper as log
 
 # Exception tracking
 import tornado.web
