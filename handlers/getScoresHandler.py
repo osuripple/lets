@@ -8,14 +8,19 @@ from helpers import userHelper
 import sys
 import traceback
 from helpers import logHelper as log
-from helpers.exceptionsTracker import trackExceptions
+
+# Exception tracking
+import tornado.web
+import tornado.gen
+from raven.contrib.tornado import SentryMixin
 
 MODULE_NAME = "get_scores"
-class handler(requestHelper.asyncRequestHandler):
+class handler(SentryMixin, requestHelper.asyncRequestHandler):
 	"""
 	Handler for /web/osu-osz2-getscores.php
 	"""
-	#@trackExceptions(MODULE_NAME)
+	@tornado.web.asynchronous
+	@tornado.gen.engine
 	def asyncGet(self):
 		try:
 			# Get request ip
@@ -75,5 +80,9 @@ class handler(requestHelper.asyncRequestHandler):
 			self.write("error: ban")
 		except exceptions.loginFailedException:
 			self.write("error: pass")
-		finally:
-			self.finish()
+		except:
+			log.error("Unknown error!\n```\n{}\n{}```".format(sys.exc_info(), traceback.format_exc()))
+			if glob.sentry:
+				yield tornado.gen.Task(self.captureException, exc_info=True)
+		#finally:
+		#	self.finish()

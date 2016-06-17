@@ -32,6 +32,9 @@ import tornado.web
 import tornado.httpserver
 import tornado.gen
 
+# Raven
+from raven.contrib.tornado import AsyncSentryClient
+
 def make_app():
 	return tornado.web.Application([
 		(r"/web/bancho_connect.php", banchoConnectHandler.handler),
@@ -126,11 +129,29 @@ if __name__ == "__main__":
 	if glob.debug == True:
 		consoleHelper.printColored("[!] Warning! Server running in debug mode!", bcolors.YELLOW)
 
-	# Start the server
+	# Server port
+	try:
+		serverPort = int(glob.conf.config["server"]["port"])
+	except:
+		consoleHelper.printColored("[!] Invalid server port! Please check your config.ini and run the server again", bcolors.RED)
+
+	# Make app
+	application = make_app()
+
+	# Set up sentry
+	try:
+		glob.sentry = generalHelper.stringToBool(glob.conf.config["sentry"]["enable"])
+		if glob.sentry == True:
+			application.sentry_client = AsyncSentryClient(glob.conf.config["sentry"]["dns"])
+		else:
+			consoleHelper.printColored("[!] Warning! Sentry logging is disabled!", bcolors.YELLOW)
+	except:
+		consoleHelper.printColored("[!] Error while starting sentry client! Please check your config.ini and run the server again", bcolors.RED)
+
+	# Server start message and console output
+	consoleHelper.printColored("> L.E.T.S. is listening for clients on 127.0.0.1:{}...".format(serverPort), bcolors.GREEN)
 	log.logMessage("Server started!", discord=True, of="info.txt", stdout=False)
 
-	serverPort = int(glob.conf.config["server"]["port"])
-	consoleHelper.printColored("> L.E.T.S. is listening for clients on 127.0.0.1:{}...".format(serverPort), bcolors.GREEN)
-	app = tornado.httpserver.HTTPServer(make_app())
-	app.listen(serverPort)
+	# Start Tornado
+	application.listen(serverPort)
 	tornado.ioloop.IOLoop.instance().start()

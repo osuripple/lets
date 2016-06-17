@@ -3,12 +3,22 @@ from helpers import requestHelper
 from helpers import userHelper
 from helpers import osuapiHelper
 from helpers import logHelper as log
+import glob
 
-MODULE_NAME = "direct"
-class handler(requestHelper.asyncRequestHandler):
+# Exception tracking
+import tornado.web
+import tornado.gen
+import sys
+import traceback
+from raven.contrib.tornado import SentryMixin
+
+MODULE_NAME = "direct_np"
+class handler(SentryMixin, requestHelper.asyncRequestHandler):
 	"""
 	Handler for /web/osu-search-set.php
 	"""
+	@tornado.web.asynchronous
+	@tornado.gen.engine
 	def asyncGet(self):
 		try:
 			# Get request ip
@@ -28,7 +38,7 @@ class handler(requestHelper.asyncRequestHandler):
 				query = self.get_argument("s")
 				searchby = "s"
 			else:
-				raise exceptions.invalidArgumentsException
+				raise exceptions.invalidArgumentsException(MODULE_NAME)
 
 			# Login check
 			#userID = userHelper.getID(username)
@@ -59,5 +69,9 @@ class handler(requestHelper.asyncRequestHandler):
 			pass
 		except exceptions.osuApiFailException:
 			pass
-		finally:
-			self.finish()
+		except:
+			log.error("Unknown error in {}!\n```{}\n{}```".format(MODULE_NAME, sys.exc_info(), traceback.format_exc()))
+			if glob.sentry:
+				yield tornado.gen.Task(self.captureException, exc_info=True)
+		#finally:
+		#	self.finish()

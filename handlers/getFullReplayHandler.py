@@ -7,13 +7,22 @@ from helpers import binaryHelper
 from constants import dataTypes
 from helpers import generalHelper
 from helpers.exceptionsTracker import trackExceptions
+from helpers import logHelper as log
+
+# Exception tracking
+import tornado.web
+import tornado.gen
+import sys
+import traceback
+from raven.contrib.tornado import SentryMixin
 
 MODULE_NAME = "get_full_replay"
-class handler(requestHelper.asyncRequestHandler):
+class handler(SentryMixin, requestHelper.asyncRequestHandler):
 	"""
 	Handler for /replay/
 	"""
-	#@trackExceptions(MODULE_NAME)
+	@tornado.web.asynchronous
+	@tornado.gen.engine
 	def asyncGet(self, replayID):
 		try:
 			# Make sure the score exists
@@ -58,12 +67,16 @@ class handler(requestHelper.asyncRequestHandler):
 			])
 
 			# Serve full replay
+			self.write(fullReplay)
 			self.add_header("Content-type", "application/octet-stream")
 			self.set_header("Content-length", len(fullReplay))
 			self.set_header("Content-Description", "File Transfer")
 			self.set_header ("Content-Disposition", "attachment; filename=\"{}.osr\"".format(scoreData["id"]))
-			self.write(fullReplay)
 		except exceptions.fileNotFoundException:
 			self.write("Replay not found")
-		finally:
-			self.finish()
+		except:
+			log.error("Unknown error in {}!\n```{}\n{}```".format(MODULE_NAME, sys.exc_info(), traceback.format_exc()))
+			if glob.sentry:
+				yield tornado.gen.Task(self.captureException, exc_info=True)
+		#finally:
+		#	self.finish()

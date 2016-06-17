@@ -13,13 +13,18 @@ from helpers import logHelper as log
 from helpers.exceptionsTracker import trackExceptions
 import beatmap
 
+# Exception tracking
+import tornado.web
+import tornado.gen
+from raven.contrib.tornado import SentryMixin
+
 MODULE_NAME = "submit_modular"
-class handler(requestHelper.asyncRequestHandler):
+class handler(SentryMixin, requestHelper.asyncRequestHandler):
 	"""
 	Handler for /web/osu-submit-modular.php
 	"""
-	#@trackExceptions(MODULE_NAME)
-	# nope, we track exceptions manually here
+	@tornado.web.asynchronous
+	@tornado.gen.engine
 	def asyncPost(self):
 		try:
 			# Get request ip
@@ -178,18 +183,20 @@ class handler(requestHelper.asyncRequestHandler):
 			# shouldn't (eg: bancho restart), we'll ban users that submit
 			# scores without an active bancho session.
 			# We only log through schiavo atm (see exceptions.py).
+			self.set_status(408)
 			self.write("error: pass")
-			self.send_error(408)
 		except:
 			# Try except block to avoid more errors
 			try:
 				log.error("Unknown error in {}!\n```{}\n{}```".format(MODULE_NAME, sys.exc_info(), traceback.format_exc()), True)
+				if glob.sentry:
+					yield tornado.gen.Task(self.captureException, exc_info=True)
 			except:
 				pass
 
 			# Every other exception returns a 408 error (timeout)
 			# This avoids lost scores due to score server crash
 			# because the client will send the score again after some time.
-			self.send_error(408)
-		finally:
-			self.finish()
+			self.set_status(408)
+		#finally:
+		#	self.finish()

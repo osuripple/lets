@@ -8,3 +8,4 @@ debug = False
 pool = None
 discord = False
 fLocks = fileLocks.fileLocks()
+sentry = False

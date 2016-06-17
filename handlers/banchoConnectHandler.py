@@ -5,12 +5,20 @@ from helpers import requestHelper
 from helpers import logHelper as log
 from helpers.exceptionsTracker import trackExceptions
 
+# Exception tracking
+import tornado.web
+import tornado.gen
+import sys
+import traceback
+from raven.contrib.tornado import SentryMixin
+
 MODULE_NAME = "bancho_connect"
-class handler(requestHelper.asyncRequestHandler):
+class handler(SentryMixin, requestHelper.asyncRequestHandler):
 	"""
 	Handler for /web/bancho_connect.php
 	"""
-	#@trackExceptions(MODULE_NAME)
+	@tornado.web.asynchronous
+	@tornado.gen.engine
 	def asyncGet(self):
 		try:
 			# Get request ip
@@ -53,5 +61,9 @@ class handler(requestHelper.asyncRequestHandler):
 			pass
 		except exceptions.need2FAException:
 			self.write("error: verify\n")
-		finally:
-			self.finish()
+		except:
+			log.error("Unknown error in {}!\n```{}\n{}```".format(MODULE_NAME, sys.exc_info(), traceback.format_exc()))
+			if glob.sentry:
+				yield tornado.gen.Task(self.captureException, exc_info=True)
+		#finally:
+		#	self.finish()
