@@ -112,7 +112,10 @@ class score:
 		"""
 		#print(str(data))
 		self.scoreID = data["id"]
-		self.playerName = data["username"]
+		if username in data:
+			self.playerName = data["username"]
+		else:
+			self.playerName = userHelper.getUsername(data["userid"])
 		self.playerUserID = data["userid"]
 		self.score = data["score"]
 		self.maxCombo = data["max_combo"]
