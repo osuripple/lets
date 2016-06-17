@@ -4,22 +4,29 @@ from helpers import passwordHelper
 import time
 from helpers import logHelper as log
 
+def cacheUserIDs():
+	"""Cache userIDs in glob.userIDCache, used later with getID()."""
+	data = glob.db.fetchAll("SELECT id, username FROM users WHERE allowed = 1")
+	for i in data:
+		glob.userIDCache[i["username"]] = i["id"]
+
 def getID(username):
 	"""
-	Get username's user ID
+	Get username's user ID from userID cache (if cache hit)
+	or from db (and cache it for other requests) if cache miss
 
 	username -- user
 	return -- user id or 0
 	"""
+	# Add to cache if needed
+	if username not in glob.userIDCache:
+		userID = glob.db.fetch("SELECT id FROM users WHERE username = %s", [username])
+		if userID == None:
+			return 0
+		glob.userIDCache[username] = result
 
-	# Get user ID from db
-	userID = glob.db.fetch("SELECT id FROM users WHERE username = %s", [username])
-	# Make sure the query returned something
-	if userID == None:
-		return 0
-
-	# Return user ID
-	return userID["id"]
+	# Get userID from cache
+	return glob.userIDCache[username]
 
 def getUsername(userID):
 	"""

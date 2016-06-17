@@ -10,12 +10,13 @@ if os.path.isfile("rippoppai.py"):
 	import rippoppai
 
 class score:
-	def __init__(self, scoreID = None, rank = None):
+	def __init__(self, scoreID = None, rank = None, setData = True):
 		"""
 		Initialize a (empty) score object.
 
 		scoreID -- score ID, used to get score data from db. Optional.
 		rank -- score rank. Optional
+		setData -- if True, set score data from db using scoreID. Optional.
 		"""
 		self.scoreID = 0
 		self.playerName = "nospe"
@@ -30,7 +31,7 @@ class score:
 		self.fullCombo = False
 		self.mods = 0
 		self.playerUserID = 0
-		self.rank = 1	# can be empty string too
+		self.rank = rank	# can be empty string too
 		self.date = 0
 		self.hasReplay = 0
 
@@ -47,7 +48,7 @@ class score:
 		self.oldPersonalBest = 0
 		self.rankedScoreIncrease = 0
 
-		if scoreID != None:
+		if scoreID != None and setData == True:
 			self.setDataFromDB(scoreID, rank)
 
 	def calculateAccuracy(self):
@@ -97,10 +98,9 @@ class score:
 		scoreID -- score ID
 		rank -- rank in scoreboard. Optional.
 		"""
-		data = glob.db.fetch("SELECT *, users.username FROM scores LEFT JOIN users ON users.id = scores.userid WHERE scores.id = %s", [scoreID])
+		data = glob.db.fetch("SELECT scores.*, users.username FROM scores LEFT JOIN users ON users.id = scores.userid WHERE scores.id = %s LIMIT 1", [scoreID])
 		if data != None:
 			self.setDataFromDict(data, rank)
-			self.playerUserID = userHelper.getID(self.playerName)
 
 	def setDataFromDict(self, data, rank = None):
 		"""
@@ -110,8 +110,10 @@ class score:
 		data -- score dictionarty
 		rank -- rank in scoreboard. Optional.
 		"""
+		#print(str(data))
 		self.scoreID = data["id"]
-		self.playerName = userHelper.getUsername(data["userid"])
+		self.playerName = data["username"]
+		self.playerUserID = data["userid"]
 		self.score = data["score"]
 		self.maxCombo = data["max_combo"]
 		self.c50 = data["50_count"]

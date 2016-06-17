@@ -50,8 +50,9 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 				raise exceptions.loginFailedException(MODULE_NAME, userID)
 			if userHelper.checkLogin(userID, password, ip) == False:
 				raise exceptions.loginFailedException(MODULE_NAME, username)
-			if userHelper.getAllowed(userID) == 0:
-				raise exceptions.userBannedException(MODULE_NAME, username)
+			# Ban check is pointless here, since there's no message on the client
+			#if userHelper.getAllowed(userID) == 0:
+			#	raise exceptions.userBannedException(MODULE_NAME, username)
 
 			# Hax check
 			if "a" in self.request.arguments:

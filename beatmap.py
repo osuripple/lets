@@ -40,7 +40,7 @@ class beatmap:
 		Add current beatmap data in db if not in yet
 		"""
 		# Make sure the beatmap is not already in db
-		bid = glob.db.fetch("SELECT id FROM beatmaps WHERE beatmap_md5 = %s", [self.fileMD5])
+		bid = glob.db.fetch("SELECT id FROM beatmaps WHERE beatmap_md5 = %s LIMIT 1", [self.fileMD5])
 		if bid != None:
 			# This beatmap is already in db, remove old record
 			log.debug("Deleting old beatmap data ({})".format(bid["id"]))
@@ -71,14 +71,20 @@ class beatmap:
 		return -- True if set, False if not set
 		"""
 		# Get data from DB
-		data = glob.db.fetch("SELECT * FROM beatmaps WHERE beatmap_md5 = %s", [md5])
+		data = glob.db.fetch("SELECT * FROM beatmaps WHERE beatmap_md5 = %s LIMIT 1", [md5])
 
 		# Make sure the query returned something
 		if data == None:
 			return False
 
+		# Set cached data period
+		expire = glob.conf.config["server"]["beatmapcacheexpire"]
+		# If the beatmap is ranked, we don't need to refresh data from osu!api that often
+		if data["ranked"] >= rankedStatuses.RANKED:
+			expire *= 3
+
 		# Make sure the beatmap data in db is not too old
-		if int(glob.conf.config["server"]["beatmapcacheexpire"]) > 0 and time.time() > data["latest_update"]+int(glob.conf.config["server"]["beatmapcacheexpire"]) and data["ranked_status_freezed"] == 0:
+		if int(expire) > 0 and time.time() > data["latest_update"]+int(expire) and data["ranked_status_freezed"] == 0:
 			return False
 
 		# Data in DB, set beatmap data
@@ -192,7 +198,7 @@ class beatmap:
 
 		return -- list with pp values. [0,0,0,0] if not cached.
 		"""
-		data = glob.db.fetch("SELECT pp_100, pp_99, pp_98, pp_95 FROM beatmaps WHERE beatmap_md5 = %s", [self.fileMD5])
+		data = glob.db.fetch("SELECT pp_100, pp_99, pp_98, pp_95 FROM beatmaps WHERE beatmap_md5 = %s LIMIT 1", [self.fileMD5])
 		if data == None:
 			return [0,0,0,0]
 		return [data["pp_100"], data["pp_99"], data["pp_98"], data["pp_95"]]

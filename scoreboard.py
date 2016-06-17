@@ -37,7 +37,7 @@ class scoreboard:
 		# Find personal best score
 		uid = userHelper.getID(self.username)
 		if uid != 0:
-			personalBestScore = glob.db.fetch("SELECT id, score FROM scores WHERE userid = %s AND beatmap_md5 = %s AND play_mode = %s AND completed = 3 ORDER BY score DESC LIMIT 1", [uid, self.beatmap.fileMD5, self.gameMode])
+			personalBestScore = glob.db.fetch("SELECT id FROM scores WHERE userid = %s AND beatmap_md5 = %s AND play_mode = %s AND completed = 3 ORDER BY score DESC LIMIT 1", [uid, self.beatmap.fileMD5, self.gameMode])
 		else:
 			personalBestScore = None
 
@@ -50,16 +50,16 @@ class scoreboard:
 			self.scores[0] = -1
 
 		# Top 50 scores
-		topScores = glob.db.fetchAll("SELECT scores.id, score AS id FROM scores LEFT JOIN users ON scores.userid = users.id WHERE beatmap_md5 = %s AND play_mode = %s AND completed = 3 AND users.allowed = '1' ORDER BY score DESC", [self.beatmap.fileMD5, self.gameMode])
+		topScores = glob.db.fetchAll("SELECT * FROM scores LEFT JOIN users ON scores.userid = users.id WHERE scores.beatmap_md5 = %s AND scores.play_mode = %s AND scores.completed = 3 AND users.allowed = 1 ORDER BY score DESC LIMIT 50", [self.beatmap.fileMD5, self.gameMode])
 		c = 1
 		if topScores != None:
 			for i in topScores:
-				# Get only first 50 scores
-				if c > 50:
-					break
+				# Create score object
+				s = score.score(i["id"], setData=False)
 
-				# Create score object and set its data
-				s = score.score(i["id"], c)
+				# Set data and rank from topScores's row
+				s.setDataFromDict(i)
+				s.setRank(c)
 
 				# Check if this top 50 score is our personal best
 				if s.playerName == self.username:
@@ -68,6 +68,16 @@ class scoreboard:
 				# Add this score to scores list and increment rank
 				self.scores.append(s)
 				c+=1
+
+		# If personal best score was not in top 50, get rank with MySQL
+		# Ikr, that query is HUGE but xd
+		if personalBestScore != None and self.personalBestRank < 1:
+			result = glob.db.fetch("""SELECT COUNT(*) AS rank FROM scores LEFT JOIN users ON scores.userid = users.id WHERE scores.score >= (
+		SELECT score FROM scores WHERE beatmap_md5 = %(md5)s AND play_mode = %(mode)s AND completed = 3 AND userid = %(userid)s
+	) AND scores.beatmap_md5 = %(md5)s AND scores.play_mode = %(mode)s AND scores.completed = 3 AND users.allowed = 1 ORDER BY score DESC
+	""", {"md5": self.beatmap.fileMD5, "userid": uid, "mode": self.gameMode})
+			if result != None:
+				self.personalBestRank = result["rank"]
 
 
 	def getScoresData(self):

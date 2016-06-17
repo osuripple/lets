@@ -12,3 +12,4 @@ pool = None
 discord = False
 fLocks = fileLocks.fileLocks()
 sentry = False
+userIDCache = {}

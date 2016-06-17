@@ -62,43 +62,43 @@ def update(userID, newScore, gameMode):
 	newScore -- new score or pp
 	gameMode -- gameMode number
 	"""
-	try:
-		mode = scoreHelper.readableGameMode(gameMode)
+	#try:
+	mode = scoreHelper.readableGameMode(gameMode)
 
-		newPlayer = False
-		us = glob.db.fetch("SELECT * FROM leaderboard_{} WHERE user=%s".format(mode), [userID])
-		if us == None:
-			newPlayer = True
+	newPlayer = False
+	us = glob.db.fetch("SELECT * FROM leaderboard_{} WHERE user=%s".format(mode), [userID])
+	if us == None:
+		newPlayer = True
 
-		# Find player who is right below our score
-		target = glob.db.fetch("SELECT * FROM leaderboard_{} WHERE v <= %s ORDER BY position ASC LIMIT 1".format(mode), [newScore])
-		plus = 0
-		if target == None:
-			# Wow, this user completely sucks at this game.
-			target = glob.db.fetch("SELECT * FROM leaderboard_{} ORDER BY position DESC LIMIT 1".format(mode))
-			plus = 1
+	# Find player who is right below our score
+	target = glob.db.fetch("SELECT * FROM leaderboard_{} WHERE v <= %s ORDER BY position ASC LIMIT 1".format(mode), [newScore])
+	plus = 0
+	if target == None:
+		# Wow, this user completely sucks at this game.
+		target = glob.db.fetch("SELECT * FROM leaderboard_{} ORDER BY position DESC LIMIT 1".format(mode))
+		plus = 1
 
-		# Set $newT
-		if target == None:
-			# Okay, nevermind. It's not this user to suck. It's just that no-one has ever entered the leaderboard thus far.
-			# So, the player is now #1. Yay!
-			newT = 1
-		else:
-			# Otherwise, just give them the position of the target.
-			newT = target["position"] + plus
+	# Set $newT
+	if target == None:
+		# Okay, nevermind. It's not this user to suck. It's just that no-one has ever entered the leaderboard thus far.
+		# So, the player is now #1. Yay!
+		newT = 1
+	else:
+		# Otherwise, just give them the position of the target.
+		newT = target["position"] + plus
 
-		# Make some place for the new "place holder".
-		if newPlayer == True:
-			glob.db.execute("UPDATE leaderboard_{} SET position = position + 1 WHERE position >= %s ORDER BY position DESC".format(mode), [newT])
-		else:
-			glob.db.execute("DELETE FROM leaderboard_{} WHERE user = %s".format(mode), [userID])
-			glob.db.execute("UPDATE leaderboard_{} SET position = position + 1 WHERE position < %s AND position >= %s ORDER BY position DESC".format(mode), [us["position"], newT])
+	# Make some place for the new "place holder".
+	if newPlayer == True:
+		glob.db.execute("UPDATE leaderboard_{} SET position = position + 1 WHERE position >= %s ORDER BY position DESC".format(mode), [newT])
+	else:
+		glob.db.execute("DELETE FROM leaderboard_{} WHERE user = %s".format(mode), [userID])
+		glob.db.execute("UPDATE leaderboard_{} SET position = position + 1 WHERE position < %s AND position >= %s ORDER BY position DESC".format(mode), [us["position"], newT])
 
-		if newT <= 1:
-			log.info("{} is now #{} ({})".format(userID, newT, mode), True)
+	if newT <= 1:
+		log.info("{} is now #{} ({})".format(userID, newT, mode), True)
 
-		# Finally, insert the user back.
-		glob.db.execute("INSERT INTO leaderboard_{} (position, user, v) VALUES (%s, %s, %s);".format(mode), [newT, userID, newScore])
-	except:
-		msg = "Unknown error while updating the leaderboard!\n```{}\n{}```".format(sys.exc_info(), traceback.format_exc())
-		log.error("{}".format(msg), True)
+	# Finally, insert the user back.
+	glob.db.execute("INSERT INTO leaderboard_{} (position, user, v) VALUES (%s, %s, %s);".format(mode), [newT, userID, newScore])
+	#except:
+		#msg = "Unknown error while updating the leaderboard!\n```{}\n{}```".format(sys.exc_info(), traceback.format_exc())
+		#log.error("{}".format(msg), True)
