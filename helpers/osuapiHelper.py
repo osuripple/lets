@@ -29,6 +29,8 @@ def osuApiRequest(request, params):
 		data = json.loads(resp)
 		if len(data) >= 1:
 			resp = data[0]
+		else:
+			resp = None
 	finally:
 		return resp
 
