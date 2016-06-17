@@ -22,19 +22,17 @@ def osuApiRequest(request, params):
 		return None
 
 	# Api request
+	response = None
 	try:
 		finalURL = "{}/api/{}?k={}&{}".format(glob.conf.config["osuapi"]["apiurl"], request, glob.conf.config["osuapi"]["apikey"], params)
-		#print("Sending request to osu!api: {}".format(finalURL))
 		resp = requests.get(finalURL, timeout=5).text
-		#print("Got response: {}".format(resp))
 		data = json.loads(resp)
 		if len(data) >= 1:
 			return data[0]
 		else:
 			return None
-	except:
-		log.error("Unknown error while contacting osu! api!\n```{}\n{}```".format(sys.exc_info(), traceback.format_exc()), True)
-		return None
+	finally:
+		return response
 
 def getOsuFileFromName(fileName):
 	"""
@@ -44,6 +42,7 @@ def getOsuFileFromName(fileName):
 	fileName -- .osu file name to download
 	return -- .osu file content if success, None if failed
 	"""
+	response = None
 	try:
 		# Make sure osuapi is enabled
 		if generalHelper.stringToBool(glob.conf.config["osuapi"]["enable"]) == False:
@@ -52,10 +51,8 @@ def getOsuFileFromName(fileName):
 
 		URL = "{}/web/maps/{}".format(glob.conf.config["osuapi"]["apiurl"], quote(fileName))
 		response = requests.get(URL, timeout=20).text
+	finally:
 		return response
-	except:
-		log.error("Unknown error while downloading {}.osu!\n```{}\n{}```".format(fileName, sys.exc_info(), traceback.format_exc()), True)
-		return None
 
 def getOsuFileFromID(beatmapID):
 	"""
@@ -65,6 +62,7 @@ def getOsuFileFromID(beatmapID):
 	beatmapID -- ID of beatmap (not beatmapset) to download
 	return -- .osu file content if success, None if failed
 	"""
+	response = None
 	try:
 		# Make sure osuapi is enabled
 		if generalHelper.stringToBool(glob.conf.config["osuapi"]["enable"]) == False:
@@ -73,19 +71,16 @@ def getOsuFileFromID(beatmapID):
 
 		URL = "{}/osu/{}".format(glob.conf.config["osuapi"]["apiurl"], beatmapID)
 		response = requests.get(URL, timeout=20).text
+	finally:
 		return response
-	except:
-		log.error("Unknown error while downloading {}.osu!\n```{}\n{}```".format(beatmapID, sys.exc_info(), traceback.format_exc()), True)
-		return None
 
 def bloodcatRequest(URL):
+	response = None
 	try:
 		response = requests.get(URL, timeout=10).text
 		response = json.loads(response)
+	finally:
 		return response
-	except:
-		log.error("Unknown error while contacting Bloodcat!\n```{}\n{}```".format(sys.exc_info(), traceback.format_exc()), True)
-		return None
 
 def bloodcatToDirect(data, np = False):
 	s = ""
