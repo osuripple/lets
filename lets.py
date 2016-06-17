@@ -78,10 +78,29 @@ if __name__ == "__main__":
 	else:
 		consoleHelper.printDone()
 
+	# Check oppai
+	consoleHelper.printNoNl("> Checking oppai... ")
+	if os.path.isfile("../oppai/oppai") or os.path.isfile("../oppai/oppai.exe"):
+		consoleHelper.printDone()
+	else:
+		consoleHelper.printError()
+		consoleHelper.printColored("[!] Oppai not found! Please put oppai(.exe) in {}/oppai/oppai(.exe) and run LETS again.".format(os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))), bcolors.YELLOW)
+		consoleHelper.printColored("[!] You can download oppai's source here -> {}https://github.com/osuripple/oppai".format(bcolors.UNDERLINE), bcolors.YELLOW)
+		sys.exit()
+
+	# Create data/oppai maps folder if needed
+	consoleHelper.printNoNl("> Checking folders... ")
+	paths = [".data", ".data/replays", ".data/screenshots", "../oppai", "../oppai/maps"]
+	for i in paths:
+		if not os.path.exists(i):
+			os.makedirs(i, 0o770)
+	consoleHelper.printDone()
+
 	# Connect to db
 	try:
-		print("> Connecting to db with MySQLdb... ")
+		consoleHelper.printNoNl("> Connecting to db with MySQLdb")
 		glob.db = databaseHelperNew.db(glob.conf.config["db"]["host"], glob.conf.config["db"]["username"], glob.conf.config["db"]["password"], glob.conf.config["db"]["database"], int(glob.conf.config["db"]["workers"]))
+		consoleHelper.printNoNl(" ")
 		consoleHelper.printDone()
 	except:
 		# Exception while connecting to db
@@ -97,21 +116,6 @@ if __name__ == "__main__":
 	except:
 		consoleHelper.printError()
 		consoleHelper.printColored("[!] Error while creating threads pool. Please check your config.ini and run the server again", bcolors.RED)
-
-	# Create data folder if needed
-	consoleHelper.printNoNl("> Checking folders... ")
-	paths = [".data", ".data/replays", ".data/screenshots"]
-	for i in paths:
-		if not os.path.exists(i):
-			os.makedirs(i, 0o770)
-	consoleHelper.printDone()
-
-	# Enable PP if this is the officialTM ripple server
-	if os.path.isfile("rippoppai.py"):
-		glob.pp = True
-		print("> Using {}rippoppai{} as PP calculator.".format(bcolors.GREEN, bcolors.ENDC))
-	else:
-		consoleHelper.printColored("[!] No PP calculator found. PP are disabled.", bcolors.YELLOW)
 
 	# Check osuapi
 	if generalHelper.stringToBool(glob.conf.config["osuapi"]["enable"]) == False:
@@ -142,7 +146,7 @@ if __name__ == "__main__":
 	try:
 		glob.sentry = generalHelper.stringToBool(glob.conf.config["sentry"]["enable"])
 		if glob.sentry == True:
-			application.sentry_client = AsyncSentryClient(glob.conf.config["sentry"]["dns"])
+			application.sentry_client = AsyncSentryClient(glob.conf.config["sentry"]["dns"], release=glob.VERSION)
 		else:
 			consoleHelper.printColored("[!] Warning! Sentry logging is disabled!", bcolors.YELLOW)
 	except:

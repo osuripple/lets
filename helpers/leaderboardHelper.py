@@ -31,9 +31,8 @@ def build():
 	data = {"std": [], "taiko": [], "ctb": [], "mania": []}
 	allowedUsers = userHelper.getAllowedUsers('id')
 
-	# Get all user's stats (ranked scores or pp)
-	ranking = "pp" if glob.pp == True else "ranked_score"
-	users = glob.db.fetchAll("SELECT id, {ranking}_std, {ranking}_taiko, {ranking}_ctb, {ranking}_mania FROM users_stats".format(ranking=rannking))
+	# Get all user's stats
+	users = glob.db.fetchAll("SELECT id, pp_std, pp_taiko, pp_ctb, pp_mania FROM users_stats")
 
 	# Put the data in the correct way into the array.
 	for user in users:
@@ -41,7 +40,7 @@ def build():
 			continue
 
 		for mode in modes:
-			data[mode].append({"user": user["id"], "score": user["{}_{}".format(ranking, mode)]})
+			data[mode].append({"user": user["id"], "score": user["pp_{}".format(mode)]})
 
 	# We're doing the sorting for every mode.
 	for mode in modes:

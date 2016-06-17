@@ -1,9 +1,12 @@
 import fileLocks
 
-VERSION = "1.0"
+try:
+	with open("version") as f:
+		VERSION = f.read()
+except:
+	VERSION = "¯\_(xd)_/¯"
 db = None
 conf = None
-pp = False
 debug = False
 pool = None
 discord = False
