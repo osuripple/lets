@@ -60,7 +60,7 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 			# Get beatmap md5 from osuapi
 			# TODO: Move this to beatmap object
 			osuapiData = osuapiHelper.osuApiRequest("get_beatmaps", "b={}".format(beatmapID))
-			if "file_md5" not in osuapiData or "beatmapset_id" not in osuapiData:
+			if osuapiData == None or "file_md5" not in osuapiData or "beatmapset_id" not in osuapiData:
 				raise exceptions.invalidBeatmapException(MODULE_NAME)
 			beatmapMd5 = osuapiData["file_md5"]
 			beatmapSetID = osuapiData["beatmapset_id"]
