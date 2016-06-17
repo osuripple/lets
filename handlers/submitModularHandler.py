@@ -11,6 +11,7 @@ import sys
 import traceback
 from helpers import logHelper as log
 from helpers.exceptionsTracker import trackExceptions
+import beatmap
 
 MODULE_NAME = "submit_modular"
 class handler(requestHelper.asyncRequestHandler):
@@ -127,7 +128,43 @@ class handler(requestHelper.asyncRequestHandler):
 
 			# Done!
 			log.debug("Done!")
-			self.write("ok")
+			beatmapInfo = beatmap.beatmap()
+			beatmapInfo.setDataFromDB(s.fileMd5)
+			# if beatmapInfo == None or False:
+			if True:
+				self.write("ok")
+			else:
+				playcount = glob.db.fetch("SELECT COUNT(id) AS count FROM scores WHERE beatmap_md5 = %s", [s.fileMd5])
+				if playcount:
+					playcount = playcount["count"]
+				else:
+					playcount = 0
+				rows = {
+					"beatmapId": beatmapInfo.beatmapID,
+					"beatmapSetId": beatmapInfo.beatmapSetID,
+					"beatmapPlaycount": playcount,
+					"beatmapPasscount": playcount,
+					"approvedDate": "",
+					"chartId": "overall",
+					"chartName": "Overall Ranking",
+					"chartEndDate": "",
+					"beatmapRankingBefore": "",
+					"beatmapRankingAfter": "",
+					"rankedScoreBefore": "",
+					"rankedScoreAfter": "",
+					"totalScoreBefore": "",
+					"totalScoreAfter": "",
+					"playCountBefore": "",
+					"accuracyBefore": "",
+					"accuracyAfter": "",
+					"rankBefore": "",
+					"rankAfter": "",
+					"toNextRank": "",
+					"toNextRankUser": "",
+					"achievements": "",
+					"onlineScoreId": ""
+				}
+			# self.write("ok")
 		except exceptions.invalidArgumentsException:
 			pass
 		except exceptions.loginFailedException:
