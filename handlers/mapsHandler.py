@@ -30,12 +30,13 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 			# Get .osu file from osu! server
 			fileContent = osuapiHelper.getOsuFileFromName(fileName)
 			if fileContent == None:
+				# TODO: Sentry capture message here
 				raise exceptions.osuApiFailException(MODULE_NAME)
 			self.write(str(fileContent))
 		except exceptions.invalidArgumentsException:
-			self.send_error()
+			self.set_status(500)
 		except exceptions.osuApiFailException:
-			self.send_error
+			self.set_status(500)
 		except:
 			log.error("Unknown error in {}!\n```{}\n{}```".format(MODULE_NAME, sys.exc_info(), traceback.format_exc()))
 			if glob.sentry:

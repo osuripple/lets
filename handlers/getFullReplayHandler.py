@@ -67,11 +67,11 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 			])
 
 			# Serve full replay
+			self.write(fullReplay)
 			self.add_header("Content-type", "application/octet-stream")
 			self.set_header("Content-length", len(fullReplay))
 			self.set_header("Content-Description", "File Transfer")
 			self.set_header ("Content-Disposition", "attachment; filename=\"{}.osr\"".format(scoreData["id"]))
-			self.write(fullReplay)
 		except exceptions.fileNotFoundException:
 			self.write("Replay not found")
 		except:

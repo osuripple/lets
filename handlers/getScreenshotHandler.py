@@ -33,11 +33,11 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 			log.info("Served screenshot {}".format(screenshotID))
 
 			# Display screenshot
+			self.write(data)
 			self.set_header("Content-type", "image/jpg")
 			self.set_header("Content-length", len(data))
-			self.write(data)
 		except exceptions.fileNotFoundException:
-			self.send_error(404)
+			self.set_status(404)
 		except:
 			log.error("Unknown error in {}!\n```{}\n{}```".format(MODULE_NAME, sys.exc_info(), traceback.format_exc()))
 			if glob.sentry:

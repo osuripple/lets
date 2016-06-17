@@ -146,8 +146,8 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 			# shouldn't (eg: bancho restart), we'll ban users that submit
 			# scores without an active bancho session.
 			# We only log through schiavo atm (see exceptions.py).
+			self.set_status(408)
 			self.write("error: pass")
-			self.send_error(408)
 		except:
 			# Try except block to avoid more errors
 			try:
@@ -160,6 +160,6 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 			# Every other exception returns a 408 error (timeout)
 			# This avoids lost scores due to score server crash
 			# because the client will send the score again after some time.
-			self.send_error(408)
+			self.set_status(408)
 		#finally:
 		#	self.finish()
