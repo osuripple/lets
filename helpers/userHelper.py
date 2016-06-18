@@ -23,10 +23,12 @@ def getID(username):
 		userID = glob.db.fetch("SELECT id FROM users WHERE username = %s", [username])
 		if userID == None:
 			return 0
-		glob.userIDCache[username] = userID
+		glob.userIDCache[username] = userID["id"]
 
 	# Get userID from cache
-	return glob.userIDCache[username]
+	meme = glob.userIDCache[username]
+	log.debug(meme)
+	return meme
 
 def getUsername(userID):
 	"""
