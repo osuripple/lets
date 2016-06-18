@@ -111,23 +111,25 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 				log.error("Replay for score {} not saved!!".format(s.scoreID), True)
 
 			# Get pp/score before updating stats
-			if s.gameMode == gameModes.STD:
-				oldTotal = userHelper.getPP(userID, s.gameMode)
-			else:
-				oldTotal = userHelper.getRankedScore(userID, s.gameMode)
+			if s.passed == True:
+				if s.gameMode == gameModes.STD:
+					oldTotal = userHelper.getPP(userID, s.gameMode)
+				else:
+					oldTotal = userHelper.getRankedScore(userID, s.gameMode)
 
 			# Update users stats (total/ranked score, playcount, level and acc)
 			log.debug("Updating {}'s stats...".format(username))
 			userHelper.updateStats(userID, s)
 
-			# Update leaderboard
-			if s.gameMode == gameModes.STD:
-				newTotal = userHelper.getPP(userID, s.gameMode)
-			else:
-				newTotal = userHelper.getRankedScore(userID, s.gameMode)
+			# Get pp/score after updating the leaderboard
+			if s.passed == True:
+				if s.gameMode == gameModes.STD:
+					newTotal = userHelper.getPP(userID, s.gameMode)
+				else:
+					newTotal = userHelper.getRankedScore(userID, s.gameMode)
 
-			# Update leaderboard
-			if s.passed == True and s.completed == 3 and newTotal > oldTotal:
+			# Update leaderboard if score/pp has changed
+			if s.passed == True and s.completed == 3 and newTotal != oldTotal:
 				leaderboardHelper.update(userID, newTotal, s.gameMode)
 
 			# TODO: Update total hits and max combo
