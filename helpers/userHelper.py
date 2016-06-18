@@ -4,6 +4,14 @@ from helpers import passwordHelper
 import time
 from helpers import logHelper as log
 
+def getUserData(user):
+	return glob.db.fetch("""SELECT
+	users_stats.*, users.allowed, users.latest_activity,
+	users.silence_end, users.silence_reason
+FROM users_stats
+LEFT JOIN users ON users.id=users_stats.id
+WHERE users_stats.id = %s""", [user])
+
 def cacheUserIDs():
 	"""Cache userIDs in glob.userIDCache, used later with getID()."""
 	data = glob.db.fetchAll("SELECT id, username FROM users WHERE allowed = 1")

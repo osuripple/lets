@@ -10,8 +10,11 @@ from helpers import leaderboardHelper
 import sys
 import traceback
 from helpers import logHelper as log
+from helpers import scoreHelper
 from helpers.exceptionsTracker import trackExceptions
 import beatmap
+import scoreboard
+import collections
 
 # Exception tracking
 import tornado.web
@@ -76,6 +79,14 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 			s = score.score()
 			s.setDataFromScoreData(scoreData)
 
+			beatmapInfo = beatmap.beatmap()
+			beatmapInfo.setDataFromDB(s.fileMd5)
+
+			scores = scoreboard.scoreboard(username, s.gameMode, beatmapInfo, setScores = True)
+			userData = userHelper.getUserData(userID)
+			mode = scoreHelper.readableGameMode(s.gameMode)
+			userRank = leaderboardHelper.getUserRank(userID, s.gameMode)
+
 			# Calculate PP
 			# NOTE: PP are std only
 			if s.gameMode == gameModes.STD:
@@ -133,43 +144,73 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 
 			# Done!
 			log.debug("Done!")
-			beatmapInfo = beatmap.beatmap()
-			beatmapInfo.setDataFromDB(s.fileMd5)
-			# if beatmapInfo == None or False:
-			if True:
-				self.write("ok")
-			else:
+			if beatmapInfo != None or beatmapInfo != False:
+				data = collections.defaultdict(lambda: 0)
+				newScore = scoreboard.scoreboard(username, s.gameMode, beatmapInfo, setScores = True)
+				newData = userHelper.getUserData(userID)
 				playcount = glob.db.fetch("SELECT COUNT(id) AS count FROM scores WHERE beatmap_md5 = %s", [s.fileMd5])
 				if playcount:
-					playcount = playcount["count"]
-				else:
-					playcount = 0
-				rows = {
-					"beatmapId": beatmapInfo.beatmapID,
-					"beatmapSetId": beatmapInfo.beatmapSetID,
-					"beatmapPlaycount": playcount,
-					"beatmapPasscount": playcount,
-					"approvedDate": "",
-					"chartId": "overall",
-					"chartName": "Overall Ranking",
-					"chartEndDate": "",
-					"beatmapRankingBefore": "",
-					"beatmapRankingAfter": "",
-					"rankedScoreBefore": "",
-					"rankedScoreAfter": "",
-					"totalScoreBefore": "",
-					"totalScoreAfter": "",
-					"playCountBefore": "",
-					"accuracyBefore": "",
-					"accuracyAfter": "",
-					"rankBefore": "",
-					"rankAfter": "",
-					"toNextRank": "",
-					"toNextRankUser": "",
-					"achievements": "",
-					"onlineScoreId": ""
-				}
-			# self.write("ok")
+					data["playcount"] = playcount["count"]
+
+				if userData:
+					data["totalScoreBefore"] = userData["total_score_" + mode]
+					data["playCountBefore"] = userData["playcount_" + mode]
+					data["accuracyBefore"] = userData["avg_accuracy_" + mode]/100
+					data["rankBefore"] = userRank["position"]
+				if newData:
+					data["totalScoreAfter"] = data["totalScoreBefore"] + s.score if beatmapInfo.rankedStatus > 0 else data["totalScoreBefore"]
+					data["accuracyAfter"] = newData["avg_accuracy_" + mode]/100
+					rankAfter = leaderboardHelper.getUserRank(userID, s.gameMode)
+					data["rankAfter"] = rankAfter["position"]
+
+				data["rankedScoreBefore"] = userData["ranked_score_" + mode]
+				data["rankedScoreAfter"] = newData["ranked_score_" + mode]
+				modeColumn = "pp_" + mode
+				rankInfo = glob.db.fetch("SELECT {col}, username FROM users_stats WHERE {col} > %s ORDER BY {col} LIMIT 1".format(col=modeColumn), [data["rankedScoreAfter"]])
+				if rankInfo:
+					data["toNextRank"] = rankInfo[modeColumn]
+					data["toNextRank"] -= newData['pp_' + mode]
+					data["toNextRankUser"] = rankInfo["username"]
+
+				data["beatmapRankingBefore"] = scores.personalBestRank if scores.personalBestRank > 0 else 0
+
+				output = collections.OrderedDict()
+				output["beatmapId"] = beatmapInfo.beatmapID
+				output["beatmapSetId"] = beatmapInfo.beatmapSetID
+				output["beatmapPlaycount"] = data["playcount"]
+				output["beatmapPasscount"] = data["playcount"]
+				output["approvedDate"] = "\n"
+				output["chartId"] = "overall"
+				output["chartName"] = "Overall Ranking"
+				output["chartEndDate"] = ""
+				output["beatmapRankingBefore"] = data["beatmapRankingBefore"]
+				output["beatmapRankingAfter"] = newScore.personalBestRank
+				output["rankedScoreBefore"] = data["rankedScoreBefore"]
+				output["rankedScoreAfter"] = data["rankedScoreAfter"]
+				output["totalScoreBefore"] = data["totalScoreBefore"]
+				output["totalScoreAfter"] = data["totalScoreAfter"]
+				output["playCountBefore"] = data["playCountBefore"]
+				output["accuracyBefore"] = data["accuracyBefore"]
+				output["accuracyAfter"] = data["accuracyAfter"]
+				output["rankBefore"] = data["rankBefore"]
+				output["rankAfter"] = data["rankAfter"]
+				output["toNextRank"] = data["toNextRank"]
+				output["toNextRankUser"] = data.get("toNextRankUser", "")
+				output["achievements"] = ""
+				output["onlineScoreId"] = s.scoreID
+
+				msg = ""
+				for line, val in output.items():
+					msg += "{}:{}".format(line, val)
+					if val != "\n":
+						if (len(output) - 1) != list(output.keys()).index(line):
+							msg += "|"
+						else:
+							msg += "\n"
+				log.debug("Generated output for online ranking screen!")
+				self.write(msg)
+			else:`
+				self.write("ok")
 		except exceptions.invalidArgumentsException:
 			pass
 		except exceptions.loginFailedException:
