@@ -166,7 +166,7 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 				data["rankedScoreBefore"] = userData["ranked_score_" + mode]
 				data["rankedScoreAfter"] = newData["ranked_score_" + mode]
 				modeColumn = "pp_" + mode
-				rankInfo = glob.db.fetch("SELECT {col}, username FROM users_stats WHERE {col} > %s ORDER BY {col} LIMIT 1".format(col=modeColumn), [data["rankedScoreAfter"]])
+				rankInfo = glob.db.fetch("SELECT {col}, username FROM users_stats WHERE {col} > %s ORDER BY {col} LIMIT 1".format(col=modeColumn), [newData['pp_' + mode]])
 				if rankInfo:
 					data["toNextRank"] = rankInfo[modeColumn]
 					data["toNextRank"] -= newData['pp_' + mode]
