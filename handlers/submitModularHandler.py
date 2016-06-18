@@ -209,7 +209,7 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 							msg += "\n"
 				log.debug("Generated output for online ranking screen!")
 				self.write(msg)
-			else:`
+			else:
 				self.write("ok")
 		except exceptions.invalidArgumentsException:
 			pass
