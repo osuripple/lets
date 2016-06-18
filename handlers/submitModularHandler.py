@@ -148,7 +148,8 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 
 			# Done!
 			log.debug("Done!")
-
+			self.write("ok")
+			return
 			if s.passed == True:
 				beatmapInfo = beatmap.beatmap()
 				beatmapInfo.setDataFromDB(s.fileMd5)
@@ -216,7 +217,9 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 							msg += "|"
 						else:
 							msg += "\n"
+				msg += "\n"
 				log.debug("Generated output for online ranking screen!")
+				log.debug(msg)
 				self.write(msg)
 			else:
 				self.write("ok")
