@@ -61,15 +61,14 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 			userID = userHelper.getID(username)
 			if userID == 0:
 				raise exceptions.loginFailedException(MODULE_NAME, userID)
-			if userHelper.checkLogin(userID, password, ip) == False:
-				raise exceptions.loginFailedException(MODULE_NAME, username)
-			if userHelper.getAllowed(userID) == 0:
-				raise exceptions.userBannedException(MODULE_NAME, username)
-
+			#if userHelper.checkLogin(userID, password, ip) == False:
+			#	raise exceptions.loginFailedException(MODULE_NAME, username)
 			# Check active bancho session (NOTE: it searches only by userID, not ip)
 			if userHelper.checkBanchoSession(userID) == False:
 				# TODO: Ban (see except exceptions.noBanchoSessionException block)
 				raise exceptions.noBanchoSessionException(MODULE_NAME, username, ip)
+			if userHelper.getAllowed(userID) == 0:
+				raise exceptions.userBannedException(MODULE_NAME, username)
 
 			# Create score object and set its data
 			log.info("{} has submitted a score on {}...".format(username, scoreData[0]))
@@ -111,18 +110,25 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 			if not os.path.isfile(".data/replays/replay_{}.osr".format(s.scoreID)) and s.completed == 3:
 				log.error("Replay for score {} not saved!!".format(s.scoreID), True)
 
+			# Get pp/score before updating stats
+			if s.gameMode == gameModes.STD:
+				oldTotal = userHelper.getPP(userID, s.gameMode)
+			else:
+				oldTotal = userHelper.getRankedScore(userID, s.gameMode)
+
 			# Update users stats (total/ranked score, playcount, level and acc)
 			log.debug("Updating {}'s stats...".format(username))
 			userHelper.updateStats(userID, s)
 
 			# Update leaderboard
 			if s.gameMode == gameModes.STD:
-				newScore = userHelper.getPP(userID, s.gameMode)
+				newTotal = userHelper.getPP(userID, s.gameMode)
 			else:
-				newScore = userHelper.getRankedScore(userID, s.gameMode)
+				newTotal = userHelper.getRankedScore(userID, s.gameMode)
 
 			# Update leaderboard
-			leaderboardHelper.update(userID, newScore, s.gameMode)
+			if s.passed == True and s.completed == 3 and newTotal > oldTotal:
+				leaderboardHelper.update(userID, newTotal, s.gameMode)
 
 			# TODO: Update total hits and max combo
 			# Update latest activity
@@ -133,8 +139,8 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 
 			# Done!
 			log.debug("Done!")
-			beatmapInfo = beatmap.beatmap()
-			beatmapInfo.setDataFromDB(s.fileMd5)
+			#beatmapInfo = beatmap.beatmap()
+			#beatmapInfo.setDataFromDB(s.fileMd5)
 			# if beatmapInfo == None or False:
 			if True:
 				self.write("ok")

@@ -63,10 +63,11 @@ def update(userID, newScore, gameMode):
 	gameMode -- gameMode number
 	"""
 	#try:
+	log.debug("Updating leaderboard...")
 	mode = scoreHelper.readableGameMode(gameMode)
 
 	newPlayer = False
-	us = glob.db.fetch("SELECT * FROM leaderboard_{} WHERE user=%s".format(mode), [userID])
+	us = glob.db.fetch("SELECT * FROM leaderboard_{} WHERE user=%s LIMIT 1".format(mode), [userID])
 	if us == None:
 		newPlayer = True
 

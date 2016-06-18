@@ -129,16 +129,28 @@ def getLevel(totalScore):
 			# Not our level, calculate score for next level
 			level+=1
 
-def updateLevel(userID, gameMode):
+def updateLevel(userID, gameMode = 0, totalScore = 0):
 	"""
 	Update level in DB for userID relative to gameMode
-	"""
-	if not exists(userID):
-		return
 
-	mode = scoreHelper.readableGameMode(gameMode)
-	totalScore = glob.db.fetch("SELECT total_score_{m} FROM users_stats WHERE id = %s".format(m = mode), [userID])
-	level = getLevel(totalScore["total_score_{m}".format(m = mode)])
+	totalScore -- totalScore. Optional. If not passed, will get it from db
+	gameMode -- Game mode number used to get totalScore from db. Optional. Needed only if totalScore is not passed
+	"""
+	# Make sure the user exists
+	#if not exists(userID):
+	#	return
+
+	# Get total score from db if not passed
+	if totalScore == 0:
+		mode = scoreHelper.readableGameMode(gameMode)
+		totalScore = glob.db.fetch("SELECT total_score_{m} as total_score FROM users_stats WHERE id = %s".format(m = mode), [userID])
+		if totalScore:
+			totalScore = totalScore["total_score"]
+
+	# Calculate level from totalScore
+	level = getLevel(totalScore)
+
+	# Save new level
 	glob.db.execute("UPDATE users_stats SET level_{m} = %s WHERE id = %s".format(m = mode), [level, userID])
 
 
@@ -156,7 +168,7 @@ def calculateAccuracy(userID, gameMode):
 	else:
 		sortby = "accuracy"
 	# Get best accuracy scores
-	bestAccScores = glob.db.fetchAll("SELECT accuracy FROM scores WHERE userid = %s AND play_mode = %s AND completed = '3' ORDER BY " + sortby + " DESC LIMIT 100", [userID, gameMode])
+	bestAccScores = glob.db.fetchAll("SELECT accuracy FROM scores WHERE userid = %s AND play_mode = %s AND completed = 3 ORDER BY " + sortby + " DESC LIMIT 100", [userID, gameMode])
 
 	v = 0
 	if bestAccScores != None:
@@ -186,7 +198,7 @@ def calculatePP(userID, gameMode):
 	return -- total PP
 	"""
 	# Get best pp scores
-	bestPPScores = glob.db.fetchAll("SELECT pp FROM scores WHERE userid = %s AND play_mode = %s AND completed = '3' ORDER BY pp DESC LIMIT 100", [userID, gameMode])
+	bestPPScores = glob.db.fetchAll("SELECT pp FROM scores WHERE userid = %s AND play_mode = %s AND completed = 3 ORDER BY pp DESC LIMIT 100", [userID, gameMode])
 
 	# Calculate weighted PP
 	totalPP = 0
@@ -208,13 +220,9 @@ def updateAccuracy(userID, gameMode):
 	userID --
 	gameMode -- gameMode number
 	"""
-
-	username = getUsername(userID)
-	if username == None:
-		return
 	newAcc = calculateAccuracy(userID, gameMode)
 	mode = scoreHelper.readableGameMode(gameMode)
-	glob.db.execute("UPDATE users_stats SET avg_accuracy_{m} = %s WHERE username = %s".format(m = mode), [newAcc, username])
+	glob.db.execute("UPDATE users_stats SET avg_accuracy_{m} = %s WHERE id = %s".format(m = mode), [newAcc, userID])
 
 
 def updatePP(userID, gameMode):
@@ -226,8 +234,8 @@ def updatePP(userID, gameMode):
 	gameMode -- gameMode number
 	"""
 	# Make sure the user exists
-	if not exists(userID):
-		return
+	#if not exists(userID):
+	#	return
 
 	# Get new total PP and update db
 	newPP = calculatePP(userID, gameMode)
