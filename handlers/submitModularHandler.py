@@ -30,6 +30,9 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 	@tornado.gen.engine
 	def asyncPost(self):
 		try:
+			# Resend the score in case of unhandled exceptions
+			keepSending = True
+
 			# Get request ip
 			ip = self.getRequestIP()
 
@@ -78,10 +81,6 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 			s = score.score()
 			s.setDataFromScoreData(scoreData)
 
-			userData = userHelper.getUserData(userID)
-			mode = scoreHelper.readableGameMode(s.gameMode)
-			userRank = leaderboardHelper.getUserRank(userID, s.gameMode)
-
 			# Calculate PP
 			# NOTE: PP are std only
 			if s.gameMode == gameModes.STD:
@@ -117,27 +116,53 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 			if not os.path.isfile(".data/replays/replay_{}.osr".format(s.scoreID)) and s.completed == 3:
 				log.error("Replay for score {} not saved!!".format(s.scoreID), True)
 
-			# Get pp/score before updating stats
-			if s.passed == True:
-				if s.gameMode == gameModes.STD:
-					oldTotal = userHelper.getPP(userID, s.gameMode)
-				else:
-					oldTotal = userHelper.getRankedScore(userID, s.gameMode)
+			# Update beatmap playcount (and passcount)
+			beatmap.incrementPlaycount(s.fileMd5, s.passed)
 
-			# Update users stats (total/ranked score, playcount, level and acc)
+			# Get "before" stats for ranking panel (only if passed)
+			if s.passed == True:
+				# Get stats and rank
+				oldUserData = glob.userStatsCache.get(userID, s.gameMode)
+				oldRank = leaderboardHelper.getUserRank(userID, s.gameMode)
+
+				# Beatmap info needed for personal best (if not in cacge)
+				# song playcount and passcount
+				beatmapInfo = beatmap.beatmap()
+				beatmapInfo.setDataFromDB(s.fileMd5)
+
+				# Try to get oldPersonalBestRank from cache
+				oldPersonalBestRank = glob.personalBestCache.get(userID, s.fileMd5)
+				if oldPersonalBestRank == 0:
+					# oldPersonalBestRank not found in cache, get it from db
+					oldScoreboard = scoreboard.scoreboard(username, s.gameMode, beatmapInfo, False)
+					oldScoreboard.setPersonalBest()
+					oldPersonalBestRank = oldScoreboard.personalBestRank if oldScoreboard.personalBestRank > 0 else 0
+			else:
+				# We need to do this or it throws an exception when building ranking panel
+				beatmapInfo = None
+
+			# Always update users stats (total/ranked score, playcount, level, acc and pp)
+			# even if not passed
 			log.debug("Updating {}'s stats...".format(username))
 			userHelper.updateStats(userID, s)
 
-			# Get pp/score after updating the leaderboard
+			# Get "after" stats for ranking panel
+			# and to determine if we should update the leaderboard
+			# (only if we passed that song)
 			if s.passed == True:
-				if s.gameMode == gameModes.STD:
-					newTotal = userHelper.getPP(userID, s.gameMode)
-				else:
-					newTotal = userHelper.getRankedScore(userID, s.gameMode)
+				# Get new stats
+				newUserData = userHelper.getUserStats(userID, s.gameMode)
+				glob.userStatsCache.update(userID, s.gameMode, newUserData)
 
-			# Update leaderboard if score/pp has changed
-			if s.passed == True and s.completed == 3 and newTotal != oldTotal:
-				leaderboardHelper.update(userID, newTotal, s.gameMode)
+				# Use pp/score as "total" based on game mode
+				if s.gameMode == gameModes.STD:
+					criteria = "pp"
+				else:
+					criteria = "rankedScore"
+
+				# Update leaderboard if score/pp has changed
+				if s.completed == 3 and newUserData[criteria] != oldUserData[criteria]:
+					leaderboardHelper.update(userID, newTotal, s.gameMode)
 
 			# TODO: Update total hits and max combo
 			# Update latest activity
@@ -146,69 +171,53 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 			# IP botnet
 			userHelper.botnet(userID, ip)
 
-			# Done!
-			log.debug("Done!")
-			self.write("ok")
-			return
-			if s.passed == True:
-				beatmapInfo = beatmap.beatmap()
-				beatmapInfo.setDataFromDB(s.fileMd5)
-				scores = scoreboard.scoreboard(username, s.gameMode, beatmapInfo, setScores = True)
+			# Score submission and stats update done
+			log.debug("Score submission and user stats update done!")
+
+			# Score has been submitted, do not retry sending the score if
+			# there are exceptions while building the ranking panel
+			keepSending = False
+
+			# Output ranking panel only if we passed the song
+			# and we got valid beatmap info from db
 			if beatmapInfo != None or beatmapInfo != False and s.passed == True:
-				data = collections.defaultdict(lambda: 0)
-				newScore = scoreboard.scoreboard(username, s.gameMode, beatmapInfo, setScores = True)
-				newData = userHelper.getUserData(userID)
-				playcount = glob.db.fetch("SELECT COUNT(id) AS count FROM scores WHERE beatmap_md5 = %s", [s.fileMd5])
-				if playcount:
-					data["playcount"] = playcount["count"]
+				log.debug("Started building ranking panel")
 
-				if userData:
-					data["totalScoreBefore"] = userData["total_score_" + mode]
-					data["playCountBefore"] = userData["playcount_" + mode]
-					data["accuracyBefore"] = userData["avg_accuracy_" + mode]/100
-					data["rankBefore"] = userRank["position"]
-				if newData:
-					data["totalScoreAfter"] = data["totalScoreBefore"] + s.score if beatmapInfo.rankedStatus > 0 else data["totalScoreBefore"]
-					data["accuracyAfter"] = newData["avg_accuracy_" + mode]/100
-					rankAfter = leaderboardHelper.getUserRank(userID, s.gameMode)
-					data["rankAfter"] = rankAfter["position"]
+				# Get personal best after submitting the score
+				newScoreboard = scoreboard.scoreboard(username, s.gameMode, beatmapInfo, False)
+				newScoreboard.setPersonalBest()
 
-				data["rankedScoreBefore"] = userData["ranked_score_" + mode]
-				data["rankedScoreAfter"] = newData["ranked_score_" + mode]
-				modeColumn = "pp_" + mode
-				rankInfo = glob.db.fetch("SELECT {col}, username FROM users_stats WHERE {col} > %s ORDER BY {col} LIMIT 1".format(col=modeColumn), [newData['pp_' + mode]])
-				if rankInfo:
-					data["toNextRank"] = rankInfo[modeColumn]
-					data["toNextRank"] -= newData['pp_' + mode]
-					data["toNextRankUser"] = rankInfo["username"]
+				# Get rank info (current rank, pp/score to next rank, user who is 1 rank above us)
+				rankInfo = leaderboardHelper.getRankInfo(userID, s.gameMode)
 
-				data["beatmapRankingBefore"] = scores.personalBestRank if scores.personalBestRank > 0 else 0
-
+				# Output dictionary
 				output = collections.OrderedDict()
 				output["beatmapId"] = beatmapInfo.beatmapID
 				output["beatmapSetId"] = beatmapInfo.beatmapSetID
-				output["beatmapPlaycount"] = data["playcount"]
-				output["beatmapPasscount"] = data["playcount"]
-				output["approvedDate"] = "\n"
+				output["beatmapPlaycount"] = beatmapInfo.playcount
+				output["beatmapPasscount"] = beatmapInfo.passcount
+				output["approvedDate"] = "2015-07-09 23:20:14\n"
 				output["chartId"] = "overall"
 				output["chartName"] = "Overall Ranking"
 				output["chartEndDate"] = ""
-				output["beatmapRankingBefore"] = data["beatmapRankingBefore"]
-				output["beatmapRankingAfter"] = newScore.personalBestRank
-				output["rankedScoreBefore"] = data["rankedScoreBefore"]
-				output["rankedScoreAfter"] = data["rankedScoreAfter"]
-				output["totalScoreBefore"] = data["totalScoreBefore"]
-				output["totalScoreAfter"] = data["totalScoreAfter"]
-				output["playCountBefore"] = data["playCountBefore"]
-				output["accuracyBefore"] = data["accuracyBefore"]
-				output["accuracyAfter"] = data["accuracyAfter"]
-				output["rankBefore"] = data["rankBefore"]
-				output["rankAfter"] = data["rankAfter"]
-				output["toNextRank"] = data["toNextRank"]
-				output["toNextRankUser"] = data.get("toNextRankUser", "")
+				output["beatmapRankingBefore"] = oldPersonalBestRank
+				output["beatmapRankingAfter"] = newScoreboard.personalBestRank
+				output["rankedScoreBefore"] = oldUserData["rankedScore"]
+				output["rankedScoreAfter"] = newUserData["rankedScore"]
+				output["totalScoreBefore"] = oldUserData["totalScore"]
+				output["totalScoreAfter"] = newUserData["totalScore"]
+				output["playCountBefore"] = newUserData["playcount"]
+				output["accuracyBefore"] = float(oldUserData["accuracy"])/100
+				output["accuracyAfter"] = float(newUserData["accuracy"])/100
+				output["rankBefore"] = oldRank
+				output["rankAfter"] = rankInfo["currentRank"]
+				output["toNextRank"] = rankInfo["difference"]
+				output["toNextRankUser"] = rankInfo["nextUsername"]
 				output["achievements"] = ""
+				output["achievements-new"] = "all-secret-bunny+A wild Masimo appears+Don't let the Masimo distract you!"
 				output["onlineScoreId"] = s.scoreID
 
+				# Build final string
 				msg = ""
 				for line, val in output.items():
 					msg += "{}:{}".format(line, val)
@@ -217,11 +226,15 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 							msg += "|"
 						else:
 							msg += "\n"
-				msg += "\n"
+
+				# Some debug messages
 				log.debug("Generated output for online ranking screen!")
 				log.debug(msg)
+
+				# Write message to client
 				self.write(msg)
 			else:
+				# No ranking panel, send just "ok"
 				self.write("ok")
 		except exceptions.invalidArgumentsException:
 			pass
@@ -250,6 +263,5 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 			# Every other exception returns a 408 error (timeout)
 			# This avoids lost scores due to score server crash
 			# because the client will send the score again after some time.
-			self.set_status(408)
-		#finally:
-		#	self.finish()
+			if keepSending == True:
+				self.set_status(408)

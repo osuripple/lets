@@ -32,6 +32,10 @@ class beatmap:
 		self.hitLength = 0
 		self.bpm = 0
 
+		# Statistics for ranking panel
+		self.playcount = 0
+		self.passcount = 0
+
 		if md5 != None and beatmapSetID != None:
 			self.setData(md5, beatmapSetID)
 
@@ -111,6 +115,9 @@ class beatmap:
 		self.maxCombo = int(data["max_combo"])
 		self.hitLength = int(data["hit_length"])
 		self.bpm = int(data["bpm"])
+		# Ranking panel statistics
+		self.playcount = int(data["playcount"]) if "playcount" in data else 0
+		self.passcount = int(data["passcount"]) if "passcount" in data else 0
 
 	def setDataFromOsuApi(self, md5, beatmapSetID):
 		"""
@@ -230,3 +237,14 @@ def convertRankedStatus(approvedStatus):
 		return rankedStatuses.QUALIFIED
 	else:
 		return rankedStatuses.UNKNOWN
+
+def incrementPlaycount(md5, passed):
+	"""
+	Increment playcount (and passcount) for a beatmap
+
+	md5 -- beatmap md5
+	passed -- if True, increment passcount too
+	"""
+	glob.db.execute("UPDATE beatmaps SET playcount = playcount+1 WHERE beatmap_md5 = %s", [md5])
+	if passed == True:
+		glob.db.execute("UPDATE beatmaps SET passcount = passcount+1 WHERE beatmap_md5 = %s", [md5])

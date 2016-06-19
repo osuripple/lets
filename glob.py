@@ -1,4 +1,6 @@
 import fileLocks
+import userStatsCache
+import personalBestCache
 
 try:
 	with open("version") as f:
@@ -10,6 +12,10 @@ conf = None
 debug = False
 pool = None
 discord = False
-fLocks = fileLocks.fileLocks()
 sentry = False
+
+# Cache and objects
+fLocks = fileLocks.fileLocks()
 userIDCache = {}
+userStatsCache = userStatsCache.userStatsCache()
+personalBestCache = personalBestCache.personalBestCache()

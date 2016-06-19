@@ -14,11 +14,35 @@ def getUserRank(userID, gameMode):
 	return -- rank number. 0 if unknown
 	"""
 	mode = scoreHelper.readableGameMode(gameMode)
-	result = glob.db.fetch("SELECT position FROM leaderboard_{} WHERE user = %s;".format(mode), [userID])
+	result = glob.db.fetch("SELECT position FROM leaderboard_{} WHERE user = %s LIMIT 1".format(mode), [userID])
 	if result != None:
-		return result
+		return int(result["position"])
 	else:
 		return 0
+
+def getRankInfo(userID, gameMode):
+	"""
+	userID --
+	gameMode -- gameMode number
+	return -- {"nextusername": string, "difference": int}
+	"""
+	data = {"nextUsername": "", "difference": 0, "currentRank": 0}
+	modeForDB = scoreHelper.readableGameMode(gameMode)
+	v = glob.db.fetch("SELECT v FROM leaderboard_{mode} WHERE user = %s LIMIT 1".format(mode=modeForDB), [userID])
+	if v != None:
+		v = v["v"]
+		result = glob.db.fetchAll("SELECT leaderboard_{mode}.*, users.username FROM leaderboard_{mode} LEFT JOIN users ON users.id = leaderboard_{mode}.user WHERE v >= %s ORDER BY v ASC LIMIT 2".format(mode=modeForDB), [v])
+		if len(result) == 2:
+			# Get us and other
+			us = result[0]
+			other = result[1]
+
+			# Get our rank, next rank username and pp/score difference
+			data["currentRank"] = us["position"]
+			data["nextUsername"] = other["username"]
+			data["difference"] = int(other["v"])-int(us["v"])
+
+	return data
 
 def build():
 	"""

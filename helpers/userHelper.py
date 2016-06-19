@@ -4,13 +4,15 @@ from helpers import passwordHelper
 import time
 from helpers import logHelper as log
 
-def getUserData(user):
-	return glob.db.fetch("""SELECT
-	users_stats.*, users.allowed, users.latest_activity,
-	users.silence_end, users.silence_reason
-FROM users_stats
-LEFT JOIN users ON users.id=users_stats.id
-WHERE users_stats.id = %s""", [user])
+def getUserStats(userID, gameMode):
+	"""
+	Get stats needed in ranking panel relative to userID for gameMdoe
+
+	userID --
+	gameMode -- gameMode number
+	"""
+	modeForDB = scoreHelper.readableGameMode(gameMode)
+	return glob.db.fetch("SELECT ranked_score_{mode} as rankedScore, total_score_{mode} as totalScore, pp_{mode} AS pp, avg_accuracy_{mode} AS accuracy, playcount_{mode} AS playcount FROM users_stats WHERE id = %s LIMIT 1".format(mode=modeForDB), [userID])
 
 def cacheUserIDs():
 	"""Cache userIDs in glob.userIDCache, used later with getID()."""
@@ -280,10 +282,10 @@ def updateStats(userID, __score):
 		glob.db.execute("UPDATE users_stats SET ranked_score_{m}=ranked_score_{m}+%s WHERE id = %s".format(m=mode), [__score.rankedScoreIncrease, userID])
 
 		# Update accuracy
-		updateAccuracy(userID, __score.gameMode)
+		accuracy = updateAccuracy(userID, __score.gameMode)
 
 		# Update pp
-		updatePP(userID, __score.gameMode)
+		pp = updatePP(userID, __score.gameMode)
 
 
 def getAllowed(userID):
