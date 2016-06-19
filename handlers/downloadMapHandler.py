@@ -18,10 +18,11 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 	@tornado.gen.engine
 	def asyncGet(self, bid):
 		try:
-			self.set_status(302)
+			self.set_status(302, "Moved Temporarily")
 			url = "http://m.zxq.co/{}.osz".format(bid)
-			#url = "https://bloodcat.com/osu/s/{}".format(bid)
-			self.add_header("location", url)
+			self.add_header("Location", url)
+			self.add_header("Cache-Control", "no-cache")
+			self.add_header("Pragma", "no-cache")
 			print(url)
 			#f = requests.get(url)
 			#self.write(str(f))
