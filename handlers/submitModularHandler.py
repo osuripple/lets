@@ -162,7 +162,7 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 
 				# Update leaderboard if score/pp has changed
 				if s.completed == 3 and newUserData[criteria] != oldUserData[criteria]:
-					leaderboardHelper.update(userID, newTotal, s.gameMode)
+					leaderboardHelper.update(userID, newUserData[criteria], s.gameMode)
 
 			# TODO: Update total hits and max combo
 			# Update latest activity
