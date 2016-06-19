@@ -196,7 +196,8 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 				output["beatmapSetId"] = beatmapInfo.beatmapSetID
 				output["beatmapPlaycount"] = beatmapInfo.playcount
 				output["beatmapPasscount"] = beatmapInfo.passcount
-				output["approvedDate"] = "2015-07-09 23:20:14\n"
+				#output["approvedDate"] = "2015-07-09 23:20:14\n"
+				output["approvedDate"] = "\n"
 				output["chartId"] = "overall"
 				output["chartName"] = "Overall Ranking"
 				output["chartEndDate"] = ""
@@ -214,7 +215,8 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 				output["toNextRank"] = rankInfo["difference"]
 				output["toNextRankUser"] = rankInfo["nextUsername"]
 				output["achievements"] = ""
-				output["achievements-new"] = "all-secret-bunny+A wild Masimo appears+Don't let the Masimo distract you!"
+				#output["achievements-new"] = "all-secret-bunny+A wild Masimo appears+Don't let the Masimo distract you!"
+				output["achievements-new"] = ""
 				output["onlineScoreId"] = s.scoreID
 
 				# Build final string
