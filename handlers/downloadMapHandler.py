@@ -19,7 +19,7 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 	def asyncGet(self, bid):
 		try:
 			self.set_status(302, "Moved Temporarily")
-			url = "http://m.zxq.co/{}.osz".format(bid)
+			url = "http://m.zxq.co/direct/direct.php?id={}".format(bid)
 			self.add_header("Location", url)
 			self.add_header("Cache-Control", "no-cache")
 			self.add_header("Pragma", "no-cache")
