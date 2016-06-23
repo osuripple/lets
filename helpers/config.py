@@ -53,6 +53,7 @@ class config:
 			self.config.get("server", "beatmapcacheexpire")
 			self.config.get("server", "serverurl")
 			self.config.get("server", "threads")
+			self.config.get("server", "cloudflare")
 
 			self.config.get("sentry","enable")
 			self.config.get("sentry","dns")
@@ -90,6 +91,7 @@ class config:
 		self.config.set("server", "beatmapcacheexpire", "86400")
 		self.config.set("server", "serverurl", "http://127.0.0.1:5001")
 		self.config.set("server", "threads", "16")
+		self.config.set("server", "cloudflare", "True")
 
 		self.config.add_section("sentry")
 		self.config.set("sentry", "enable", "False")

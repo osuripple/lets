@@ -4,6 +4,7 @@ import tornado.gen
 from tornado.ioloop import IOLoop
 import glob
 from helpers import logHelper as log
+import ipaddress
 
 class asyncRequestHandler(tornado.web.RequestHandler):
 	"""
@@ -43,7 +44,7 @@ class asyncRequestHandler(tornado.web.RequestHandler):
 		self.finish()
 
 	def getRequestIP(self):
-		realIP = self.request.headers.get("X-Real-IP")
+		realIP = self.request.headers.get("X-Forwarded-For") if glob.cloudflare == True else self.request.headers.get("X-Real-IP")
 		if realIP != None:
 			return realIP
 		return self.request.remote_ip

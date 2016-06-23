@@ -156,6 +156,9 @@ if __name__ == "__main__":
 	except:
 		consoleHelper.printColored("[!] Error while starting sentry client! Please check your config.ini and run the server again", bcolors.RED)
 
+	# Cloudflare meme
+	glob.cloudflare = generalHelper.stringToBool(glob.conf.config["server"]["cloudflare"])
+
 	# Cache user ids
 	consoleHelper.printNoNl("> Caching user IDs... ")
 	userHelper.cacheUserIDs()

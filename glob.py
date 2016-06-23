@@ -13,6 +13,7 @@ debug = False
 pool = None
 discord = False
 sentry = False
+cloudflare = False
 
 # Cache and objects
 fLocks = fileLocks.fileLocks()
