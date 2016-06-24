@@ -215,8 +215,21 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 				output["toNextRank"] = rankInfo["difference"]
 				output["toNextRankUser"] = rankInfo["nextUsername"]
 				output["achievements"] = ""
-				#output["achievements-new"] = "all-secret-bunny+A wild Masimo appears+Don't let the Masimo distract you!"
-				output["achievements-new"] = ""
+				try:
+					# std only
+					if s.gameMode != 0:
+						raise
+
+					# Get best score if
+					bestID = int(glob.db.fetch("SELECT id FROM scores WHERE userid = %s AND play_mode = %s AND completed = 3 ORDER BY pp DESC LIMIT 1", [userID, s.gameMode])["id"])
+					if bestID == s.scoreID:
+						# Dat pp achievement
+						output["achievements-new"] = "all-secret-jackpot+Here come dat PP+Oh shit waddup"
+					else:
+						raise
+				except:
+					# No achievement
+					output["achievements-new"] = ""
 				output["onlineScoreId"] = s.scoreID
 
 				# Build final string
