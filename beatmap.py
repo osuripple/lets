@@ -44,7 +44,7 @@ class beatmap:
 		Add current beatmap data in db if not in yet
 		"""
 		# Make sure the beatmap is not already in db
-		bid = glob.db.fetch("SELECT id FROM beatmaps WHERE beatmap_md5 = %s LIMIT 1", [self.fileMD5])
+		bid = glob.db.fetch("SELECT id FROM beatmaps WHERE beatmap_md5 = %s OR beatmap_id = %s LIMIT 1", [self.fileMD5, self.beatmapID])
 		if bid != None:
 			# This beatmap is already in db, remove old record
 			log.debug("Deleting old beatmap data ({})".format(bid["id"]))
