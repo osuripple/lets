@@ -175,9 +175,16 @@ class oppai:
 				self.stars = None
 				return self.pp
 
+			output = output.split(sep)
+
+			# get rid of pesky warnings!!!
+			try:
+				float(output[0])
+			except ValueError:
+				del output[0]
+
 			if tillerino == True:
 				# Get tillerino output (multiple lines)
-				output = output.split(sep)
 				if stars == True:
 					self.pp = output[:-2]
 					self.stars = float(output[-2])
@@ -186,7 +193,6 @@ class oppai:
 			else:
 				# Get standard output (:l to remove (/r)/n at the end)
 				l = -1 if UNIX else -2
-				output = output.split(sep)
 				if stars == True:
 					self.pp = float(output[len(output)-2][:l-1])
 				else:
