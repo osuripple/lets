@@ -50,7 +50,7 @@ class scoreboard:
 			self.scores[0] = -1
 
 		# Top 50 scores
-		topScores = glob.db.fetchAll("SELECT * FROM scores LEFT JOIN users ON scores.userid = users.id WHERE scores.beatmap_md5 = %s AND scores.play_mode = %s AND scores.completed = 3 AND users.allowed = 1 ORDER BY score DESC LIMIT 50", [self.beatmap.fileMD5, self.gameMode])
+		topScores = glob.db.fetchAll("SELECT * FROM scores LEFT JOIN users ON scores.userid = users.id WHERE scores.beatmap_md5 = %s AND scores.play_mode = %s AND scores.completed = 3 AND (users.privileges & 1 > 0 OR users.id = %s) ORDER BY score DESC LIMIT 50", [self.beatmap.fileMD5, self.gameMode, self.userID])
 		c = 1
 		if topScores != None:
 			for i in topScores:
@@ -95,7 +95,7 @@ class scoreboard:
 		# We have a score, run the huge query
 		result = glob.db.fetch("""SELECT COUNT(*) AS rank FROM scores LEFT JOIN users ON scores.userid = users.id WHERE scores.score >= (
 		SELECT score FROM scores WHERE beatmap_md5 = %(md5)s AND play_mode = %(mode)s AND completed = 3 AND userid = %(userid)s
-		) AND scores.beatmap_md5 = %(md5)s AND scores.play_mode = %(mode)s AND scores.completed = 3 AND users.allowed = 1 ORDER BY score DESC
+		) AND scores.beatmap_md5 = %(md5)s AND scores.play_mode = %(mode)s AND scores.completed = 3 AND users.privileges & 1 > 0 ORDER BY score DESC
 		""", {"md5": self.beatmap.fileMD5, "userid": self.userID, "mode": self.gameMode})
 		if result != None:
 			self.personalBestRank = result["rank"]

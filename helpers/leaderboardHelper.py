@@ -44,40 +44,6 @@ def getRankInfo(userID, gameMode):
 
 	return data
 
-def build():
-	"""
-	Build the leaderboard for every gamemode
-
-	WARNING: THIS FUNCTION WAS NOT TESTED
-	"""
-	# Declare stuff that will be used later on.
-	modes = ["std", "taiko", "ctb", "mania"]
-	data = {"std": [], "taiko": [], "ctb": [], "mania": []}
-	allowedUsers = userHelper.getAllowedUsers('id')
-
-	# Get all user's stats
-	users = glob.db.fetchAll("SELECT id, pp_std, pp_taiko, pp_ctb, pp_mania FROM users_stats")
-
-	# Put the data in the correct way into the array.
-	for user in users:
-		if allowedUsers[user["id"]] == False:
-			continue
-
-		for mode in modes:
-			data[mode].append({"user": user["id"], "score": user["pp_{}".format(mode)]})
-
-	# We're doing the sorting for every mode.
-	for mode in modes:
-		# Do the sorting
-		data[mode].sort(key=lambda s: s["score"])
-
-		# Remove all data from the table
-		glob.db.execute("TRUNCATE TABLE leaderboard_{};".format(mode))
-
-		# And insert each user.
-		for key, value in data[mode]:
-			glob.db.execute("INSERT INTO leaderboard_{} (position, user, v) VALUES (%s, %s, %s)".format(mode), [key + 1, value["user"], value["score"]])
-
 def update(userID, newScore, gameMode):
 	"""
 	Update gamemode's leaderboard the leaderboard

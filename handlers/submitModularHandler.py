@@ -73,7 +73,7 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 			if userHelper.checkBanchoSession(userID) == False:
 				# TODO: Ban (see except exceptions.noBanchoSessionException block)
 				raise exceptions.noBanchoSessionException(MODULE_NAME, username, ip)
-			if userHelper.getAllowed(userID) == 0:
+			if userHelper.isBanned(userID) == True:
 				raise exceptions.userBannedException(MODULE_NAME, username)
 
 			# Create score object and set its data
@@ -86,25 +86,25 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 			if s.gameMode == gameModes.STD:
 				s.calculatePP()
 
-			# Ban obvious cheaters
+			# Restrict obvious cheaters
 			if s.pp >= 700:
-				userHelper.setAllowed(userID, 0)
-				log.warning("{} ({}) has been banned due to too high pp gain ({}pp)".format(username, userID, s.pp), True)
+				userHelper.restrict(userID)
+				log.warning("{} ({}) has been restricted due to too high pp gain ({}pp)".format(username, userID, s.pp), True)
 
 			# Save score in db
 			s.saveScoreInDB()
 
 			# Make sure process list has been passed
 			if s.completed == 3 and "pl" not in self.request.arguments:
-				userHelper.setAllowed(userID, 0)
-				log.warning("{} ({}) has been banned due to missing process list".format(username, userID), True)
+				userHelper.restrict(userID)
+				log.warning("{} ({}) has been restricted due to missing process list".format(username, userID), True)
 
 			# Save replay
 			if s.passed == True and s.completed == 3:
 				if "score" not in self.request.files:
 					# Ban if no replay passed
-					userHelper.setAllowed(userID, 0)
-					log.warning("{} ({}) has been banned due to replay not found on map {}".format(username, userID, s.fileMd5), True)
+					userHelper.restrict(userID)
+					log.warning("{} ({}) has been restricted due to replay not found on map {}".format(username, userID, s.fileMd5), True)
 				else:
 					# Otherwise, save the replay
 					log.debug("Saving replay ({})...".format(s.scoreID))

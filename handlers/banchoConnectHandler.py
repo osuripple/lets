@@ -40,7 +40,7 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 				raise exceptions.loginFailedException(MODULE_NAME, username)
 
 			# Ban check
-			if userHelper.getAllowed(userID) == 0:
+			if userHelper.isBanned(userID) == True:
 				raise exceptions.userBannedException(MODULE_NAME, username)
 
 			# 2FA check

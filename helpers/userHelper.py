@@ -3,6 +3,7 @@ from helpers import scoreHelper
 from helpers import passwordHelper
 import time
 from helpers import logHelper as log
+from constants import privileges
 
 def getUserStats(userID, gameMode):
 	"""
@@ -16,7 +17,7 @@ def getUserStats(userID, gameMode):
 
 def cacheUserIDs():
 	"""Cache userIDs in glob.userIDCache, used later with getID()."""
-	data = glob.db.fetchAll("SELECT id, username FROM users WHERE allowed = 1")
+	data = glob.db.fetchAll("SELECT id, username FROM users WHERE privileges & {} > 0".format(privileges.USER_NORMAL))
 	for i in data:
 		glob.userIDCache[i["username"]] = i["id"]
 
@@ -287,22 +288,6 @@ def updateStats(userID, __score):
 		# Update pp
 		pp = updatePP(userID, __score.gameMode)
 
-
-def getAllowed(userID):
-	"""
-	Get allowed status for userID
-
-	db -- database connection
-	userID -- user ID
-	return -- allowed int
-	"""
-
-	result = glob.db.fetch("SELECT allowed FROM users WHERE id = %s", [userID])
-	if result != None:
-		return result["allowed"]
-	else:
-		return None
-
 def updateLatestActivity(userID):
 	"""
 	Update userID's latest activity to current UNIX time
@@ -310,25 +295,6 @@ def updateLatestActivity(userID):
 	userID --
 	"""
 	glob.db.execute("UPDATE users SET latest_activity = %s WHERE id = %s", [int(time.time()), userID])
-
-def getAllowedUsers(by = "username"):
-	"""
-	Return a dictionary containing all allowed status for every user users
-
-	by -- column used to identity users. Can be username or id
-	return -- allowed users dictionary (key: by, value: True/False)
-	"""
-	# get all the allowed users in Ripple
-	allowedUsersRaw = glob.db.fetchAll("SELECT {}, allowed FROM users".format(by))
-
-	# Future array containing all the allowed users.
-	allowedUsers = {}
-
-	# Fill up the allowedUsers dictionary
-	for i in allowedUsersRaw:
-		allowedUsers[i[by]] = True if i["allowed"] == 1 else False
-
-	return allowedUsers
 
 def getRankedScore(userID, gameMode):
 	"""
@@ -371,17 +337,6 @@ def incrementReplaysWatched(userID, gameMode):
 	"""
 	mode = scoreHelper.readableGameMode(gameMode)
 	glob.db.execute("UPDATE users_stats SET replays_watched_{mode}=replays_watched_{mode}+1 WHERE id = %s".format(mode=mode), [userID])
-
-
-def setAllowed(userID, allowed):
-	"""
-	Set userID's allowed status
-
-	userID -- user
-	allowed -- allowed status. 1: normal, 0: banned
-	"""
-	banDateTime = int(time.time()) if allowed == 0 else 0
-	glob.db.execute("UPDATE users SET allowed = %s, ban_datetime = %s WHERE id = %s", [allowed, banDateTime, userID])
 
 def getAqn(userID):
 	"""
@@ -439,3 +394,77 @@ def check2FA(userID, ip):
 
 	result = glob.db.fetch("SELECT id FROM ip_user WHERE userid = %s AND ip = %s", [userID, ip])
 	return True if result is None else False
+
+def isAllowed(userID):
+	"""
+	Check if userID is not banned or restricted
+
+	userID -- id of the user
+	return -- True if not banned or restricted, otherwise false.
+	"""
+	result = glob.db.fetch("SELECT privileges FROM users WHERE id = %s", [userID])
+	if result != None:
+		return (result["privileges"] & privileges.USER_NORMAL) and (result["privileges"] & privileges.USER_PUBLIC)
+	else:
+		return False
+
+def isRestricted(userID):
+	"""
+	Check if userID is restricted
+
+	userID -- id of the user
+	return -- True if not restricted, otherwise false.
+	"""
+	result = glob.db.fetch("SELECT privileges FROM users WHERE id = %s", [userID])
+	if result != None:
+		return (result["privileges"] & privileges.USER_NORMAL) and not (result["privileges"] & privileges.USER_PUBLIC)
+	else:
+		return False
+
+def isBanned(userID):
+	"""
+	Check if userID is banned
+
+	userID -- id of the user
+	return -- True if not banned, otherwise false.
+	"""
+	result = glob.db.fetch("SELECT privileges FROM users WHERE id = %s", [userID])
+	if result != None:
+		return not (result["privileges"] & privileges.USER_NORMAL) and not (result["privileges"] & privileges.USER_PUBLIC)
+	else:
+		return True
+
+def ban(userID):
+	"""
+	Ban userID
+
+	userID -- id of user
+	"""
+	banDateTime = int(time.time())
+	glob.db.execute("UPDATE users SET privileges = privileges & %s, ban_datetime = %s WHERE id = %s", [ ~(privileges.USER_NORMAL | privileges.USER_PUBLIC) , banDateTime, userID])
+
+def unban(userID):
+	"""
+	Unban userID
+
+	userID -- id of user
+	"""
+	glob.db.execute("UPDATE users SET privileges = privileges | %s, ban_datetime = 0 WHERE id = %s", [ (privileges.USER_NORMAL | privileges.USER_PUBLIC) , userID])
+
+def restrict(userID):
+	"""
+	Put userID in restricted mode
+
+	userID -- id of user
+	"""
+	banDateTime = int(time.time())
+	glob.db.execute("UPDATE users SET privileges = privileges & %s, ban_datetime = %s WHERE id = %s", [~privileges.USER_PUBLIC, banDateTime, userID])
+
+def unrestrict(userID):
+	"""
+	Remove restricted mode from userID.
+	Same as unban().
+
+	userID -- id of user
+	"""
+	unban(userID)
