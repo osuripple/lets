@@ -166,7 +166,7 @@ if __name__ == "__main__":
 
 	# Server start message and console output
 	consoleHelper.printColored("> L.E.T.S. is listening for clients on 127.0.0.1:{}...".format(serverPort), bcolors.GREEN)
-	log.logMessage("Server started!", discord=True, of="info.txt", stdout=False)
+	log.logMessage("Server started!", discord="bunker", of="info.txt", stdout=False)
 
 	# Start Tornado
 	application.listen(serverPort)

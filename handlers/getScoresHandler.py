@@ -57,7 +57,7 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 			# Hax check
 			if "a" in self.request.arguments:
 				if int(self.get_argument("a")) == 1 and not userHelper.getAqn(userID):
-					log.warning("Found AQN folder on user {} ({})".format(username, userID), True)
+					log.warning("Found AQN folder on user {} ({})".format(username, userID), "cm")
 					userHelper.setAqn(userID)
 
 			# Console output

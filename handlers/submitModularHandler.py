@@ -89,7 +89,7 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 			# Restrict obvious cheaters
 			if s.pp >= 700:
 				userHelper.restrict(userID)
-				log.warning("{} ({}) has been restricted due to too high pp gain ({}pp)".format(username, userID, s.pp), True)
+				log.warning("{} ({}) has been restricted due to too high pp gain ({}pp)".format(username, userID, s.pp), "cm")
 
 			# Save score in db
 			s.saveScoreInDB()
@@ -97,14 +97,14 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 			# Make sure process list has been passed
 			if s.completed == 3 and "pl" not in self.request.arguments:
 				userHelper.restrict(userID)
-				log.warning("{} ({}) has been restricted due to missing process list".format(username, userID), True)
+				log.warning("{} ({}) has been restricted due to missing process list".format(username, userID), "cm")
 
 			# Save replay
 			if s.passed == True and s.completed == 3:
 				if "score" not in self.request.files:
 					# Ban if no replay passed
 					userHelper.restrict(userID)
-					log.warning("{} ({}) has been restricted due to replay not found on map {}".format(username, userID, s.fileMd5), True)
+					log.warning("{} ({}) has been restricted due to replay not found on map {}".format(username, userID, s.fileMd5), "cm")
 				else:
 					# Otherwise, save the replay
 					log.debug("Saving replay ({})...".format(s.scoreID))
@@ -114,7 +114,7 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 
 			# Make sure the replay has been saved (debug)
 			if not os.path.isfile(".data/replays/replay_{}.osr".format(s.scoreID)) and s.completed == 3:
-				log.error("Replay for score {} not saved!!".format(s.scoreID), True)
+				log.error("Replay for score {} not saved!!".format(s.scoreID), "bunker")
 
 			# Update beatmap playcount (and passcount)
 			beatmap.incrementPlaycount(s.fileMd5, s.passed)
