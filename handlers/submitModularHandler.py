@@ -89,6 +89,7 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 			# Restrict obvious cheaters
 			if s.pp >= 700:
 				userHelper.restrict(userID)
+				userHelper.appendNotes(userID, "-- Restricted due to too high pp gain ({}pp)".format(s.pp))
 				log.warning("{} ({}) has been restricted due to too high pp gain ({}pp)".format(username, userID, s.pp), "cm")
 
 			# Save score in db
@@ -97,6 +98,7 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 			# Make sure process list has been passed
 			if s.completed == 3 and "pl" not in self.request.arguments:
 				userHelper.restrict(userID)
+				userHelper.appendNotes(userID, "-- Restricted due to missing process list while submitting a score (most likely he used a score submitter)".format(s.pp))
 				log.warning("{} ({}) has been restricted due to missing process list".format(username, userID), "cm")
 
 			# Save replay
@@ -104,6 +106,7 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 				if "score" not in self.request.files:
 					# Ban if no replay passed
 					userHelper.restrict(userID)
+					userHelper.appendNotes(userID, "-- Restricted due to missing replay while submitting a score (most likely he used a score submitter)".format(s.pp))
 					log.warning("{} ({}) has been restricted due to replay not found on map {}".format(username, userID, s.fileMd5), "cm")
 				else:
 					# Otherwise, save the replay

@@ -468,3 +468,15 @@ def unrestrict(userID):
 	userID -- id of user
 	"""
 	unban(userID)
+
+def appendNotes(userID, notes, addNl = True):
+	"""
+	Append "notes" to current userID's "notes for CM"
+
+	userID -- id of user
+	notes -- text to append
+	addNl -- if True, prepend \n to notes. Optional. Default: True.
+	"""
+	if addNl == True:
+		notes = "\n"+notes
+	glob.db.execute("UPDATE users SET notes=CONCAT(notes,%s) WHERE id = %s", [notes, userID])
