@@ -457,8 +457,9 @@ def restrict(userID):
 
 	userID -- id of user
 	"""
-	banDateTime = int(time.time())
-	glob.db.execute("UPDATE users SET privileges = privileges & %s, ban_datetime = %s WHERE id = %s", [~privileges.USER_PUBLIC, banDateTime, userID])
+	if isRestricted(userID) == False:
+		banDateTime = int(time.time())
+		glob.db.execute("UPDATE users SET privileges = privileges & %s, ban_datetime = %s WHERE id = %s", [~privileges.USER_PUBLIC, banDateTime, userID])
 
 def unrestrict(userID):
 	"""
