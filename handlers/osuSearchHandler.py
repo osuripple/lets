@@ -31,8 +31,15 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 			# Get arguments
 			#username = self.get_argument("u")
 			#password = self.get_argument("h")
-			gameMode = self.get_argument("m")
-			rankedStatus = self.get_argument("r")
+			if "m" in self.request.arguments:
+				gameMode = self.get_argument("m")
+			else:
+				gameMode = "-1"	 # all game modes
+
+			if "r" in self.request.arguments:
+				rankedStatus = self.get_argument("r")
+			else:
+				rankedStatus = "4"	# all ranked statuses
 
 			# Login check
 			#userID = userHelper.getID(username)
