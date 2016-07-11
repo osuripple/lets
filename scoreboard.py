@@ -94,8 +94,8 @@ class scoreboard:
 
 		# We have a score, run the huge query
 		result = glob.db.fetch("""SELECT COUNT(*) AS rank FROM scores LEFT JOIN users ON scores.userid = users.id WHERE scores.score >= (
-		SELECT score FROM scores WHERE beatmap_md5 = %(md5)s AND play_mode = %(mode)s AND completed = 3 AND userid = %(userid)s
-		) AND scores.beatmap_md5 = %(md5)s AND scores.play_mode = %(mode)s AND scores.completed = 3 AND users.privileges & 1 > 0 ORDER BY score DESC
+		SELECT score FROM scores WHERE beatmap_md5 = %(md5)s AND play_mode = %(mode)s AND completed = 3 AND userid = %(userid)s LIMIT 1
+		) AND scores.beatmap_md5 = %(md5)s AND scores.play_mode = %(mode)s AND scores.completed = 3 AND users.privileges & 1 > 0 ORDER BY score DESC LIMIT 1
 		""", {"md5": self.beatmap.fileMD5, "userid": self.userID, "mode": self.gameMode})
 		if result != None:
 			self.personalBestRank = result["rank"]
