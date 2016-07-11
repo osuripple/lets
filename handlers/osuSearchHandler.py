@@ -109,6 +109,11 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 			# Get data from bloodcat API
 			bcData = osuapiHelper.bloodcatRequest(bcURL)
 
+			# Make sure we got some data from bloodcat
+			if bcData == None:
+				self.write("")	# this should work, why shouldn't it?
+				return
+
 			# Show 101 if we have >= 40 results (bloodcat maps per page)
 			# or osu! won't load next pages
 			if len(bcData) >= 40:
