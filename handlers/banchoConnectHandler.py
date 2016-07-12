@@ -45,7 +45,7 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 
 			# 2FA check
 			if userHelper.check2FA(userID, ip):
-				raise exceptions.need2FAException(MODULE_NAME, username)
+				raise exceptions.need2FAException(MODULE_NAME, username, ip)
 
 			# Update latest activity
 			userHelper.updateLatestActivity(userID)
