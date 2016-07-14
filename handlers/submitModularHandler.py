@@ -84,6 +84,9 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 			if userHelper.isBanned(userID) == True:
 				raise exceptions.userBannedException(MODULE_NAME, username)
 
+			# Get restricted
+			restricted = userHelper.isRestricted(userID)
+
 			# Create score object and set its data
 			log.info("{} has submitted a score on {}...".format(username, scoreData[0]))
 			s = score.score()
@@ -95,7 +98,7 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 				s.calculatePP()
 
 			# Restrict obvious cheaters
-			if s.pp >= 700:
+			if s.pp <= 700 and restricted == False:
 				userHelper.restrict(userID)
 				userHelper.appendNotes(userID, "-- Restricted due to too high pp gain ({}pp)".format(s.pp))
 				log.warning("{} ({}) has been restricted due to too high pp gain ({}pp)".format(username, userID, s.pp), "cm")
@@ -104,7 +107,7 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 			if bmk == None and bml == None:
 				# No bmk and bml params passed, edited or super old client
 				log.warning("{} ({}) most likely submitted a score from an edited client or a super old client".format(username, userID), "cm")
-			elif bmk != bml:
+			elif bmk != bml and restricted == False:
 				# bmk and bml passed and they are different, restrict the user
 				userHelper.restrict(userID)
 				userHelper.appendNotes(userID, "-- Restricted due to notepad hack")
@@ -114,13 +117,13 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 			s.saveScoreInDB()
 
 			# Make sure process list has been passed
-			if s.completed == 3 and "pl" not in self.request.arguments:
+			if s.completed == 3 and "pl" not in self.request.arguments and restricted == False:
 				userHelper.restrict(userID)
 				userHelper.appendNotes(userID, "-- Restricted due to missing process list while submitting a score (most likely he used a score submitter)".format(s.pp))
 				log.warning("{} ({}) has been restricted due to missing process list".format(username, userID), "cm")
 
 			# Save replay
-			if s.passed == True and s.completed == 3:
+			if s.passed == True and s.completed == 3 and restricted == False:
 				if "score" not in self.request.files:
 					# Ban if no replay passed
 					userHelper.restrict(userID)
