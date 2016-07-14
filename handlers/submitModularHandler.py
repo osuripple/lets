@@ -112,6 +112,7 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 				userHelper.restrict(userID)
 				userHelper.appendNotes(userID, "-- Restricted due to notepad hack")
 				log.warning("{} ({}) has been restricted due to notepad hack".format(username, userID), "cm")
+				return
 
 			# Save score in db
 			s.saveScoreInDB()
