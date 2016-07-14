@@ -52,6 +52,14 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 			password = self.get_argument("pass")
 			ip = self.getRequestIP()
 
+			# Get bmk and bml (notepad hack check)
+			if "bmk" in self.request.arguments and "bml" in self.request.arguments:
+				bmk = self.get_argument("bmk")
+				bml = self.get_argument("bml")
+			else:
+				bmk = None
+				bml = None
+
 			# Get right AES Key
 			if "osuver" in self.request.arguments:
 				aeskey = "osu!-scoreburgr---------{}".format(self.get_argument("osuver"))
@@ -91,6 +99,16 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 				userHelper.restrict(userID)
 				userHelper.appendNotes(userID, "-- Restricted due to too high pp gain ({}pp)".format(s.pp))
 				log.warning("{} ({}) has been restricted due to too high pp gain ({}pp)".format(username, userID, s.pp), "cm")
+
+			# Check notepad hack
+			if bmk == None and bml == None:
+				# No bmk and bml params passed, edited or super old client
+				log.warning("{} ({}) most likely submitted a score from an edited client or a super old client".format(username, userID), "cm")
+			elif bmk != bml:
+				# bmk and bml passed and they are different, restrict the user
+				userHelper.restrict(userID)
+				userHelper.appendNotes(userID, "-- Restricted due to notepad hack")
+				log.warning("{} ({}) has been restricted due to notepad hack".format(username, userID), "cm")
 
 			# Save score in db
 			s.saveScoreInDB()
