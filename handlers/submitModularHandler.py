@@ -106,7 +106,8 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 			# Check notepad hack
 			if bmk == None and bml == None:
 				# No bmk and bml params passed, edited or super old client
-				log.warning("{} ({}) most likely submitted a score from an edited client or a super old client".format(username, userID), "cm")
+				#log.warning("{} ({}) most likely submitted a score from an edited client or a super old client".format(username, userID), "cm")
+				pass
 			elif bmk != bml and restricted == False:
 				# bmk and bml passed and they are different, restrict the user
 				userHelper.restrict(userID)
