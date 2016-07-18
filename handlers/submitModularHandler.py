@@ -126,11 +126,12 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 
 			# Save replay
 			if s.passed == True and s.completed == 3:
-				if "score" not in self.request.files and restricted == False:
-					# Ban if no replay passed
-					userHelper.restrict(userID)
-					userHelper.appendNotes(userID, "-- Restricted due to missing replay while submitting a score (most likely he used a score submitter)")
-					log.warning("{} ({}) has been restricted due to replay not found on map {}".format(username, userID, s.fileMd5), "cm")
+				if "score" not in self.request.files:
+					if restricted == False:
+						# Ban if no replay passed
+						userHelper.restrict(userID)
+						userHelper.appendNotes(userID, "-- Restricted due to missing replay while submitting a score (most likely he used a score submitter)".format(s.pp))
+						log.warning("{} ({}) has been restricted due to replay not found on map {}".format(username, userID, s.fileMd5), "cm")
 				else:
 					# Otherwise, save the replay
 					log.debug("Saving replay ({})...".format(s.scoreID))
