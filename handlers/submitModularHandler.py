@@ -98,7 +98,7 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 				s.calculatePP()
 
 			# Restrict obvious cheaters
-			if ((s.pp >= 700 and s.gameMode == gameModes.STD) or (s.pp >= 1700 and s.gameMode == gameModes.MANIA)) and restricted == False:
+			if ((s.pp >= 700 and s.gameMode == gameModes.STD) or (s.pp >= 2000 and s.gameMode == gameModes.MANIA)) and restricted == False:
 				userHelper.restrict(userID)
 				userHelper.appendNotes(userID, "-- Restricted due to too high pp gain ({}pp)".format(s.pp))
 				log.warning("{} ({}) has been restricted due to too high pp gain ({}pp)".format(username, userID, s.pp), "cm")
