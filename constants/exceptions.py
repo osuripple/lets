@@ -27,6 +27,9 @@ class fileNotFoundException(Exception):
 class invalidBeatmapException(Exception):
 	pass
 
+class unsupportedGameModeException(Exception):
+	pass
+
 class beatmapTooLongException(Exception):
 	def __init__(self, handler):
 		log.warning("{} - Requested beatmap is too long.".format(handler))

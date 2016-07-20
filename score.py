@@ -3,11 +3,12 @@ from helpers import userHelper
 from helpers import scoreHelper
 from helpers import generalHelper
 from constants import rankedStatuses
+from constants import gameModes
 import beatmap
 import os
 from helpers import logHelper as log
-if os.path.isfile("rippoppai.py"):
-	import rippoppai
+from pp import wifipiano
+from pp import rippoppai
 
 class score:
 	def __init__(self, scoreID = None, rank = None, setData = True):
@@ -119,6 +120,7 @@ class score:
 		self.playerUserID = data["userid"]
 		self.score = data["score"]
 		self.maxCombo = data["max_combo"]
+		self.gameMode = data["play_mode"]
 		self.c50 = data["50_count"]
 		self.c100 = data["100_count"]
 		self.c300 = data["300_count"]
@@ -245,8 +247,12 @@ class score:
 
 			# Create an instance of the magic pp calculator and calculate pp
 			if b.rankedStatus >= rankedStatuses.RANKED and b.rankedStatus != rankedStatuses.UNKNOWN:
-				fo = rippoppai.oppai(b, self)
-				self.pp = fo.pp
+				if self.gameMode == gameModes.STD:
+					fo = rippoppai.oppai(b, self)
+					self.pp = fo.pp
+				elif self.gameMode == gameModes.MANIA:
+					xeno = wifipiano.piano(b, self)
+					self.pp = xeno.pp
 			else:
 				self.pp = 0
 		else:

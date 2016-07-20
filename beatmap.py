@@ -9,7 +9,7 @@ import traceback
 
 
 class beatmap:
-	def __init__(self, md5 = None, beatmapSetID = None):
+	def __init__(self, md5 = None, beatmapSetID = None, gameMode = 0):
 		"""
 		Initialize a beatmap object.
 
@@ -25,7 +25,10 @@ class beatmap:
 		self.offset = 0		# Won't implement
 		self.rating = 10.0 	# Won't implement
 
-		self.stars = 0.0
+		self.starsStd = 0.0	# stars for converted
+		self.starsTaiko = 0.0	# stars for converted
+		self.starsCtb = 0.0		# stars for converted
+		self.starsMania = 0.0	# stars for converted
 		self.AR = 0.0
 		self.OD = 0.0
 		self.maxCombo = 0
@@ -52,19 +55,22 @@ class beatmap:
 
 		# Add new beatmap data
 		log.debug("Saving beatmap data in db...")
-		glob.db.execute("INSERT INTO `beatmaps` (`id`, `beatmap_id`, `beatmapset_id`, `beatmap_md5`, `song_name`, `ar`, `od`, `difficulty`, `max_combo`, `hit_length`, `bpm`, `ranked`, `latest_update`) VALUES (NULL, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);", [
+		glob.db.execute("INSERT INTO `beatmaps` (`id`, `beatmap_id`, `beatmapset_id`, `beatmap_md5`, `song_name`, `ar`, `od`, `difficulty_std`, `difficulty_taiko`, `difficulty_ctb`, `difficulty_mania`, `max_combo`, `hit_length`, `bpm`, `ranked`, `latest_update`) VALUES (NULL, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);", [
 			self.beatmapID,
 			self.beatmapSetID,
 			self.fileMD5,
 			self.songName,
 			self.AR,
 			self.OD,
-			self.stars,
+			self.starsStd,
+			self.starsTaiko,
+			self.starsCtb,
+			self.starsMania,
 			self.maxCombo,
 			self.hitLength,
 			self.bpm,
 			self.rankedStatus,
-			int(time.time())
+			int(time.time()),
 		])
 
 	def setDataFromDB(self, md5):
@@ -79,6 +85,11 @@ class beatmap:
 
 		# Make sure the query returned something
 		if data == None:
+			return False
+
+		# Make sure the beatmap is not an old one
+		if data["difficulty_taiko"] == 0 and data["difficulty_ctb"] == 0 and data["difficulty_mania"] == 0:
+			log.debug("Difficulty for non-std gamemodes not found in DB, refreshing data from osu!api...")
 			return False
 
 		# Set cached data period
@@ -111,7 +122,10 @@ class beatmap:
 		self.beatmapSetID = int(data["beatmapset_id"])
 		self.AR = float(data["ar"])
 		self.OD = float(data["od"])
-		self.stars = float(data["difficulty"])
+		self.starsStd = float(data["difficulty_std"])
+		self.starsTaiko = float(data["difficulty_taiko"])
+		self.starsCtb = float(data["difficulty_ctb"])
+		self.starsMania = float(data["difficulty_mania"])
 		self.maxCombo = int(data["max_combo"])
 		self.hitLength = int(data["hit_length"])
 		self.bpm = int(data["bpm"])
@@ -128,12 +142,37 @@ class beatmap:
 		return -- True if set, False if not set
 		"""
 		# Check if osuapi is enabled
-		data = osuapiHelper.osuApiRequest("get_beatmaps", "h={}".format(md5))
-		if data == None:
+		mainData = None
+		dataStd = osuapiHelper.osuApiRequest("get_beatmaps", "h={}&a=1&m=0".format(md5))
+		dataTaiko = osuapiHelper.osuApiRequest("get_beatmaps", "h={}&a=1&m=1".format(md5))
+		dataCtb = osuapiHelper.osuApiRequest("get_beatmaps", "h={}&a=1&m=2".format(md5))
+		dataMania = osuapiHelper.osuApiRequest("get_beatmaps", "h={}&a=1&m=3".format(md5))
+		if dataStd != None:
+			mainData = dataStd
+		elif dataTaiko != None:
+			mainData = dataTaiko
+		elif dataCtb != None:
+			mainData = dataCtb
+		elif dataMania != None:
+			mainData = dataMania
+
+		if mainData == None:
 			log.debug("osu!api data is None")
 			# Error while retreiving data from MD5, check with beatmap set ID
-			data = osuapiHelper.osuApiRequest("get_beatmaps", "s={}".format(beatmapSetID))
-			if data == None:
+			dataStd = osuapiHelper.osuApiRequest("get_beatmaps", "s={}&a=1&m=0".format(beatmapSetID))
+			dataTaiko = osuapiHelper.osuApiRequest("get_beatmaps", "s={}&a=1&m=1".format(beatmapSetID))
+			dataCtb = osuapiHelper.osuApiRequest("get_beatmaps", "s={}&a=1&m=2".format(beatmapSetID))
+			dataMania = osuapiHelper.osuApiRequest("get_beatmaps", "s={}&a=1&m=3".format(beatmapSetID))
+			if dataStd != None:
+				mainData = dataStd
+			elif dataTaiko != None:
+				mainData = dataTaiko
+			elif dataCtb != None:
+				mainData = dataCtb
+			elif dataMania != None:
+				mainData = dataMania
+
+			if mainData == None:
 				# Still no data, beatmap is not submitted
 				return False
 			else:
@@ -144,18 +183,28 @@ class beatmap:
 
 		# We have data from osu!api, set beatmap data
 		log.debug("Got beatmap data from osu!api")
-		self.songName = "{} - {} [{}]".format(data["artist"], data["title"], data["version"])
+		self.songName = "{} - {} [{}]".format(mainData["artist"], mainData["title"], mainData["version"])
 		self.fileMD5 = md5
-		self.rankedStatus = int(convertRankedStatus(data["approved"]))
-		self.beatmapID = int(data["beatmap_id"])
-		self.beatmapSetID = int(data["beatmapset_id"])
-		self.AR = float(data["diff_approach"])
-		self.OD = float(data["diff_overall"])
-		self.stars = float(data["difficultyrating"])
-		self.maxCombo = int(data["max_combo"]) if data["max_combo"] is not None else 0
-		self.hitLength = int(data["hit_length"])
-		if data["bpm"] != None:
-			self.bpm = int(float(data["bpm"]))
+		self.rankedStatus = int(convertRankedStatus(mainData["approved"]))
+		self.beatmapID = int(mainData["beatmap_id"])
+		self.beatmapSetID = int(mainData["beatmapset_id"])
+		self.AR = float(mainData["diff_approach"])
+		self.OD = float(mainData["diff_overall"])
+
+		# Determine stars for every mode
+		if dataStd != None:
+			self.starsStd = dataStd["difficultyrating"]
+		if dataTaiko != None:
+			self.starsTaiko = dataTaiko["difficultyrating"]
+		if dataCtb != None:
+			self.starsCtb = dataCtb["difficultyrating"]
+		if dataMania != None:
+			self.starsMania = dataMania["difficultyrating"]
+
+		self.maxCombo = int(mainData["max_combo"]) if mainData["max_combo"] is not None else 0
+		self.hitLength = int(mainData["hit_length"])
+		if mainData["bpm"] != None:
+			self.bpm = int(float(mainData["bpm"]))
 		else:
 			self.bpm = -1
 		return True
@@ -182,6 +231,8 @@ class beatmap:
 				self.addBeatmapToDB()
 		else:
 			log.debug("Beatmap found in db")
+
+		log.debug("{}\n{}\n{}\n{}".format(self.starsStd, self.starsTaiko, self.starsCtb, self.starsMania))
 
 	def getData(self):
 		"""

@@ -3,12 +3,14 @@ from helpers import requestHelper
 from constants import exceptions
 import beatmap
 from helpers import osuapiHelper
-import rippoppai
+from pp import rippoppai
+from pp import wifipiano
 import traceback
 import sys
 from helpers import logHelper as log
 from helpers.exceptionsTracker import trackExceptions
 import glob
+from constants import gameModes
 
 # Exception tracking
 import tornado.web
@@ -44,6 +46,15 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 			else:
 				modsEnum = 0
 
+			# Get game mode
+			if "g" in self.request.arguments:
+				gameMode = self.get_argument("g")
+				if not gameMode.isdigit():
+					raise exceptions.invalidArgumentsException(MODULE_NAME)
+				gameMode = int(gameMode)
+			else:
+				gameMode = 0
+
 			# Get acc
 			if "a" in self.request.arguments:
 				accuracy = self.get_argument("a")
@@ -73,40 +84,55 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 				raise exceptions.beatmapTooLongException(MODULE_NAME)
 
 			returnPP = []
-			if accuracy < 0 and modsEnum == 0:
-				# Generic acc
-				# Get cached pp values
-				cachedPP = bmap.getCachedTillerinoPP()
-				if cachedPP != [0,0,0,0]:
-					log.debug("Got cached pp.")
-					returnPP = cachedPP
-				else:
-					log.debug("Cached pp not found. Calculating pp with oppai...")
-					# Cached pp not found, calculate them
-					oppai = rippoppai.oppai(bmap, mods=modsEnum, tillerino=True, stars=True)
-					returnPP = oppai.pp
-					bmap.stars = oppai.stars
+			if gameMode == gameModes.STD and bmap.starsStd == 0:
+				# Mode Specific beatmap, auto detect game mode
+				if bmap.starsTaiko > 0:
+					gameMode = gameModes.TAIKO
+				if bmap.starsCtb > 0:
+					gameMode = gameModes.CTB
+				if bmap.starsMania > 0:
+					gameMode = gameModes.MANIA
 
-					# Cache values in DB
-					log.debug("Saving cached pp...")
-					bmap.saveCachedTillerinoPP(returnPP)
-			else:
-				# Specific accuracy, calculate
-				# Create oppai instance
-				log.debug("Specific request ({}%/{}). Calculating pp with oppai...".format(accuracy, modsEnum))
-				oppai = rippoppai.oppai(bmap, mods=modsEnum, tillerino=True, stars=True)
-				bmap.stars = oppai.stars
-				if accuracy > 0:
-					returnPP.append(calculatePPFromAcc(oppai, accuracy))
+			# Calculate pp
+			if gameMode == gameModes.STD:
+				# Std pp
+				if accuracy < 0 and modsEnum == 0:
+					# Generic acc
+					# Get cached pp values
+					cachedPP = bmap.getCachedTillerinoPP()
+					if cachedPP != [0,0,0,0]:
+						log.debug("Got cached pp.")
+						returnPP = cachedPP
+					else:
+						log.debug("Cached pp not found. Calculating pp with oppai...")
+						# Cached pp not found, calculate them
+						oppai = rippoppai.oppai(bmap, mods=modsEnum, tillerino=True, stars=True)
+						returnPP = oppai.pp
+						bmap.stars = oppai.stars
+
+						# Cache values in DB
+						log.debug("Saving cached pp...")
+						if len(returnPP) == 4:
+							bmap.saveCachedTillerinoPP(returnPP)
 				else:
-					returnPP = oppai.pp
+					# Specific accuracy, calculate
+					# Create oppai instance
+					log.debug("Specific request ({}%/{}). Calculating pp with oppai...".format(accuracy, modsEnum))
+					oppai = rippoppai.oppai(bmap, mods=modsEnum, tillerino=True, stars=True)
+					bmap.starsStd = oppai.stars
+					if accuracy > 0:
+						returnPP.append(calculatePPFromAcc(oppai, accuracy))
+					else:
+						returnPP = oppai.pp
+			else:
+				raise exceptions.unsupportedGameModeException
 
 			# Data to return
 			data = {
 				"song_name": bmap.songName,
 				"pp": returnPP,
 				"length": bmap.hitLength,
-				"stars": bmap.stars,
+				"stars": bmap.starsStd,
 				"ar": bmap.AR,
 				"bpm": bmap.bpm,
 			}
@@ -124,6 +150,9 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 		except exceptions.beatmapTooLongException:
 			statusCode = 400
 			data["message"] = "requested beatmap is too long"
+		except exceptions.unsupportedGameModeException:
+			statusCode = 400
+			data["message"] = "Unsupported gamemode"
 		except:
 			log.error("Unknown error in {}!\n```{}\n{}```".format(MODULE_NAME, sys.exc_info(), traceback.format_exc()))
 			if glob.sentry:

@@ -1,4 +1,4 @@
-from lets import glob
+import glob
 from helpers import scoreHelper
 from helpers import passwordHelper
 import time

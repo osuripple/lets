@@ -86,6 +86,9 @@ def printRippMessage(message):
 def printRippoppaiMessage(message):
 	printColored("[rippoppai] {}".format(message), bcolors.GREEN)
 
+def printWifiPianoMessage(message):
+	printColored("[wifipiano] {}".format(message), bcolors.GREEN)
+
 def printDebugMessage(message):
 	printColored("[debug] {}".format(message), bcolors.BLUE)
 

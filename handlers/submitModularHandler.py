@@ -93,12 +93,12 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 			s.setDataFromScoreData(scoreData)
 
 			# Calculate PP
-			# NOTE: PP are std only
-			if s.gameMode == gameModes.STD:
+			# NOTE: PP are std and mania only
+			if s.gameMode == gameModes.STD or s.gameMode == gameModes.MANIA:
 				s.calculatePP()
 
 			# Restrict obvious cheaters
-			if s.pp >= 700 and restricted == False:
+			if ((s.pp >= 700 and s.gameMode == gameModes.STD) or (s.pp >= 1700 and s.gameMode == gameModes.MANIA)) and restricted == False:
 				userHelper.restrict(userID)
 				userHelper.appendNotes(userID, "-- Restricted due to too high pp gain ({}pp)".format(s.pp))
 				log.warning("{} ({}) has been restricted due to too high pp gain ({}pp)".format(username, userID, s.pp), "cm")
@@ -121,15 +121,15 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 			# Make sure process list has been passed
 			if s.completed == 3 and "pl" not in self.request.arguments and restricted == False:
 				userHelper.restrict(userID)
-				userHelper.appendNotes(userID, "-- Restricted due to missing process list while submitting a score (most likely he used a score submitter)".format(s.pp))
+				userHelper.appendNotes(userID, "-- Restricted due to missing process list while submitting a score (most likely he used a score submitter)")
 				log.warning("{} ({}) has been restricted due to missing process list".format(username, userID), "cm")
 
 			# Save replay
-			if s.passed == True and s.completed == 3 and restricted == False:
-				if "score" not in self.request.files:
+			if s.passed == True and s.completed == 3:
+				if "score" not in self.request.files and restricted == False:
 					# Ban if no replay passed
 					userHelper.restrict(userID)
-					userHelper.appendNotes(userID, "-- Restricted due to missing replay while submitting a score (most likely he used a score submitter)".format(s.pp))
+					userHelper.appendNotes(userID, "-- Restricted due to missing replay while submitting a score (most likely he used a score submitter)")
 					log.warning("{} ({}) has been restricted due to replay not found on map {}".format(username, userID, s.fileMd5), "cm")
 				else:
 					# Otherwise, save the replay
@@ -151,7 +151,7 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 				oldUserData = glob.userStatsCache.get(userID, s.gameMode)
 				oldRank = leaderboardHelper.getUserRank(userID, s.gameMode)
 
-				# Beatmap info needed for personal best (if not in cacge)
+				# Beatmap info needed for personal best (if not in cache)
 				# song playcount and passcount
 				beatmapInfo = beatmap.beatmap()
 				beatmapInfo.setDataFromDB(s.fileMd5)
@@ -181,7 +181,7 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 				glob.userStatsCache.update(userID, s.gameMode, newUserData)
 
 				# Use pp/score as "total" based on game mode
-				if s.gameMode == gameModes.STD:
+				if s.gameMode == gameModes.STD or s.gameMode == gameModes.MANIA:
 					criteria = "pp"
 				else:
 					criteria = "rankedScore"

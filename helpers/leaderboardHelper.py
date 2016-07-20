@@ -52,7 +52,6 @@ def update(userID, newScore, gameMode):
 	newScore -- new score or pp
 	gameMode -- gameMode number
 	"""
-	#try:
 	log.debug("Updating leaderboard...")
 	mode = scoreHelper.readableGameMode(gameMode)
 

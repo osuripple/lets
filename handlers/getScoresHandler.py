@@ -65,7 +65,7 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 			log.info("Requested beatmap {} ({})".format(fileNameShort, md5))
 
 			# Create beatmap object and set its data
-			bmap = beatmap.beatmap(md5, beatmapSetID)
+			bmap = beatmap.beatmap(md5, beatmapSetID, gameMode)
 
 			# Create leaderboard object, link it to bmap and get all scores
 			sboard = scoreboard.scoreboard(username, gameMode, bmap)
