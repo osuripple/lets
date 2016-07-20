@@ -15,7 +15,7 @@ This server handles every non real time client feature, so:
 - MySQLdb (`pip install mysqlclient` or `pip install mysql-python`)
 - Tornado (`pip install tornado`)
 - Bcrypt (`pip install bcrypt`)
-- Progressbar2 (only for `tomegerry.py`) (`pip install progressbar2`)
+- Progressbar2 (only for `tomejerry.py`) (`pip install progressbar2`)
 - oppai
 
 ## How to set up LETS
@@ -52,7 +52,7 @@ path/to/ripple/oppai$ mkdir maps
 - `-g x` to recalculate PP for scores for `x` gamemode (0: std, 3: mania)  
 - `-i x` to recalculate PP for score with `x` id  
 - `-n x` to recalculate PP for scores submitted by user with `x` username  
-For a full list of all the arguments supported by `tomegerry`, run `python3 tomegerry.py --help`
+For a full list of all the arguments supported by `tomejerry`, run `python3 tomejerry.py --help`
 
 ## License
 
