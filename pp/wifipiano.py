@@ -3,7 +3,7 @@ import subprocess
 class piano:
 	# Folder where wifipiano is placed
 	PP_FOLDER = "../ripple_ppcalc"
-	
+
 	def __init__(self, __beatmap, __score):
 		self.beatmap = __beatmap
 		self.score = __score
@@ -22,7 +22,7 @@ class piano:
 		command += "-score {}".format(self.score.score)
 		command += "-acc {}".format(self.score.accuracy)
 		command += "-mods {}".format(self.score.mods)
-		
+
 		# Run wifipiano and get output
 		process = subprocess.run(command, shell=True, stdout=subprocess.PIPE)
 		output = process.stdout.decode("utf-8")
