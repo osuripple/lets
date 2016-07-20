@@ -101,7 +101,7 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 			if ((s.pp >= 700 and s.gameMode == gameModes.STD) or (s.pp >= 5000 and s.gameMode == gameModes.MANIA)) and restricted == False:
 				userHelper.restrict(userID)
 				userHelper.appendNotes(userID, "-- Restricted due to too high pp gain ({}pp)".format(s.pp))
-				log.warning("{} ({}) has been restricted due to too high pp gain ({}pp)".format(username, userID, s.pp), "cm")
+				log.warning("**{}** ({}) has been restricted due to too high pp gain **({}pp)**".format(username, userID, s.pp), "cm")
 
 			# Check notepad hack
 			if bmk == None and bml == None:
@@ -112,7 +112,7 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 				# bmk and bml passed and they are different, restrict the user
 				userHelper.restrict(userID)
 				userHelper.appendNotes(userID, "-- Restricted due to notepad hack")
-				log.warning("{} ({}) has been restricted due to notepad hack".format(username, userID), "cm")
+				log.warning("**{}** ({}) has been restricted due to notepad hack".format(username, userID), "cm")
 				return
 
 			# Save score in db
@@ -122,7 +122,7 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 			if s.completed == 3 and "pl" not in self.request.arguments and restricted == False:
 				userHelper.restrict(userID)
 				userHelper.appendNotes(userID, "-- Restricted due to missing process list while submitting a score (most likely he used a score submitter)")
-				log.warning("{} ({}) has been restricted due to missing process list".format(username, userID), "cm")
+				log.warning("**{}** ({}) has been restricted due to missing process list".format(username, userID), "cm")
 
 			# Save replay
 			if s.passed == True and s.completed == 3:
@@ -130,8 +130,8 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 					if restricted == False:
 						# Ban if no replay passed
 						userHelper.restrict(userID)
-						userHelper.appendNotes(userID, "-- Restricted due to missing replay while submitting a score (most likely he used a score submitter)".format(s.pp))
-						log.warning("{} ({}) has been restricted due to replay not found on map {}".format(username, userID, s.fileMd5), "cm")
+						userHelper.appendNotes(userID, "-- Restricted due to missing replay while submitting a score (most likely he used a score submitter)")
+						log.warning("**{}** ({}) has been restricted due to replay not found on map {}".format(username, userID, s.fileMd5), "cm")
 				else:
 					# Otherwise, save the replay
 					log.debug("Saving replay ({})...".format(s.scoreID))
