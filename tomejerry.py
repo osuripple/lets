@@ -23,6 +23,9 @@ MAX_WORKERS = 32
 MODULE_NAME = "rippoppai"
 UNIX = True if os.name == "posix" else False
 
+# Global stuff
+args = None
+
 if __name__ == "__main__":
 	# Verbose
 	glob.debug = False
@@ -48,12 +51,12 @@ if __name__ == "__main__":
 		b = beatmap.beatmap()
 
 		# Check if we have data for this song
-		#if scoreData["song_name"] == None:
-		# If we don't have song data in scoreData, get with get_scores method (mysql, osuapi blabla)
-		b.setData(scoreData["beatmap_md5"], 0)
-		#else:
+		if scoreData["song_name"] == None or args.apirefresh == True:
+			# If we don't have song data in scoreData, get with get_scores method (mysql, osuapi blabla)
+			b.setData(scoreData["beatmap_md5"], 0)
+		else:
 			# If we have data, set data from dict
-		#	b.setDataFromDict(scoreData)
+			b.setDataFromDict(scoreData)
 
 		# Make sure the beatmap is ranked
 		if b.rankedStatus != rankedStatuses.RANKED and b.rankedStatus != rankedStatuses.APPROVED and b.rankedStatus != rankedStatuses.QUALIFIED:
@@ -195,6 +198,7 @@ if __name__ == "__main__":
 	parser.add_argument('-g','--gamemode', help="calculate pp for scores with this gamemode (std:0, mania:3)", required=False)
 	parser.add_argument('-u','--userid', help="calculate pp for scores played by a specific user (userID)", required=False)
 	parser.add_argument('-n','--username', help="calculate pp for scores played by a specific user (username)", required=False)
+	parser.add_argument('-a','--apirefresh', help="always fetch beatmap data from osu!api", required=False, action='store_true')
 	parser.add_argument('-w','--workers', help="force number of workers", required=False)
 	parser.add_argument('-v','--verbose', help="run ripp in verbose/debug mode", required=False, action='store_true')
 	args = parser.parse_args()
