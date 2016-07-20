@@ -48,12 +48,12 @@ if __name__ == "__main__":
 		b = beatmap.beatmap()
 
 		# Check if we have data for this song
-		if scoreData["song_name"] == None:
-			# If we don't have song data in scoreData, get with get_scores method (mysql, osuapi blabla)
-			b.setData(scoreData["beatmap_md5"], 0)
-		else:
+		#if scoreData["song_name"] == None:
+		# If we don't have song data in scoreData, get with get_scores method (mysql, osuapi blabla)
+		b.setData(scoreData["beatmap_md5"], 0)
+		#else:
 			# If we have data, set data from dict
-			b.setDataFromDict(scoreData)
+		#	b.setDataFromDict(scoreData)
 
 		# Make sure the beatmap is ranked
 		if b.rankedStatus != rankedStatuses.RANKED and b.rankedStatus != rankedStatuses.APPROVED and b.rankedStatus != rankedStatuses.QUALIFIED:
