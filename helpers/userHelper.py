@@ -480,4 +480,4 @@ def appendNotes(userID, notes, addNl = True):
 	"""
 	if addNl == True:
 		notes = "\n"+notes
-	glob.db.execute("UPDATE users SET notes=CONCAT(notes,%s) WHERE id = %s", [notes, userID])
+	glob.db.execute("UPDATE users SET notes=CONCAT(COALESCE(notes, ''),%s) WHERE id = %s", [notes, userID])
