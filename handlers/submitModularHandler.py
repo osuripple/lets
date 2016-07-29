@@ -195,8 +195,8 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 			# Update latest activity
 			userHelper.updateLatestActivity(userID)
 
-			# IP botnet
-			userHelper.botnet(userID, ip)
+			# IP log
+			userHelper.IPLog(userID, ip)
 
 			# Score submission and stats update done
 			log.debug("Score submission and user stats update done!")

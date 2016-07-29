@@ -360,9 +360,9 @@ def setAqn(userID, value = 1):
 	"""
 	glob.db.fetch("UPDATE users SET aqn = %s WHERE id = %s", [value, userID])
 
-def botnet(userID, ip):
+def IPLog(userID, ip):
 	"""
-	Botnet the user
+	Log user IP
 	"""
 	glob.db.execute("""INSERT INTO ip_user (userid, ip, occurencies) VALUES (%s, %s, '1')
 						ON DUPLICATE KEY UPDATE occurencies = occurencies + 1""", [userID, ip])
@@ -430,7 +430,7 @@ def isBanned(userID):
 	"""
 	result = glob.db.fetch("SELECT privileges FROM users WHERE id = %s", [userID])
 	if result != None:
-		return not (result["privileges"] & privileges.USER_NORMAL) and not (result["privileges"] & privileges.USER_PUBLIC)
+		return not (result["privileges"] & 3 > 0)
 	else:
 		return True
 
