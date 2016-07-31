@@ -55,9 +55,6 @@ path/to/ripple/oppai$ mkdir maps
 For a full list of all the arguments supported by `tomejerry`, run `python3 tomejerry.py --help`
 
 ## License
-
-```
-Copyright (C) The Ripple Developers - All Rights Reserved
-Unauthorized copying of this file, via any medium is strictly prohibited
-Proprietary and confidential
-```
+This project is licensed under the GNU AGPL 3 License.  
+See the "LICENSE" file for more information.  
+This project contains code taken by reference from [osu-performance](https://github.com/ppy/osu-performance) by Tom94.

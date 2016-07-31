@@ -4,7 +4,7 @@ from constants import exceptions
 import beatmap
 from helpers import osuapiHelper
 from pp import rippoppai
-from pp import wifipiano
+from pp import wifipiano2
 import traceback
 import sys
 from helpers import logHelper as log

@@ -7,7 +7,7 @@ from constants import gameModes
 import beatmap
 import os
 from helpers import logHelper as log
-from pp import wifipiano
+from pp import wifipiano2
 from pp import rippoppai
 
 class score:
