@@ -28,6 +28,7 @@ from handlers import getFullReplayHandler
 
 from handlers import redirectHandler
 from handlers import defaultHandler
+from handlers import emptyHandler
 
 # Tornado
 import tornado.ioloop
@@ -58,6 +59,12 @@ def make_app():
 
 		(r"/api/v1/status", apiStatusHandler.handler),
 		(r"/api/v1/pp", apiPPHandler.handler),
+
+		# Not done yet
+		(r"/web/lastfm.php", emptyHandler.handler),
+		(r"/web/check-updates.php", emptyHandler.handler),
+		(r"/web/osu-rate.php", emptyHandler.handler),
+		(r"/web/osu-checktweets.php", emptyHandler.handler),
 	], default_handler_class=defaultHandler.handler)
 
 if __name__ == "__main__":

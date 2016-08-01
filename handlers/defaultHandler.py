@@ -7,7 +7,7 @@ class handler(requestHelper.asyncRequestHandler):
 	@tornado.web.asynchronous
 	@tornado.gen.engine
 	def asyncGet(self):
-		log.warning("404: {}".format(self.request.uri))
+		print("404: {}".format(self.request.uri))
 		self.write("""
 				<html>
 					<head>
