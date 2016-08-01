@@ -1,10 +1,9 @@
-# LETS
+## LETS
 ## Latest Essential Tatoe Server
-### aka ripple's new score server
 This server handles every non real time client feature, so:
 - Ingame scoreboards
 - Score submission
-- PP calculation through `oppai` (std) and `wifipiano` (mania)
+- PP calculation through `oppai` (std) and `wifipiano2` (mania)
 - Screenshots
 - Replays
 - osu!direct
@@ -12,19 +11,16 @@ This server handles every non real time client feature, so:
 
 ## Requirements
 - Python 3.5
-- MySQLdb (`pip install mysqlclient` or `pip install mysql-python`)
-- Tornado (`pip install tornado`)
-- Bcrypt (`pip install bcrypt`)
-- Progressbar2 (only for `tomejerry.py`) (`pip install progressbar2`)
+- MySQLdb (`mysqlclient` or `mysql-python`)
+- Tornado (`tornado`)
+- Bcrypt (`bcrypt`)
+- Progressbar2 (`progressbar2`), only for `tomejerry.py`  
 - oppai
 
 ## How to set up LETS
 First of all, install all the dependencies
 ```
-$ pip install mysqlclient
-$ pip install tornado
-$ pip install bcrypt
-$ pip install progressbar2
+$ pip install mysqlclient tornado bcrypt progressbar2
 ```
 then, run LETS once to create the default config file and edit it
 ```
