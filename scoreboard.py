@@ -4,7 +4,7 @@ from helpers import userHelper
 from constants import rankedStatuses
 
 class scoreboard:
-	def __init__(self, username, gameMode, beatmap, setScores = True):
+	def __init__(self, username, gameMode, beatmap, setScores = True, country = False, friends = False, mods = -1):
 		"""
 		Initialize a leaderboard object
 
@@ -19,6 +19,9 @@ class scoreboard:
 		self.userID = userHelper.getID(self.username)	# username's userID
 		self.gameMode = gameMode		# requested gameMode
 		self.beatmap = beatmap			# beatmap objecy relative to this leaderboard
+		self.country = country
+		self.friends = friends
+		self.mods = mods
 		if setScores == True:
 			self.setScores()
 
@@ -37,7 +40,17 @@ class scoreboard:
 
 		# Find personal best score
 		if self.userID != 0:
-			personalBestScore = glob.db.fetch("SELECT id FROM scores WHERE userid = %s AND beatmap_md5 = %s AND play_mode = %s AND completed = 3 ORDER BY score DESC LIMIT 1", [self.userID, self.beatmap.fileMD5, self.gameMode])
+			# Base query
+			query = "SELECT id FROM scores WHERE userid = %(userid)s AND beatmap_md5 = %(md5)s AND play_mode = %(mode)s AND completed = 3"
+			# Mods
+			if self.mods > -1:
+				query += " AND mods = %(mods)s"
+			# Friends ranking
+			if self.friends == True:
+				query += " AND (scores.userid IN (SELECT user2 FROM users_relationships WHERE user1 = %(userid)s) OR scores.userid = %(userid)s)"
+			# Sort and limit at the end
+			query += " ORDER BY score DESC LIMIT 1"
+			personalBestScore = glob.db.fetch(query, {"userid": self.userID, "md5": self.beatmap.fileMD5, "mode": self.gameMode, "mods": self.mods})
 		else:
 			personalBestScore = None
 
@@ -50,7 +63,21 @@ class scoreboard:
 			self.scores[0] = -1
 
 		# Top 50 scores
-		topScores = glob.db.fetchAll("SELECT * FROM scores LEFT JOIN users ON scores.userid = users.id WHERE scores.beatmap_md5 = %s AND scores.play_mode = %s AND scores.completed = 3 AND (users.privileges & 1 > 0 OR users.id = %s) ORDER BY score DESC LIMIT 50", [self.beatmap.fileMD5, self.gameMode, self.userID])
+		# Base query
+		query = "SELECT * FROM scores JOIN users ON scores.userid = users.id JOIN users_stats ON users.id = users_stats.id WHERE scores.beatmap_md5 = %(beatmap_md5)s AND scores.play_mode = %(play_mode)s AND scores.completed = 3 AND (users.privileges & 1 > 0 OR users.id = %(userid)s)"
+		# Country ranking
+		if self.country == True:
+			query += " AND users_stats.country = (SELECT country FROM users_stats WHERE id = %(userid)s LIMIT 1)"
+		# Mods ranking
+		if self.mods > -1:
+			query += " AND scores.mods = %(mods)s"
+		# Friends ranking
+		if self.friends == True:
+			query += " AND (scores.userid IN (SELECT user2 FROM users_relationships WHERE user1 = %(userid)s) OR scores.userid = %(userid)s)"
+		# Sort and limit at the end
+		query += " ORDER BY score DESC LIMIT 50"
+		topScores = glob.db.fetchAll(query, {"beatmap_md5": self.beatmap.fileMD5, "play_mode": self.gameMode, "userid": self.userID, "mods": self.mods})
+
 		c = 1
 		if topScores != None:
 			for i in topScores:
@@ -71,7 +98,7 @@ class scoreboard:
 
 		# If personal best score was not in top 50, try to get it from cache
 		if personalBestScore != None and self.personalBestRank < 1:
-			self.personalBestRank = glob.personalBestCache.get(self.userID, self.beatmap.fileMD5)
+			self.personalBestRank = glob.personalBestCache.get(self.userID, self.beatmap.fileMD5, self.country, self.friends, self.mods)
 
 		# It's not even in cache, get it from db
 		if personalBestScore != None and self.personalBestRank < 1:
@@ -88,15 +115,36 @@ class scoreboard:
 		Ikr, that query is HUGE but xd
 		"""
 		# Before running the HUGE query, make sure we have a score on that map
-		hasScore = glob.db.fetch("SELECT id FROM scores WHERE beatmap_md5 = %s AND userid = %s AND play_mode = %s AND completed = 3 LIMIT 1", [self.beatmap.fileMD5, self.userID, self.gameMode])
+		query = "SELECT id FROM scores WHERE beatmap_md5 = %(md5)s AND userid = %(userid)s AND play_mode = %(mode)s AND completed = 3"
+		# Mods
+		if self.mods > -1:
+			query += " AND scores.mods = %(mods)s"
+		# Friends ranking
+		if self.friends == True:
+			query += " AND (scores.userid IN (SELECT user2 FROM users_relationships WHERE user1 = %(userid)s) OR scores.userid = %(userid)s)"
+		# Sort and limit at the end
+		query += " LIMIT 1"
+		hasScore = glob.db.fetch(query, {"md5": self.beatmap.fileMD5, "userid": self.userID, "mode": self.gameMode, "mods": self.mods})
 		if hasScore == None:
 			return
 
 		# We have a score, run the huge query
-		result = glob.db.fetch("""SELECT COUNT(*) AS rank FROM scores LEFT JOIN users ON scores.userid = users.id WHERE scores.score >= (
+		# Base query
+		query = """SELECT COUNT(*) AS rank FROM scores JOIN users ON scores.userid = users.id JOIN users_stats ON users.id = users_stats.id WHERE scores.score >= (
 		SELECT score FROM scores WHERE beatmap_md5 = %(md5)s AND play_mode = %(mode)s AND completed = 3 AND userid = %(userid)s LIMIT 1
-		) AND scores.beatmap_md5 = %(md5)s AND scores.play_mode = %(mode)s AND scores.completed = 3 AND users.privileges & 1 > 0 ORDER BY score DESC LIMIT 1
-		""", {"md5": self.beatmap.fileMD5, "userid": self.userID, "mode": self.gameMode})
+		) AND scores.beatmap_md5 = %(md5)s AND scores.play_mode = %(mode)s AND scores.completed = 3 AND users.privileges & 1 > 0"""
+		# Country
+		if self.country == True:
+			query += " AND users_stats.country = (SELECT country FROM users_stats WHERE id = %(userid)s LIMIT 1)"
+		# Mods
+		if self.mods > -1:
+			query += " AND scores.mods = %(mods)s"
+		# Friends
+		if self.friends == True:
+			query += " AND (scores.userid IN (SELECT user2 FROM users_relationships WHERE user1 = %(userid)s) OR scores.userid = %(userid)s)"
+		# Sort and limit at the end
+		query += " ORDER BY score DESC LIMIT 1"
+		result = glob.db.fetch(query, {"md5": self.beatmap.fileMD5, "userid": self.userID, "mode": self.gameMode, "mods": self.mods})
 		if result != None:
 			self.personalBestRank = result["rank"]
 
@@ -113,19 +161,22 @@ class scoreboard:
 			# We don't have a personal best score
 			data += "\n"
 		else:
+			# NOTE: wtf is this code?!?!?
 			# We have a personal best score
-			if self.personalBestRank == -1:
-				# ...but we don't know our rank in scoreboard. Get it.
-				c=1
-				self.userID = userHelper.getID(self.username)
-				scores = glob.db.fetchAll("SELECT DISTINCT userid, score FROM scores WHERE beatmap_md5 = %s AND play_mode = %s AND completed = 3 ORDER BY score DESC", [self.beatmap.fileMD5, self.gameMode])
-				if scores != None:
-					for i in scores:
-						if i["userid"] == self.userID:
-							self.personalBestRank = c
-						c+=1
+			#if self.personalBestRank == -1:
+			#	# ...but we don't know our rank in scoreboard. Get it.
+			#	c=1
+			#	self.userID = userHelper.getID(self.username)
+			#	scores = glob.db.fetchAll("SELECT DISTINCT userid, score FROM scores WHERE beatmap_md5 = %s AND play_mode = %s AND completed = 3 ORDER BY score DESC", [self.beatmap.fileMD5, self.gameMode])
+			#	if scores != None:
+			#		log.debug("w00t p00t")
+			#		for i in scores:
+			#			if i["userid"] == self.userID:
+			#				self.personalBestRank = c
+			#			c+=1
 
 			# Set personal best score rank
+			self.setPersonalBest()	# sets self.personalBestRank with the huge query
 			self.scores[0].setRank(self.personalBestRank)
 			data += self.scores[0].getData(self.username)
 

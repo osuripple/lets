@@ -481,3 +481,16 @@ def appendNotes(userID, notes, addNl = True):
 	if addNl == True:
 		notes = "\n"+notes
 	glob.db.execute("UPDATE users SET notes=CONCAT(COALESCE(notes, ''),%s) WHERE id = %s", [notes, userID])
+
+def getPrivileges(userID):
+	"""
+	Return privileges for userID
+
+	userID -- id of user
+	return -- privileges number
+	"""
+	result = glob.db.fetch("SELECT privileges FROM users WHERE id = %s", [userID])
+	if result != None:
+		return result["privileges"]
+	else:
+		return 0

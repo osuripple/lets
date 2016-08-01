@@ -8,6 +8,7 @@ from helpers import userHelper
 import sys
 import traceback
 from helpers import logHelper as log
+from constants import privileges
 
 # Exception tracking
 import tornado.web
@@ -33,7 +34,7 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 			# TODO: Maintenance check
 
 			# Check required arguments
-			if requestHelper.checkArguments(self.request.arguments, ["c", "f", "i", "m", "us"]) == False:
+			if requestHelper.checkArguments(self.request.arguments, ["c", "f", "i", "m", "us", "v", "mods"]) == False:
 				raise exceptions.invalidArgumentsException(MODULE_NAME)
 
 			# GET parameters
@@ -43,6 +44,7 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 			gameMode = self.get_argument("m")
 			username = self.get_argument("us")
 			password = self.get_argument("ha")
+			scoreboardType = int(self.get_argument("v"))
 
 			# Login and ban check
 			userID = userHelper.getID(username)
@@ -60,6 +62,20 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 					log.warning("Found AQN folder on user {} ({})".format(username, userID), "cm")
 					userHelper.setAqn(userID)
 
+			# Scoreboard type
+			country = False
+			friends = False
+			mods = -1
+			if scoreboardType == 4:
+				# Country leaderboard
+				country = True
+			elif scoreboardType == 2:
+				# Mods leaderboard, replace mods (-1, every mod) with "mods" GET parameters
+				mods = int(self.get_argument("mods"))
+			elif scoreboardType == 3 and userHelper.getPrivileges(userID) & privileges.USER_DONOR > 0:
+				# Friends leaderboard
+				friends = True
+
 			# Console output
 			fileNameShort = fileName[:32]+"..." if len(fileName) > 32 else fileName[:-4]
 			log.info("Requested beatmap {} ({})".format(fileNameShort, md5))
@@ -68,7 +84,7 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 			bmap = beatmap.beatmap(md5, beatmapSetID, gameMode)
 
 			# Create leaderboard object, link it to bmap and get all scores
-			sboard = scoreboard.scoreboard(username, gameMode, bmap)
+			sboard = scoreboard.scoreboard(username, gameMode, bmap, setScores=True, country=country, mods=mods, friends=friends)
 
 			# Data to return
 			data = ""
