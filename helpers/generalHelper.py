@@ -5,7 +5,7 @@ import time
 import hashlib
 from functools import partial
 from constants import mods
-from time import gmtime, strftime
+from time import localtime, strftime
 
 def randomString(length = 8):
 	return ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(length))
@@ -29,6 +29,12 @@ def osuDateToUNIXTimestamp(osuDate):
 	unixtime = time.mktime(date_object.timetuple())
 	unixtime = int(unixtime)
 	return unixtime
+
+def currentOsuDate():
+	"""
+	Return current osu date
+	"""
+	return int(strftime("%y%m%d%H%M%S", localtime()))
 
 def fileMd5(filename):
 	"""
@@ -124,4 +130,4 @@ def getTimestamp():
 	Return current time in YYYY-MM-DD HH:MM:SS format.
 	Used in logs.
 	"""
-	return strftime("%Y-%m-%d %H:%M:%S", gmtime())
+	return strftime("%Y-%m-%d %H:%M:%S", localtime())

@@ -158,7 +158,8 @@ class score:
 			self.mods = int(scoreData[13])
 			self.passed = True if scoreData[14] == 'True' else False
 			self.gameMode = int(scoreData[15])
-			self.playDateTime = int(scoreData[16])
+			#self.playDateTime = int(scoreData[16])
+			self.playDateTime = generalHelper.currentOsuDate()
 			self.calculateAccuracy()
 			#osuVersion = scoreData[17]
 
