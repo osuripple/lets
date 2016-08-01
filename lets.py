@@ -27,6 +27,7 @@ from handlers import downloadMapHandler
 from handlers import getFullReplayHandler
 
 from handlers import redirectHandler
+from handlers import defaultHandler
 
 # Tornado
 import tornado.ioloop
@@ -57,7 +58,7 @@ def make_app():
 
 		(r"/api/v1/status", apiStatusHandler.handler),
 		(r"/api/v1/pp", apiPPHandler.handler),
-	])
+	], default_handler_class=defaultHandler.handler)
 
 if __name__ == "__main__":
 	consoleHelper.printServerStartHeader(True)
