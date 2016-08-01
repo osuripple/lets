@@ -252,7 +252,7 @@ class score:
 					fo = rippoppai.oppai(b, self)
 					self.pp = fo.pp
 				elif self.gameMode == gameModes.MANIA:
-					xeno = wifipiano.piano(b, self)
+					xeno = wifipiano2.piano(b, self)
 					self.pp = xeno.pp
 			else:
 				self.pp = 0
