@@ -25,6 +25,7 @@ from handlers import apiStatusHandler
 from handlers import apiPPHandler
 from handlers import downloadMapHandler
 from handlers import getFullReplayHandler
+from handlers import checkUpdatesHandler
 
 from handlers import redirectHandler
 from handlers import defaultHandler
@@ -48,6 +49,7 @@ def make_app():
 		(r"/web/osu-screenshot.php", uploadScreenshotHandler.handler),
 		(r"/web/osu-search.php", osuSearchHandler.handler),
 		(r"/web/osu-search-set.php", osuSearchSetHandler.handler),
+		(r"/web/check-updates.php", checkUpdatesHandler.handler),
 		(r"/ss/(.*)", getScreenshotHandler.handler),
 		(r"/web/maps/(.*)", mapsHandler.handler),
 		(r"/d/(.*)", downloadMapHandler.handler),
@@ -62,7 +64,6 @@ def make_app():
 
 		# Not done yet
 		(r"/web/lastfm.php", emptyHandler.handler),
-		(r"/web/check-updates.php", emptyHandler.handler),
 		(r"/web/osu-rate.php", emptyHandler.handler),
 		(r"/web/osu-checktweets.php", emptyHandler.handler),
 	], default_handler_class=defaultHandler.handler)
