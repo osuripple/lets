@@ -1,5 +1,5 @@
 from helpers import requestHelper
-import logHelper as log
+from helpers import logHelper as log
 import tornado.web
 import tornado.gen
 import requests
