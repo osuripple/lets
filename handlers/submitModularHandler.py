@@ -21,6 +21,8 @@ import tornado.web
 import tornado.gen
 from raven.contrib.tornado import SentryMixin
 
+import urllib
+
 MODULE_NAME = "submit_modular"
 class handler(SentryMixin, requestHelper.asyncRequestHandler):
 	"""
@@ -272,6 +274,12 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 				# Some debug messages
 				log.debug("Generated output for online ranking screen!")
 				log.debug(msg)
+
+
+				# send message to #announce if we're rank #1
+				if newScoreboard.personalBestRank == 1:
+					annmsg = "{} achieved rank #1 on [https://osu.ppy.sh/b/{} {}]".format(username, beatmapInfo.beatmapID, beatmapInfo.songName)
+					requests.get(urllib.parse.quote_plus("{}/api/v1/fokabotMessage?k={}&to={}&msg={}".format(glob.conf.config["server"]["banchourl"], glob.conf.config["server"]["apikey"], "#announce", annmsg)))
 
 				# Write message to client
 				self.write(msg)
