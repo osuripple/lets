@@ -19,3 +19,14 @@ def getGameModeForDB(gameMode):
 		return "ctb"
 	else:
 		return "mania"
+
+
+def getGamemodeFull(gameMode):
+	if gameMode == STD:
+		return "osu!"
+	elif gameMode == TAIKO:
+		return "Taiko"
+	elif gameMode == CTB:
+		return "Catch The Beat"
+	else:
+		return "osu!mania"
