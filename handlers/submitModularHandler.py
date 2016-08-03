@@ -278,7 +278,7 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 
 
 				# send message to #announce if we're rank #1
-				if newScoreboard.personalBestRank == 1:
+				if newScoreboard.personalBestRank == 1 and s.completed == 3:
 					annmsg = "{} achieved rank #1 on [https://osu.ppy.sh/b/{} {}]".format(username, beatmapInfo.beatmapID, beatmapInfo.songName)
 					params = urlencode({"k": glob.conf.config["server"]["apikey"], "to": "#announce", "msg": annmsg})
 					requests.get("{}/api/v1/fokabotMessage?{}".format(glob.conf.config["server"]["banchourl"], params))
