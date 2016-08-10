@@ -52,7 +52,9 @@ def getOsuFileFromName(fileName):
 			return None
 
 		URL = "{}/web/maps/{}".format(glob.conf.config["osuapi"]["apiurl"], quote(fileName))
-		response = requests.get(URL, timeout=20).text
+		req = requests.get(URL, timeout=20)
+		req.encoding = "utf-8"
+		response = req.text
 	finally:
 		return response
 

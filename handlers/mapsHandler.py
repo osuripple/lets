@@ -32,7 +32,7 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 			if fileContent == None:
 				# TODO: Sentry capture message here
 				raise exceptions.osuApiFailException(MODULE_NAME)
-			self.write(str(fileContent))
+			self.write(fileContent)
 		except exceptions.invalidArgumentsException:
 			self.set_status(500)
 		except exceptions.osuApiFailException:
