@@ -52,7 +52,8 @@ class beatmap:
 			# This beatmap is already in db, remove old record
 			# Get current frozen status
 			frozen = bdata["ranked_status_freezed"]
-			self.rankedStatus = bdata["ranked"]
+			if frozen == 1:
+				self.rankedStatus = bdata["ranked"]
 			log.debug("Deleting old beatmap data ({})".format(bdata["id"]))
 			glob.db.execute("DELETE FROM beatmaps WHERE id = %s", [bdata["id"]])
 		else:
@@ -192,7 +193,8 @@ class beatmap:
 		log.debug("Got beatmap data from osu!api")
 		self.songName = "{} - {} [{}]".format(mainData["artist"], mainData["title"], mainData["version"])
 		self.fileMD5 = md5
-		self.rankedStatus = int(convertRankedStatus(mainData["approved"]))
+		self.rankedStatus = convertRankedStatus(int(mainData["approved"]))
+		print(str(self.rankedStatus))
 		self.beatmapID = int(mainData["beatmap_id"])
 		self.beatmapSetID = int(mainData["beatmapset_id"])
 		self.AR = float(mainData["diff_approach"])

@@ -25,6 +25,7 @@ def osuApiRequest(request, params):
 	resp = None
 	try:
 		finalURL = "{}/api/{}?k={}&{}".format(glob.conf.config["osuapi"]["apiurl"], request, glob.conf.config["osuapi"]["apikey"], params)
+		log.debug(finalURL)
 		resp = requests.get(finalURL, timeout=5).text
 		data = json.loads(resp)
 		if len(data) >= 1:
@@ -32,6 +33,7 @@ def osuApiRequest(request, params):
 		else:
 			resp = None
 	finally:
+		log.debug(str(resp).encode("utf-8"))
 		return resp
 
 def getOsuFileFromName(fileName):

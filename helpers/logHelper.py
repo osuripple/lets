@@ -99,7 +99,7 @@ def info(message, discord = None, alertDev = False):
 	discord -- if not None, send message to that discord channel through schiavo. Optional. Default = None
 	alertDev -- if True, send al hl to devs on discord. Optional. Default = False.
 	"""
-	logMessage(message, "INFO", bcolors.ENDC, discord, alertDev, "info.txt")
+	logMessage(message, "INFO", bcolors.ENDC, discord, alertDev, None)
 
 def debug(message):
 	"""
