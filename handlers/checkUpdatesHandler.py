@@ -9,9 +9,9 @@ class handler(requestHelper.asyncRequestHandler):
 	@tornado.gen.engine
 	def asyncGet(self):
 		try:
-            if requestHelper.checkArguments(self.request.arguments, ["stream", "action"]) == False:
-                self.write("missing params")
-                return
+			if requestHelper.checkArguments(self.request.arguments, ["stream", "action"]) == False:
+				self.write("missing params")
+				return
 
 			response = requests.get("https://osu.ppy.sh/web/check-updates.php?stream={}&action={}".format(self.get_argument("stream"), self.get_argument("action")))
 			self.write(response.text)
