@@ -79,7 +79,6 @@ def checkLogin(userID, password, ip = ""):
 
 	# Return True if there's a bancho session for this user from that ip
 	if banchoSession == True:
-		log.debug("Found cached bancho session")
 		return True
 
 	# Otherwise, check password

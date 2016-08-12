@@ -76,14 +76,17 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 
 			# Login and ban check
 			userID = userHelper.getID(username)
+			# User exists check
 			if userID == 0:
 				raise exceptions.loginFailedException(MODULE_NAME, userID)
-			#if userHelper.checkLogin(userID, password, ip) == False:
-			#	raise exceptions.loginFailedException(MODULE_NAME, username)
-			# Check active bancho session (NOTE: it searches only by userID, not ip)
+			# Bancho session/username-pass combo check
+			if userHelper.checkLogin(userID, password, ip) == False:
+				raise exceptions.loginFailedException(MODULE_NAME, username)
+			# Generic bancho session check
 			if userHelper.checkBanchoSession(userID) == False:
 				# TODO: Ban (see except exceptions.noBanchoSessionException block)
 				raise exceptions.noBanchoSessionException(MODULE_NAME, username, ip)
+			# Ban check
 			if userHelper.isBanned(userID) == True:
 				raise exceptions.userBannedException(MODULE_NAME, username)
 
