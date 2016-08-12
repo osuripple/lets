@@ -281,7 +281,7 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 
 
 				# send message to #announce if we're rank #1
-				if newScoreboard.personalBestRank == 1 and s.completed == 3:
+				if newScoreboard.personalBestRank == 1 and s.completed == 3 and restricted == False:
 					annmsg = "[https://ripple.moe/?u={} {}] achieved rank #1 on [https://osu.ppy.sh/b/{} {}] ({})".format(userID, username, beatmapInfo.beatmapID, beatmapInfo.songName, gameModes.getGamemodeFull(s.gameMode))
 					params = urlencode({"k": glob.conf.config["server"]["apikey"], "to": "#announce", "msg": annmsg})
 					requests.get("{}/api/v1/fokabotMessage?{}".format(glob.conf.config["server"]["banchourl"], params))
