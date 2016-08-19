@@ -19,12 +19,6 @@ def stringToBool(s):
 	"""
 	return (s == "True" or s== "true" or s == "1" or s == 1)
 
-def currentOsuDate():
-	"""
-	Return current osu date
-	"""
-	return int(strftime("%y%m%d%H%M%S", localtime()))
-
 def fileMd5(filename):
 	"""
 	Return filename's md5

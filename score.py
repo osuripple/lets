@@ -6,6 +6,7 @@ from constants import rankedStatuses
 from constants import gameModes
 import beatmap
 import os
+import time
 from helpers import logHelper as log
 from pp import wifipiano2
 from pp import rippoppai
@@ -159,7 +160,7 @@ class score:
 			self.passed = True if scoreData[14] == 'True' else False
 			self.gameMode = int(scoreData[15])
 			#self.playDateTime = int(scoreData[16])
-			self.playDateTime = generalHelper.currentOsuDate()
+			self.playDateTime = int(time.time())
 			self.calculateAccuracy()
 			#osuVersion = scoreData[17]
 
