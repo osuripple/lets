@@ -184,7 +184,7 @@ class score:
 			self.mods,
 			self.playerUserID,
 			self.rank,
-			generalHelper.osuDateToUNIXTimestamp(self.date))
+			self.date)
 
 	def setCompletedStatus(self):
 		"""

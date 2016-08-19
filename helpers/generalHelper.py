@@ -19,17 +19,6 @@ def stringToBool(s):
 	"""
 	return (s == "True" or s== "true" or s == "1" or s == 1)
 
-def osuDateToUNIXTimestamp(osuDate):
-	"""
-	Convert an osu date to UNIX date
-
-	osuDate -- osudate
-	"""
-	date_object = datetime.strptime(str(osuDate), "%y%m%d%H%M%S")
-	unixtime = time.mktime(date_object.timetuple())
-	unixtime = int(unixtime)
-	return unixtime
-
 def currentOsuDate():
 	"""
 	Return current osu date
