@@ -17,6 +17,11 @@ class handler(requestHelper.asyncRequestHandler):
 				args["action"] = self.get_argument("action")
 			if "time" in self.request.arguments:
 				args["time"] = self.get_argument("time")
+
+			if args["action"].lower() == "put":
+				self.write("nope")
+				return
+
 			response = requests.get("https://osu.ppy.sh/web/check-updates.php?{}".format(urlencode(args)))
 			self.write(response.text)
 		except Exception as e:
