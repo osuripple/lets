@@ -10,8 +10,6 @@ from helpers import leaderboardHelper
 import sys
 import traceback
 from helpers import logHelper as log
-from helpers import scoreHelper
-from helpers.exceptionsTracker import trackExceptions
 import beatmap
 import scoreboard
 import collections
@@ -89,6 +87,9 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 			# Ban check
 			if userHelper.isBanned(userID) == True:
 				raise exceptions.userBannedException(MODULE_NAME, username)
+			# Data length check
+			if len(scoreData) < 16:
+				raise exceptions.invalidArgumentsException(MODULE_NAME)
 
 			# Get restricted
 			restricted = userHelper.isRestricted(userID)
@@ -123,6 +124,17 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 
 			# Save score in db
 			s.saveScoreInDB()
+
+			# Client anti-cheat flags
+			ignoreFlags = 4
+			if glob.debug == True:
+				# ignore multiple client flags if we are in debug mode
+				ignoreFlags |= 8
+			haxFlags = (len(scoreData[17])-len(scoreData[17].strip())) & ~ignoreFlags
+			if haxFlags != 0 and restricted == False:
+				userHelper.restrict(userID)
+				userHelper.appendNotes(userID, "-- Restricted due to clientside anti cheat flag ({}) (cheated score id: {})".format(haxFlags, s.scoreID))
+				log.warning("**{}** ({}) has been restricted due clientside anti cheat flag **({})**".format(username, userID, haxFlags), "cm")
 
 			# Make sure process list has been passed
 			if s.completed == 3 and "pl" not in self.request.arguments and restricted == False:
