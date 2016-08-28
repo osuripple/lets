@@ -11,16 +11,17 @@ This server handles every non real time client feature, so:
 
 ## Requirements
 - Python 3.5
-- MySQLdb (`mysqlclient` or `mysql-python`)
-- Tornado (`tornado`)
-- Bcrypt (`bcrypt`)
-- Progressbar2 (`progressbar2`), only for `tomejerry.py`  
+- MySQLdb (`mysqlclient`)
+- Tornado
+- Bcrypt
+- Progressbar2 (only for `tomejerry.py`  )
+- Raven
 - oppai
 
 ## How to set up LETS
 First of all, install all the dependencies
 ```
-$ pip install mysqlclient tornado bcrypt progressbar2
+$ pip install -r requirements.txt
 ```
 then, run LETS once to create the default config file and edit it
 ```
