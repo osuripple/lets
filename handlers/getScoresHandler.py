@@ -88,7 +88,7 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 
 			# Data to return
 			data = ""
-			data += bmap.getData()
+			data += bmap.getData(sboard.totalScores)
 			data += sboard.getScoresData()
 			self.write(data)
 		except exceptions.invalidArgumentsException:

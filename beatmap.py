@@ -243,13 +243,12 @@ class beatmap:
 
 		log.debug("{}\n{}\n{}\n{}".format(self.starsStd, self.starsTaiko, self.starsCtb, self.starsMania))
 
-	def getData(self):
+	def getData(self, totalScores=0):
 		"""
 		Return this beatmap's data (header) for getscores
 
 		return -- beatmap header for getscores
 		"""
-		totalScores = 0
 		data = "{}|false".format(self.rankedStatus)
 		if self.rankedStatus != rankedStatuses.NOT_SUBMITTED and self.rankedStatus != rankedStatuses.NEED_UPDATE and self.rankedStatus != rankedStatuses.UNKNOWN:
 			# If the beatmap is updated and exists, the client needs more data
