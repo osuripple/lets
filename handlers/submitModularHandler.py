@@ -126,7 +126,7 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 			s.saveScoreInDB()
 
 			# Client anti-cheat flags
-			ignoreFlags = 4
+			'''ignoreFlags = 4
 			if glob.debug == True:
 				# ignore multiple client flags if we are in debug mode
 				ignoreFlags |= 8
@@ -134,7 +134,7 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 			if haxFlags != 0 and restricted == False:
 				userHelper.restrict(userID)
 				userHelper.appendNotes(userID, "-- Restricted due to clientside anti cheat flag ({}) (cheated score id: {})".format(haxFlags, s.scoreID))
-				log.warning("**{}** ({}) has been restricted due clientside anti cheat flag **({})**".format(username, userID, haxFlags), "cm")
+				log.warning("**{}** ({}) has been restricted due clientside anti cheat flag **({})**".format(username, userID, haxFlags), "cm")'''
 
 			# Make sure process list has been passed
 			if s.completed == 3 and "pl" not in self.request.arguments and restricted == False:
