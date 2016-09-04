@@ -11,6 +11,7 @@ except:
 db = None
 conf = None
 debug = False
+pool = None
 discord = False
 sentry = False
 cloudflare = False

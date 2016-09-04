@@ -9,9 +9,7 @@ from helpers import generalHelper
 from helpers import userHelper
 from constants import bcolors
 from helpers import logHelper as log
-from gevent import monkey as brit_monkey
-
-brit_monkey.patch_all()
+from multiprocessing.pool import ThreadPool
 
 # Handlers
 from handlers import getScoresHandler
@@ -125,6 +123,15 @@ if __name__ == "__main__":
 			consoleHelper.printError()
 			consoleHelper.printColored("[!] Error while connection to database. Please check your config.ini and run the server again", bcolors.RED)
 			raise
+
+		# Create threads pool
+		try:
+			consoleHelper.printNoNl("> Creating threads pool... ")
+			glob.pool = ThreadPool(int(glob.conf.config["server"]["threads"]))
+			consoleHelper.printDone()
+		except:
+			consoleHelper.printError()
+			consoleHelper.printColored("[!] Error while creating threads pool. Please check your config.ini and run the server again", bcolors.RED)
 
 		# Check osuapi
 		if generalHelper.stringToBool(glob.conf.config["osuapi"]["enable"]) == False:
