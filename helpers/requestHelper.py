@@ -4,7 +4,7 @@ import tornado.gen
 from tornado.ioloop import IOLoop
 import glob
 from helpers import logHelper as log
-import ipaddress
+import gevent
 
 class asyncRequestHandler(tornado.web.RequestHandler):
 	"""
@@ -45,7 +45,7 @@ class asyncRequestHandler(tornado.web.RequestHandler):
 
 	def getRequestIP(self):
 		realIP = self.request.headers.get("X-Forwarded-For") if glob.cloudflare == True else self.request.headers.get("X-Real-IP")
-		if realIP != None:
+		if realIP is not None:
 			return realIP
 		return self.request.remote_ip
 
@@ -58,7 +58,9 @@ def runBackground(data, callback):
 	func, args, kwargs = data
 	def _callback(result):
 		IOLoop.instance().add_callback(lambda: callback(result))
-	glob.pool.apply_async(func, args, kwargs, _callback)
+	g = gevent.Greenlet(func, *args, **kwargs)
+	g.link(_callback)
+	g.start()
 
 
 def checkArguments(arguments, requiredArguments):

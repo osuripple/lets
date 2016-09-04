@@ -53,7 +53,6 @@ class config:
 			self.config.get("server", "beatmapcacheexpire")
 			self.config.get("server", "serverurl")
 			self.config.get("server", "banchourl")
-			self.config.get("server", "threads")
 			self.config.get("server", "cloudflare")
 			self.config.get("server", "apikey")
 
@@ -93,7 +92,6 @@ class config:
 		self.config.set("server", "beatmapcacheexpire", "86400")
 		self.config.set("server", "serverurl", "http://127.0.0.1:5002")
 		self.config.set("server", "banchourl", "http://127.0.0.1:5001")
-		self.config.set("server", "threads", "16")
 		self.config.set("server", "cloudflare", "True")
 		self.config.set("server", "apikey", "changeme")
 
