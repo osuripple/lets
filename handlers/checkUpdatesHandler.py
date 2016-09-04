@@ -11,12 +11,16 @@ class handler(requestHelper.asyncRequestHandler):
 	def asyncGet(self):
 		try:
 			args = {}
-			if "stream" in self.request.arguments:
-				args["stream"] = self.get_argument("stream")
-			if "action" in self.request.arguments:
-				args["action"] = self.get_argument("action")
-			if "time" in self.request.arguments:
-				args["time"] = self.get_argument("time")
+			#if "stream" in self.request.arguments:
+			#	args["stream"] = self.get_argument("stream")
+			#if "action" in self.request.arguments:
+			#	args["action"] = self.get_argument("action")
+			#if "time" in self.request.arguments:
+			#	args["time"] = self.get_argument("time")
+
+			# Pass all arguments otherwise it doesn't work
+			for key, value in self.request.arguments.items():
+				args[key] = self.get_argument(key)
 
 			if args["action"].lower() == "put":
 				self.write("nope")
