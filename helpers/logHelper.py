@@ -63,13 +63,8 @@ def logMessage(message, alertType = "INFO", messageColor = bcolors.ENDC, discord
 			discordBotHelper.sendGeneral(message)
 
 	# Log to file if needed
-	if of != None:
-		try:
-			glob.fLocks.lockFile(of)
-			with open(".data/{}".format(of), "a") as f:
-				f.write(finalMessage+ENDL)
-		finally:
-			glob.fLocks.unlockFile(of)
+	if of is not None:
+		glob.fileBuffers.write(".data/"+of, finalMessage+ENDL)
 
 def warning(message, discord = None, alertDev = False):
 	"""

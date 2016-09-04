@@ -1,6 +1,7 @@
 import fileLocks
 import userStatsCache
 import personalBestCache
+import fileBuffer
 
 try:
 	with open("version") as f:
@@ -20,3 +21,4 @@ fLocks = fileLocks.fileLocks()
 userIDCache = {}
 userStatsCache = userStatsCache.userStatsCache()
 personalBestCache = personalBestCache.personalBestCache()
+fileBuffers = fileBuffer.buffersList()
