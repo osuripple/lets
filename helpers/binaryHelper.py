@@ -60,7 +60,6 @@ def packData(__data, __dataType):
 def binaryWrite(structure = []):
 	packetData = bytes()
 	for i in structure:
-		print("writing")
 		packetData += packData(i[0], i[1])
 	#print(str(packetData))
 	return packetData
