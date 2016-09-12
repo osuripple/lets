@@ -5,6 +5,7 @@ import os
 import glob
 from constants import gameModes
 from constants import exceptions
+from constants import rankedStatuses
 from helpers import requestHelper
 from helpers import leaderboardHelper
 import sys
@@ -99,6 +100,15 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 			s = score.score()
 			s.setDataFromScoreData(scoreData)
 
+			# Get beatmap info
+			beatmapInfo = beatmap.beatmap()
+			beatmapInfo.setDataFromDB(s.fileMd5)
+
+			# Make sure the beatmap is submitted and updated
+			if beatmapInfo.rankedStatus == rankedStatuses.NOT_SUBMITTED or beatmapInfo.rankedStatus == rankedStatuses.NEED_UPDATE or beatmapInfo.rankedStatus == rankedStatuses.UNKNOWN:
+				log.debug("Beatmap is not submitted/outdated/unknown. Score submission aborted.")
+				return
+
 			# Calculate PP
 			# NOTE: PP are std and mania only
 			if s.gameMode == gameModes.STD or s.gameMode == gameModes.MANIA:
@@ -170,11 +180,6 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 				oldUserData = glob.userStatsCache.get(userID, s.gameMode)
 				oldRank = leaderboardHelper.getUserRank(userID, s.gameMode)
 
-				# Beatmap info needed for personal best (if not in cache)
-				# song playcount and passcount
-				beatmapInfo = beatmap.beatmap()
-				beatmapInfo.setDataFromDB(s.fileMd5)
-
 				# Try to get oldPersonalBestRank from cache
 				oldPersonalBestRank = glob.personalBestCache.get(userID, s.fileMd5)
 				if oldPersonalBestRank == 0:
@@ -182,9 +187,6 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 					oldScoreboard = scoreboard.scoreboard(username, s.gameMode, beatmapInfo, False)
 					oldScoreboard.setPersonalBest()
 					oldPersonalBestRank = oldScoreboard.personalBestRank if oldScoreboard.personalBestRank > 0 else 0
-			else:
-				# We need to do this or it throws an exception when building ranking panel
-				beatmapInfo = None
 
 			# Always update users stats (total/ranked score, playcount, level, acc and pp)
 			# even if not passed
