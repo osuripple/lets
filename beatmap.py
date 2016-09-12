@@ -101,13 +101,16 @@ class beatmap:
 			return False
 
 		# Set cached data period
-		expire = glob.conf.config["server"]["beatmapcacheexpire"]
+		expire = int(glob.conf.config["server"]["beatmapcacheexpire"])
+
 		# If the beatmap is ranked, we don't need to refresh data from osu!api that often
-		if data["ranked"] >= rankedStatuses.RANKED:
+		if data["ranked"] >= rankedStatuses.RANKED and data["ranked_status_freezed"] == 0:
 			expire *= 3
 
 		# Make sure the beatmap data in db is not too old
-		if int(expire) > 0 and time.time() > data["latest_update"]+int(expire) and data["ranked_status_freezed"] == 0:
+		if int(expire) > 0 and time.time() > data["latest_update"]+int(expire):
+			if data["ranked_status_freezed"] == 1:
+				self.setDataFromDict(data)
 			return False
 
 		# Data in DB, set beatmap data
@@ -164,9 +167,13 @@ class beatmap:
 		elif dataMania != None:
 			mainData = dataMania
 
+		# If the beatmap is frozen and still valid from osu!api, return True so we don't overwrite anything
+		if mainData != None and self.rankedStatusFrozen == 1:
+			return True
+
+		# Can't fint beatmap by MD5. The beatmap has been updated. Check with beatmap set ID
 		if mainData == None:
 			log.debug("osu!api data is None")
-			# Error while retreiving data from MD5, check with beatmap set ID
 			dataStd = osuapiHelper.osuApiRequest("get_beatmaps", "s={}&a=1&m=0".format(beatmapSetID))
 			dataTaiko = osuapiHelper.osuApiRequest("get_beatmaps", "s={}&a=1&m=1".format(beatmapSetID))
 			dataCtb = osuapiHelper.osuApiRequest("get_beatmaps", "s={}&a=1&m=2".format(beatmapSetID))
@@ -201,6 +208,10 @@ class beatmap:
 		self.OD = float(mainData["diff_overall"])
 
 		# Determine stars for every mode
+		self.starsStd = 0
+		self.starsTaiko = 0
+		self.starsCtb = 0
+		self.starsMania = 0
 		if dataStd != None:
 			self.starsStd = dataStd["difficultyrating"]
 		if dataTaiko != None:
