@@ -227,7 +227,7 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 
 			# Output ranking panel only if we passed the song
 			# and we got valid beatmap info from db
-			if beatmapInfo != None or beatmapInfo != False and s.passed == True:
+			if beatmapInfo != None and beatmapInfo != False and s.passed == True:
 				log.debug("Started building ranking panel")
 
 				# Get personal best after submitting the score
@@ -265,7 +265,7 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 				try:
 					# std only
 					if s.gameMode != 0:
-						raise
+						raise Exception
 
 					# Get best score if
 					bestID = int(glob.db.fetch("SELECT id FROM scores WHERE userid = %s AND play_mode = %s AND completed = 3 ORDER BY pp DESC LIMIT 1", [userID, s.gameMode])["id"])
@@ -273,7 +273,7 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 						# Dat pp achievement
 						output["achievements-new"] = "all-secret-jackpot+Here come dat PP+Oh shit waddup"
 					else:
-						raise
+						raise Exception
 				except:
 					# No achievement
 					output["achievements-new"] = ""
