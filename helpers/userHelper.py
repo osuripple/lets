@@ -431,6 +431,19 @@ def isBanned(userID):
 	else:
 		return True
 
+def isLocked(userID):
+	"""
+	Check if userID is locked
+
+	userID -- id of the user
+	return -- True if not locked, otherwise false.
+	"""
+	result = glob.db.fetch("SELECT privileges FROM users WHERE id = %s LIMIT 1", [userID])
+	if result != None:
+		return ((result["privileges"] & privileges.USER_PUBLIC > 0) and (result["privileges"] & privileges.USER_NORMAL == 0))
+	else:
+		return True
+		
 def ban(userID):
 	"""
 	Ban userID

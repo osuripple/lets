@@ -43,6 +43,10 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 			if userHelper.isBanned(userID) == True:
 				raise exceptions.userBannedException(MODULE_NAME, username)
 
+			# Lock check
+			if userHelper.isLocked(userID) == True:
+				raise exceptions.userLockedException(MODULE_NAME, username)
+
 			# 2FA check
 			if userHelper.check2FA(userID, ip):
 				raise exceptions.need2FAException(MODULE_NAME, username, ip)
@@ -58,6 +62,8 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 		except exceptions.loginFailedException:
 			self.write("error: pass\n")
 		except exceptions.userBannedException:
+			pass
+		except exceptions.userLockedException:
 			pass
 		except exceptions.need2FAException:
 			self.write("error: verify\n")

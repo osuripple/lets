@@ -12,6 +12,10 @@ class userBannedException(Exception):
 	def __init__(self, handler, who):
 		log.warning("{} - {} is banned".format(handler, who))
 
+class userLockedException(Exception):
+	def __init__(self, handler, who):
+		log.warning("{} - {} is locked".format(handler, who))
+
 class noBanchoSessionException(Exception):
 	def __init__(self, handler, who, ip):
 		log.warning("{handler} - {username} has tried to submit a score from {ip} without an active bancho session from that ip. If this happens often, {username} is trying to use a score submitter.".format(handler=handler, ip=ip, username=who), "bunker")
