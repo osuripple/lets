@@ -32,6 +32,8 @@ from handlers import redirectHandler
 from handlers import defaultHandler
 from handlers import emptyHandler
 
+from handlers import loadTestHandler
+
 # Tornado
 import tornado.ioloop
 import tornado.web
@@ -68,6 +70,8 @@ def make_app():
 		(r"/web/lastfm.php", emptyHandler.handler),
 		(r"/web/osu-rate.php", emptyHandler.handler),
 		(r"/web/osu-checktweets.php", emptyHandler.handler),
+
+		(r"/loadTest", loadTestHandler.handler),
 	], default_handler_class=defaultHandler.handler)
 
 if __name__ == "__main__":
@@ -156,13 +160,13 @@ if __name__ == "__main__":
 			consoleHelper.printColored("[!] Invalid server port! Please check your config.ini and run the server again", bcolors.RED)
 
 		# Make app
-		application = make_app()
+		glob.application = make_app()
 
 		# Set up sentry
 		try:
 			glob.sentry = generalHelper.stringToBool(glob.conf.config["sentry"]["enable"])
 			if glob.sentry == True:
-				application.sentry_client = AsyncSentryClient(glob.conf.config["sentry"]["dns"], release=glob.VERSION)
+				glob.application.sentry_client = AsyncSentryClient(glob.conf.config["sentry"]["dns"], release=glob.VERSION)
 			else:
 				consoleHelper.printColored("[!] Warning! Sentry logging is disabled!", bcolors.YELLOW)
 		except:
@@ -181,7 +185,7 @@ if __name__ == "__main__":
 		log.logMessage("Server started!", discord="bunker", of="info.txt", stdout=False)
 
 		# Start Tornado
-		application.listen(serverPort)
+		glob.application.listen(serverPort)
 		tornado.ioloop.IOLoop.instance().start()
 	finally:
 		# Perform some clean up

@@ -10,8 +10,11 @@ except:
 	VERSION = "¯\_(xd)_/¯"
 db = None
 conf = None
-debug = False
+application = None
 pool = None
+
+busyThreads = 0
+debug = False
 discord = False
 sentry = False
 cloudflare = False

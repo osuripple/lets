@@ -1,6 +1,8 @@
 import MySQLdb
 import threading
+import glob
 from helpers import logHelper as log
+import threading
 
 class mysqlWorker:
 	"""
@@ -37,15 +39,26 @@ class db:
 		database -- MySQL database name
 		workers -- Number of workers to spawn
 		"""
-		#self.lock = threading.Lock()
-		#self.connection = MySQLdb.connect(host, username, password, database)
-
 		self.workers = []
 		self.lastWorker = 0
 		self.workersNumber = workers
+		self.locked = 0
 		for i in range(0,self.workersNumber):
 			print(".", end="")
 			self.workers.append(mysqlWorker(i, host, username, password, database))
+
+	def checkPoolSaturation(self):
+		"""
+		Check the number of busy connections in connections pool.
+		If the pool is 100% busy, log a message to sentry
+		"""
+		if self.locked >= (self.workersNumber-1):
+			msg = "MySQL connections pool is saturated!".format(self.locked, self.workersNumber)
+			log.warning(msg)
+			glob.application.sentry_client.captureMessage(msg, level="warning", extra={
+				"workersBusy": self.locked,
+				"workersTotal": self.workersNumber
+			})
 
 	def getWorker(self):
 		"""
@@ -57,7 +70,10 @@ class db:
 			self.lastWorker = 0
 		else:
 			self.lastWorker += 1
-		#print("Using worker {}".format(self.lastWorker))
+
+		# Saturation check
+		threading.Thread(target=self.checkPoolSaturation).start()
+		self.locked += 1
 		return self.workers[self.lastWorker]
 
 	def execute(self, query, params = ()):
@@ -82,6 +98,7 @@ class db:
 			if cursor:
 				cursor.close()
 			worker.lock.release()
+			self.locked -= 1
 
 	def fetch(self, query, params = (), all = False):
 		"""
@@ -109,6 +126,7 @@ class db:
 			if cursor:
 				cursor.close()
 			worker.lock.release()
+			self.locked -= 1
 
 	def fetchAll(self, query, params = ()):
 		"""
