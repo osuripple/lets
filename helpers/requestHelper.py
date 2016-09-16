@@ -17,10 +17,12 @@ class asyncRequestHandler(tornado.web.RequestHandler):
 	@tornado.gen.engine
 	def get(self, *args, **kwargs):
 		try:
+			glob.busyThreads += 1
 			yield tornado.gen.Task(runBackground, (self.asyncGet, tuple(args), dict(kwargs)))
 		except Exception as e:
 			yield tornado.gen.Task(self.captureException, exc_info=True)
 		finally:
+			glob.busyThreads -= 1
 			if not self._finished:
 				self.finish()
 
@@ -28,10 +30,12 @@ class asyncRequestHandler(tornado.web.RequestHandler):
 	@tornado.gen.engine
 	def post(self, *args, **kwargs):
 		try:
+			glob.busyThreads += 1
 			yield tornado.gen.Task(runBackground, (self.asyncPost, tuple(args), dict(kwargs)))
 		except Exception as e:
 			yield tornado.gen.Task(self.captureException, exc_info=True)
 		finally:
+			glob.busyThreads -= 1
 			if not self._finished:
 				self.finish()
 
@@ -57,11 +61,9 @@ def runBackground(data, callback):
 	"""
 	func, args, kwargs = data
 	def _callback(result):
-		glob.busyThreads -= 1
 		IOLoop.instance().add_callback(lambda: callback(result))
 	glob.pool.apply_async(func, args, kwargs, _callback)
 	threading.Thread(target=checkPoolSaturation).start()
-	glob.busyThreads += 1
 
 def checkPoolSaturation():
 	"""
