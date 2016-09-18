@@ -5,6 +5,9 @@ from tornado.ioloop import IOLoop
 import glob
 from helpers import logHelper as log
 import threading
+import time
+
+currentMilliseconds = lambda: int(round(time.time() * 1000))
 
 class asyncRequestHandler(tornado.web.RequestHandler):
 	"""
@@ -17,11 +20,14 @@ class asyncRequestHandler(tornado.web.RequestHandler):
 	@tornado.gen.engine
 	def get(self, *args, **kwargs):
 		try:
+			st = currentMilliseconds()
 			glob.busyThreads += 1
 			yield tornado.gen.Task(runBackground, (self.asyncGet, tuple(args), dict(kwargs)))
 		except Exception as e:
 			yield tornado.gen.Task(self.captureException, exc_info=True)
 		finally:
+			et = currentMilliseconds()
+			log.warning("{} REQUEST TIME: {} ms".format(self.request.path, et-st))
 			glob.busyThreads -= 1
 			if not self._finished:
 				self.finish()
@@ -30,11 +36,14 @@ class asyncRequestHandler(tornado.web.RequestHandler):
 	@tornado.gen.engine
 	def post(self, *args, **kwargs):
 		try:
+			st = currentMilliseconds()
 			glob.busyThreads += 1
 			yield tornado.gen.Task(runBackground, (self.asyncPost, tuple(args), dict(kwargs)))
 		except Exception as e:
 			yield tornado.gen.Task(self.captureException, exc_info=True)
 		finally:
+			et = currentMilliseconds()
+			log.warning("{} REQUEST TIME: {} ms".format(self.request.path, et-st))
 			glob.busyThreads -= 1
 			if not self._finished:
 				self.finish()

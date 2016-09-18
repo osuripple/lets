@@ -197,7 +197,7 @@ class score:
 			userID = userHelper.getID(self.playerName)
 
 			# Make sure we don't have another score identical to this one
-			duplicate = glob.db.fetch("SELECT id FROM scores WHERE userid = %s AND beatmap_md5 = %s AND play_mode = %s AND score = %s", [userID, self.fileMd5, self.gameMode, self.score])
+			duplicate = glob.db.fetch("SELECT id FROM scores WHERE userid = %s AND beatmap_md5 = %s AND play_mode = %s AND score = %s LIMIT 1", [userID, self.fileMd5, self.gameMode, self.score])
 			if duplicate != None:
 				# Found same score in db. Don't save this score.
 				self.completed = -1
@@ -205,7 +205,7 @@ class score:
 
 			# No duplicates found.
 			# Get right "completed" value
-			personalBest = glob.db.fetch("SELECT id, score FROM scores WHERE userid = %s AND beatmap_md5 = %s AND play_mode = %s AND completed = 3", [userID, self.fileMd5, self.gameMode])
+			personalBest = glob.db.fetch("SELECT id, score FROM scores WHERE userid = %s AND beatmap_md5 = %s AND play_mode = %s AND completed = 3 LIMIT 1", [userID, self.fileMd5, self.gameMode])
 			if personalBest == None:
 				# This is our first score on this map, so it's our best score
 				self.completed = 3
