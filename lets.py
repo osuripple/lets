@@ -31,6 +31,7 @@ from handlers import osuErrorHandler
 from handlers import redirectHandler
 from handlers import defaultHandler
 from handlers import emptyHandler
+from handlers import apiCacheBeatmapHandler
 
 from handlers import loadTestHandler
 
@@ -65,6 +66,11 @@ def make_app():
 
 		(r"/api/v1/status", apiStatusHandler.handler),
 		(r"/api/v1/pp", apiPPHandler.handler),
+		(r"/api/v1/cacheBeatmap", apiCacheBeatmapHandler.handler),
+
+		(r"/letsapi/v1/status", apiStatusHandler.handler),
+		(r"/letsapi/v1/pp", apiPPHandler.handler),
+		(r"/letsapi/v1/cacheBeatmap", apiCacheBeatmapHandler.handler),
 
 		# Not done yet
 		(r"/web/lastfm.php", emptyHandler.handler),

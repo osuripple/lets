@@ -9,7 +9,7 @@ import traceback
 
 
 class beatmap:
-	def __init__(self, md5 = None, beatmapSetID = None, gameMode = 0):
+	def __init__(self, md5 = None, beatmapSetID = None, gameMode = 0, refresh=False):
 		"""
 		Initialize a beatmap object.
 
@@ -38,6 +38,9 @@ class beatmap:
 		# Statistics for ranking panel
 		self.playcount = 0
 		self.passcount = 0
+
+		# Force refresh from osu api
+		self.refresh = refresh
 
 		if md5 != None and beatmapSetID != None:
 			self.setData(md5, beatmapSetID)
@@ -239,6 +242,12 @@ class beatmap:
 		# Get beatmap from db
 		dbResult = self.setDataFromDB(md5)
 
+		# Force refresh from osu api.
+		# We get data before to keep frozen maps ranked
+		# if they haven't been updated
+		if dbResult == True and self.refresh:
+			dbResult = False
+
 		if dbResult == False:
 			log.debug("Beatmap not found in db")
 			# If this beatmap is not in db, get it from osu!api
@@ -315,6 +324,6 @@ def incrementPlaycount(md5, passed):
 	md5 -- beatmap md5
 	passed -- if True, increment passcount too
 	"""
-	glob.db.execute("UPDATE beatmaps SET playcount = playcount+1 WHERE beatmap_md5 = %s", [md5])
+	glob.db.execute("UPDATE beatmaps SET playcount = playcount+1 WHERE beatmap_md5 = %s LIMIT 1", [md5])
 	if passed == True:
-		glob.db.execute("UPDATE beatmaps SET passcount = passcount+1 WHERE beatmap_md5 = %s", [md5])
+		glob.db.execute("UPDATE beatmaps SET passcount = passcount+1 WHERE beatmap_md5 = %s LIMIT 1", [md5])

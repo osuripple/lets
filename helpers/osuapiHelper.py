@@ -8,7 +8,7 @@ from helpers import logHelper as log
 import sys
 import traceback
 
-def osuApiRequest(request, params):
+def osuApiRequest(request, params, getFirst=True):
 	"""
 	Send a request to osu!api.
 
@@ -28,10 +28,13 @@ def osuApiRequest(request, params):
 		log.debug(finalURL)
 		resp = requests.get(finalURL, timeout=5).text
 		data = json.loads(resp)
-		if len(data) >= 1:
-			resp = data[0]
+		if getFirst:
+			if len(data) >= 1:
+				resp = data[0]
+			else:
+				resp = None
 		else:
-			resp = None
+			resp = data
 	finally:
 		log.debug(str(resp).encode("utf-8"))
 		return resp
