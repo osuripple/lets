@@ -11,7 +11,7 @@ class handler(requestHelper.asyncRequestHandler):
 		if not glob.debug:
 			self.write("Nope")
 			return
-		glob.db.fetchAll("SELECT * FROM beatmaps")
-		glob.db.fetchAll("SELECT * FROM users")
-		glob.db.fetchAll("SELECT * FROM scores")
+		glob.db.fetchAll("SELECT SQL_NO_CACHE * FROM beatmaps")
+		glob.db.fetchAll("SELECT SQL_NO_CACHE * FROM users")
+		glob.db.fetchAll("SELECT SQL_NO_CACHE * FROM scores")
 		self.write("ibmd")
