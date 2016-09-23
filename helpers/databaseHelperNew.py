@@ -17,6 +17,18 @@ class worker():
 		self.temporary = temporary
 		log.debug("Created MySQL worker. Temporary: {}".format(self.temporary))
 
+	def ping(self):
+		"""
+		Ping MySQL server using this worker.
+
+		:return: True if connected, False if error occured.
+		"""
+		try:
+			self.connection.cursor(MySQLdb.cursors.DictCursor).execute("SELECT 1+1")
+			return True
+		except:
+			return False
+
 	def __del__(self):
 		"""
 		Close connection to the server
@@ -107,11 +119,6 @@ class connectionsPool():
 			worker = self.pool.get()
 			self.consecutiveEmptyPool = 0
 
-		# Make sure this connection is still alive
-		if not worker.connection.open:
-			log.warning("MySQL connection lost! Reconnecting...")
-			worker.connect(*self.config)
-
 		# Return the connection
 		return worker
 
@@ -162,11 +169,16 @@ class db:
 			cursor = worker.connection.cursor(MySQLdb.cursors.DictCursor)
 			cursor.execute(query, params)
 			return cursor.lastrowid
+		except MySQLdb.OperationalError:
+			del worker
+			worker = None
+			self.execute(query, params)
 		finally:
 			# Close the cursor and release worker's lock
 			if cursor is not None:
 				cursor.close()
-			self.pool.putWorker(worker)
+			if worker is not None:
+				self.pool.putWorker(worker)
 
 	def fetch(self, query, params = (), all = False):
 		"""
@@ -188,11 +200,16 @@ class db:
 				return cursor.fetchall()
 			else:
 				return cursor.fetchone()
+		except MySQLdb.OperationalError:
+			del worker
+			worker = None
+			self.fetch(query, params, all)
 		finally:
 			# Close the cursor and release worker's lock
 			if cursor is not None:
 				cursor.close()
-			self.pool.putWorker(worker)
+			if worker is not None:
+				self.pool.putWorker(worker)
 
 	def fetchAll(self, query, params = ()):
 		"""
