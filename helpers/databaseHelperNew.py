@@ -47,18 +47,17 @@ class db:
 			print(".", end="")
 			self.workers.append(mysqlWorker(i, host, username, password, database))
 
-	def checkPoolSaturation(self):
+	def logPoolSaturation(self):
 		"""
-		Check the number of busy connections in connections pool.
-		If the pool is 100% busy, log a message to sentry
+		Log a message to sentry to warn that
+		mysql connections pool is saturated
 		"""
-		if self.locked >= (self.workersNumber-1):
-			msg = "MySQL connections pool is saturated!".format(self.locked, self.workersNumber)
-			log.warning(msg)
-			glob.application.sentry_client.captureMessage(msg, level="warning", extra={
-				"workersBusy": self.locked,
-				"workersTotal": self.workersNumber
-			})
+		msg = "MySQL connections pool is saturated!".format(self.locked, self.workersNumber)
+		log.warning(msg)
+		glob.application.sentry_client.captureMessage(msg, level="warning", extra={
+			"workersBusy": self.locked,
+			"workersTotal": self.workersNumber
+		})
 
 	def getWorker(self):
 		"""
@@ -72,7 +71,8 @@ class db:
 			self.lastWorker += 1
 
 		# Saturation check
-		threading.Thread(target=self.checkPoolSaturation).start()
+		if self.locked >= (self.workersNumber - 1):
+			threading.Thread(target=self.logPoolSaturation).start()
 		self.locked += 1
 		return self.workers[self.lastWorker]
 
