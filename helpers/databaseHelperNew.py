@@ -21,7 +21,7 @@ class mysqlWorker:
 		self.wid = wid
 		self.connection = MySQLdb.connect(host, username, password, database)
 		self.connection.autocommit(True)
-		self.busy = False
+		self.ready = True
 		self.lock = threading.Lock()
 
 class db:
@@ -66,26 +66,15 @@ class db:
 
 		return -- worker object
 		"""
-		#if self.lastWorker >= self.workersNumber-1:
-		#	self.lastWorker = 0
-		#else:
-		#	self.lastWorker += 1
-		found = False
-		for i in self.workers:
-			if not i.busy:
-				i.busy = True
-				found = True
-				worker = i
-
-		# If all workers are busy, select the first one
-		if not found:
-			worker = self.workers[0]
+		if self.lastWorker >= self.workersNumber-1:
+			self.lastWorker = 0
+		else:
+			self.lastWorker += 1
 
 		# Saturation check
 		threading.Thread(target=self.checkPoolSaturation).start()
 		self.locked += 1
-		#self.workers[self.lastWorker]
-		return worker
+		return self.workers[self.lastWorker]
 
 	def execute(self, query, params = ()):
 		"""
@@ -97,7 +86,7 @@ class db:
 		log.debug(query)
 		# Get a worker and acquire its lock
 		worker = self.getWorker()
-		#worker.lock.acquire()
+		worker.lock.acquire()
 
 		try:
 			# Create cursor, execute query and commit
@@ -108,8 +97,7 @@ class db:
 			# Close the cursor and release worker's lock
 			if cursor:
 				cursor.close()
-			#worker.lock.release()
-			worker.busy = False
+			worker.lock.release()
 			self.locked -= 1
 
 	def fetch(self, query, params = (), all = False):
@@ -123,7 +111,7 @@ class db:
 		log.debug(query)
 		# Get a worker and acquire its lock
 		worker = self.getWorker()
-		#worker.lock.acquire()
+		worker.lock.acquire()
 
 		try:
 			# Create cursor, execute the query and fetch one/all result(s)
@@ -137,8 +125,7 @@ class db:
 			# Close the cursor and release worker's lock
 			if cursor:
 				cursor.close()
-			#worker.lock.release()
-			worker.busy = False
+			worker.lock.release()
 			self.locked -= 1
 
 	def fetchAll(self, query, params = ()):
