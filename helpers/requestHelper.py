@@ -27,7 +27,7 @@ class asyncRequestHandler(tornado.web.RequestHandler):
 			yield tornado.gen.Task(self.captureException, exc_info=True)
 		finally:
 			et = currentMilliseconds()
-			log.warning("{} REQUEST TIME: {} ms".format(self.request.path, et-st))
+			log.info(">>>>> {} REQUEST TIME: {} ms".format(self.request.path, et-st))
 			glob.busyThreads -= 1
 			if not self._finished:
 				self.finish()
