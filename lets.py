@@ -75,6 +75,7 @@ def make_app():
 		# Not done yet
 		(r"/web/lastfm.php", emptyHandler.handler),
 		(r"/web/osu-rate.php", emptyHandler.handler),
+		(r"/web/osu-comment.php", emptyHandler.handler),
 		(r"/web/osu-checktweets.php", emptyHandler.handler),
 
 		(r"/loadTest", loadTestHandler.handler),
