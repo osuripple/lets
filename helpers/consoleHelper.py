@@ -24,7 +24,7 @@ def printServerStartHeader(asciiArt):
 
 	printColored("> Welcome to the Latest Essential Tatoe Server v{}".format(glob.VERSION), bcolors.GREEN)
 	printColored("> Made by the Ripple team", bcolors.GREEN)
-	printColored("> {}https://github.com/osuripple/ripple".format(bcolors.UNDERLINE), bcolors.GREEN)
+	printColored("> {}https://git.zxq.co/ripple/lets".format(bcolors.UNDERLINE), bcolors.GREEN)
 	printColored("> Press CTRL+C to exit\n", bcolors.GREEN)
 
 
