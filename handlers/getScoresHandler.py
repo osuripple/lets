@@ -91,6 +91,9 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 			data += bmap.getData(sboard.totalScores)
 			data += sboard.getScoresData()
 			self.write(data)
+
+			# Datadog stats
+			glob.dog.increment("lets.served_leaderboards")
 		except exceptions.invalidArgumentsException:
 			self.write("error: meme")
 		except exceptions.userBannedException:

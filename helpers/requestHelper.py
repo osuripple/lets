@@ -71,6 +71,7 @@ def runBackground(data, callback):
 	func, args, kwargs = data
 	def _callback(result):
 		IOLoop.instance().add_callback(lambda: callback(result))
+		glob.dog.increment("lets.incoming_requests")
 	glob.pool.apply_async(func, args, kwargs, _callback)
 	threading.Thread(target=checkPoolSaturation).start()
 

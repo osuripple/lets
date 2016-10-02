@@ -1,6 +1,7 @@
 # General imports
 import sys
 import os
+
 import glob
 from helpers import consoleHelper
 from helpers import databaseHelperNew
@@ -43,6 +44,9 @@ import tornado.gen
 
 # Raven
 from raven.contrib.tornado import AsyncSentryClient
+
+# Datadog
+import datadogClient
 
 def make_app():
 	return tornado.web.Application([
@@ -177,7 +181,16 @@ if __name__ == "__main__":
 			else:
 				consoleHelper.printColored("[!] Warning! Sentry logging is disabled!", bcolors.YELLOW)
 		except:
-			consoleHelper.printColored("[!] Error while starting sentry client! Please check your config.ini and run the server again", bcolors.RED)
+			consoleHelper.printColored("[!] Error while starting Sentry client! Please check your config.ini and run the server again", bcolors.RED)
+
+		# Set up Datadog
+		try:
+			if generalHelper.stringToBool(glob.conf.config["datadog"]["enable"]):
+				glob.dog = datadogClient.datadogClient(glob.conf.config["datadog"]["apikey"], glob.conf.config["datadog"]["appkey"])
+			else:
+				consoleHelper.printColored("[!] Warning! Datadog stats tracking is disabled!", bcolors.YELLOW)
+		except:
+			consoleHelper.printColored("[!] Error while starting Datadog client! Please check your config.ini and run the server again", bcolors.RED)
 
 		# Cloudflare meme
 		glob.cloudflare = generalHelper.stringToBool(glob.conf.config["server"]["cloudflare"])

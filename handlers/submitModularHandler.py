@@ -305,6 +305,9 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 			else:
 				# No ranking panel, send just "ok"
 				self.write("ok")
+
+			# Datadog stats
+			glob.dog.increment("lets.submitted_scores")
 		except exceptions.invalidArgumentsException:
 			pass
 		except exceptions.loginFailedException:

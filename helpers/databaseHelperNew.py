@@ -1,5 +1,7 @@
 import queue
 import MySQLdb
+import time
+import glob
 from helpers import logHelper as log
 
 class worker():
@@ -42,7 +44,7 @@ class connectionsPool():
 	"""
 	A MySQL workers pool
 	"""
-	def __init__(self, host, username, password, database, initialSize=16):
+	def __init__(self, host, username, password, database, size=128):
 		"""
 		Initialize a MySQL connections pool
 
@@ -51,10 +53,11 @@ class connectionsPool():
 		:param password: MySQL password
 		:param database: MySQL database name
 		:param initialSize: initial pool size
+		:param maxSize: maximum pool size, to avoid `Too many connections` errors
 		"""
 		self.config = (host, username, password, database)
-		self.maxSize = initialSize
-		self.pool = queue.Queue(0)
+		self.maxSize = size
+		self.pool = queue.Queue(self.maxSize)
 		self.consecutiveEmptyPool = 0
 		self.fillPool()
 
@@ -67,57 +70,79 @@ class connectionsPool():
 		"""
 		db = MySQLdb.connect(*self.config)
 		db.autocommit(True)
+		db.cursor(MySQLdb.cursors.DictCursor).execute("SET SESSION query_cache_type = 0;")
 		conn = worker(db, temporary)
 		return conn
 
-	def expandPool(self, newWorkers=5):
-		"""
-		Add some new workers to the pool
+	"""def expandPool(self, newWorkers=5):
 
-		:param newWorkers: number of new workers
+	Add some new workers to the pool
+
+	:param newWorkers: number of new workers
+	:return:
+
+	if self.currentSize+newWorkers > self.maxSize:
+		newWorkers = self.currentSize-self.maxSize
+	self.currentSize += newWorkers
+	self.fillPool()"""
+
+	def fillPool(self, newConnections=0):
+		"""
+		Fill the queue with workers
+
+		:param newConnections:	number of new connections. If 0, the pool will be filled entirely.
 		:return:
 		"""
-		self.maxSize += newWorkers
-		self.fillPool()
+		# If newConnections = 0, fill the whole pool
+		if newConnections == 0:
+			newConnections = self.maxSize
 
-	def fillPool(self):
-		"""
-		Fill the queue with workers until its maxSize
-
-		:return:
-		"""
-		size = self.pool.qsize()
-		if self.maxSize > 0 and size >= self.maxSize:
-			return
-		newConnections = self.maxSize-size
+		# Fill the pool
 		for _ in range(0, newConnections):
-			self.pool.put_nowait(self.newWorker())
+			if not self.pool.full():
+				self.pool.put_nowait(self.newWorker())
 
-	def getWorker(self):
+	def getWorker(self, level=0):
 		"""
 		Get a MySQL connection worker from the pool.
 		If the pool is empty, a new temporary worker is created.
 
+		:param retries: number of failed connection attempts. If > 50, return None
 		:return: instance of worker class
 		"""
+		# Make sure we below 50 retries
+		#log.info("Pool size: {}".format(self.pool.qsize()))
+		glob.dog.increment("lets.mysql_pool.queries")
+		glob.dog.gauge("lets.mysql_pool.size", self.pool.qsize())
+		if level >= 50:
+			log.warning("Too many failed connection attempts. No MySQL connection available.")
+			return None
 
-		if self.pool.empty():
-			# The pool is empty. Spawn a new temporary worker
-			log.warning("Using temporary worker")
-			worker = self.newWorker(True)
+		try:
+			if self.pool.empty():
+				# The pool is empty. Spawn a new temporary worker
+				log.warning("MySQL connections pool is empty. Using temporary worker.")
+				worker = self.newWorker(True)
 
-			# Increment saturation
-			self.consecutiveEmptyPool += 1
+				# Increment saturation
+				self.consecutiveEmptyPool += 1
 
-			# If the pool is usually empty, expand it
-			if self.consecutiveEmptyPool >= 5:
-				log.warning("MySQL connections pool is saturated. Filling connections pool.")
-				self.expandPool()
-		else:
-			# The pool is not empty. Get worker from the pool
-			# and reset saturation counter
-			worker = self.pool.get()
-			self.consecutiveEmptyPool = 0
+				# If the pool is usually empty, expand it
+				if self.consecutiveEmptyPool >= 10:
+					log.warning("MySQL connections pool is empty. Filling connections pool.")
+					self.fillPool()
+			else:
+				# The pool is not empty. Get worker from the pool
+				# and reset saturation counter
+				worker = self.pool.get()
+				self.consecutiveEmptyPool = 0
+		except MySQLdb.OperationalError:
+			# Connection to server lost
+			# Wait 1 second and try again
+			log.warning("Can't connect to MySQL database. Retrying in 1 second...")
+			glob.dog.increment("lets.mysql_pool.failed_connections")
+			time.sleep(1)
+			return self.getWorker(level=level+1)
 
 		# Return the connection
 		return worker
@@ -131,9 +156,12 @@ class connectionsPool():
 		:param worker: worker object
 		:return:
 		"""
-		if worker.temporary:
+		if worker.temporary or self.pool.full():
+			# Kill the worker if it's temporary or the queue
+			# is full and we can't  put anything in it
 			del worker
 		else:
+			# Put the connection in the queue if there's space
 			self.pool.put_nowait(worker)
 
 class db:
@@ -162,7 +190,8 @@ class db:
 		"""
 		cursor = None
 		worker = self.pool.getWorker()
-
+		if worker is None:
+			return None
 		try:
 			# Create cursor, execute query and commit
 			cursor = worker.connection.cursor(MySQLdb.cursors.DictCursor)
@@ -190,7 +219,8 @@ class db:
 		"""
 		cursor = None
 		worker = self.pool.getWorker()
-
+		if worker is None:
+			return None
 		try:
 			# Create cursor, execute the query and fetch one/all result(s)
 			cursor = worker.connection.cursor(MySQLdb.cursors.DictCursor)
@@ -201,6 +231,7 @@ class db:
 			else:
 				return cursor.fetchone()
 		except MySQLdb.OperationalError:
+			log.warning("MySQL connection lost! Using next worker...")
 			del worker
 			worker = None
 			return self.fetch(query, params, all)

@@ -60,6 +60,10 @@ class config:
 			self.config.get("sentry","enable")
 			self.config.get("sentry","dns")
 
+			self.config.get("datadog", "enable")
+			self.config.get("datadog", "apikey")
+			self.config.get("datadog", "appkey")
+
 			self.config.get("osuapi","enable")
 			self.config.get("osuapi","apiurl")
 			self.config.get("osuapi","apikey")
@@ -100,6 +104,11 @@ class config:
 		self.config.add_section("sentry")
 		self.config.set("sentry", "enable", "False")
 		self.config.set("sentry", "dns", "")
+
+		self.config.add_section("datadog")
+		self.config.set("datadog", "enable", "False")
+		self.config.set("datadog", "apikey", "")
+		self.config.set("datadog", "appkey", "")
 
 		self.config.add_section("osuapi")
 		self.config.set("osuapi", "enable", "True")

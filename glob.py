@@ -2,6 +2,7 @@ import fileLocks
 import userStatsCache
 import personalBestCache
 import fileBuffer
+import datadogClient
 
 try:
 	with open("version") as f:
@@ -25,3 +26,4 @@ userIDCache = {}
 userStatsCache = userStatsCache.userStatsCache()
 personalBestCache = personalBestCache.personalBestCache()
 fileBuffers = fileBuffer.buffersList()
+dog = datadogClient.datadogClient()
