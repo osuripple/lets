@@ -3,9 +3,9 @@ import time
 import beatmap
 from common.constants import gameModes
 from common.log import logUtils as log
-from common.ripple import userUtils
+from common.ripple import userUtils, scoreUtils
 from constants import rankedStatuses
-from helpers import scoreHelper
+from common.ripple import scoreUtils
 from objects import glob
 from pp import rippoppai
 from pp import wifipiano2
@@ -198,7 +198,7 @@ class score:
 		Set this score completed status and rankedScoreIncrease
 		"""
 		self.completed = 0
-		if self.passed == True and scoreHelper.isRankable(self.mods):
+		if self.passed == True and scoreUtils.isRankable(self.mods):
 			# Get userID
 			userID = userUtils.getID(self.playerName)
 

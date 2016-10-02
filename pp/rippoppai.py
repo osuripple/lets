@@ -5,12 +5,12 @@ oppai interface for ripple 2 / LETS
 import os
 import subprocess
 
+from common import generalUtils
 from common.constants import bcolors
+from common.ripple import scoreUtils
 from constants import exceptions
 from helpers import consoleHelper
-from common import generalUtils
 from helpers import osuapiHelper
-from helpers import scoreHelper
 from objects import glob
 
 # constants
@@ -140,7 +140,7 @@ class oppai:
 			if self.acc > 0:
 				command += " {acc:.2f}%".format(acc=self.acc)
 			if self.mods > 0:
-				command += " +{mods}".format(mods=scoreHelper.readableMods(modsFixed))
+				command += " +{mods}".format(mods=scoreUtils.readableMods(modsFixed))
 			if self.combo > 0:
 				command += " {combo}x".format(combo=self.combo)
 			if self.misses > 0:

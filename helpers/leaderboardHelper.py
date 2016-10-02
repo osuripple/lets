@@ -1,5 +1,5 @@
 from common.log import logUtils as log
-from helpers import scoreHelper
+from common.ripple import scoreUtils
 from objects import glob
 
 
@@ -11,7 +11,7 @@ def getUserRank(userID, gameMode):
 	gameMode -- gameMode number
 	return -- rank number. 0 if unknown
 	"""
-	mode = scoreHelper.readableGameMode(gameMode)
+	mode = scoreUtils.readableGameMode(gameMode)
 	result = glob.db.fetch("SELECT position FROM leaderboard_{} WHERE user = %s LIMIT 1".format(mode), [userID])
 	if result != None:
 		return int(result["position"])
@@ -25,7 +25,7 @@ def getRankInfo(userID, gameMode):
 	return -- {"nextusername": string, "difference": int}
 	"""
 	data = {"nextUsername": "", "difference": 0, "currentRank": 0}
-	modeForDB = scoreHelper.readableGameMode(gameMode)
+	modeForDB = scoreUtils.readableGameMode(gameMode)
 	v = glob.db.fetch("SELECT v FROM leaderboard_{mode} WHERE user = %s LIMIT 1".format(mode=modeForDB), [userID])
 	if v != None:
 		v = v["v"]
@@ -51,7 +51,7 @@ def update(userID, newScore, gameMode):
 	gameMode -- gameMode number
 	"""
 	log.debug("Updating leaderboard...")
-	mode = scoreHelper.readableGameMode(gameMode)
+	mode = scoreUtils.readableGameMode(gameMode)
 
 	newPlayer = False
 	us = glob.db.fetch("SELECT * FROM leaderboard_{} WHERE user=%s LIMIT 1".format(mode), [userID])
