@@ -70,17 +70,17 @@ class score:
 			totalPoints = (self.c100*50)+(self.c300*100)
 			totalHits = self.cMiss+self.c100+self.c300
 			if totalHits == 0:
-				self.accuracy = totalPoints/(totalHits*100)
-			else:
 				self.accuracy = 100
+			else:
+				self.accuracy = totalPoints / (totalHits * 100)
 		elif self.gameMode == 2:
 			# ctb
 			fruits = self.c300+self.c100+self.c50
 			totalFruits = fruits+self.cMiss+self.cKatu
 			if totalFruits == 0:
-				self.accuracy = fruits/totalFruits
-			else:
 				self.accuracy = 100
+			else:
+				self.accuracy = fruits / totalFruits
 		elif self.gameMode == 3:
 			# mania
 			totalPoints = self.c50*50+self.c100*100+self.cKatu*200+self.c300*300+self.cGeki*300
