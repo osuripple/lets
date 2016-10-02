@@ -1,22 +1,20 @@
 import json
-from helpers import requestHelper
-from constants import exceptions
-import beatmap
-from helpers import osuapiHelper
-from pp import rippoppai
-import traceback
 import sys
-from helpers import logHelper as log
-import glob
-from constants import gameModes
+import traceback
 
-# Exception tracking
-import tornado.web
 import tornado.gen
+import tornado.web
 from raven.contrib.tornado import SentryMixin
 
+import beatmap
+from common.log import logUtils as log
+from common.web import requestsManager
+from constants import exceptions
+from helpers import osuapiHelper
+from objects import glob
+
 MODULE_NAME = "api/cacheBeatmap"
-class handler(SentryMixin, requestHelper.asyncRequestHandler):
+class handler(SentryMixin, requestsManager.asyncRequestHandler):
 	"""
 	Handler for /api/v1/cacheBeatmap
 	"""
@@ -28,7 +26,7 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 		data = {"message": "unknown error"}
 		try:
 			# Check arguments
-			if requestHelper.checkArguments(self.request.arguments, ["sid", "refresh"]) == False:
+			if requestsManager.checkArguments(self.request.arguments, ["sid", "refresh"]) == False:
 				raise exceptions.invalidArgumentsException(MODULE_NAME)
 
 			# Get beatmap set data from osu api

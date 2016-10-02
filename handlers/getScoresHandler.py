@@ -1,22 +1,21 @@
-import beatmap
-import scoreboard
-import glob
-from constants import exceptions
-from helpers import requestHelper
-from helpers import discordBotHelper
-from helpers import userHelper
 import sys
 import traceback
-from helpers import logHelper as log
-from constants import privileges
 
-# Exception tracking
-import tornado.web
 import tornado.gen
+import tornado.web
 from raven.contrib.tornado import SentryMixin
 
+import beatmap
+import scoreboard
+from common.constants import privileges
+from common.log import logUtils as log
+from common.ripple import userUtils
+from common.web import requestsManager
+from constants import exceptions
+from objects import glob
+
 MODULE_NAME = "get_scores"
-class handler(SentryMixin, requestHelper.asyncRequestHandler):
+class handler(SentryMixin, requestsManager.asyncRequestHandler):
 	"""
 	Handler for /web/osu-osz2-getscores.php
 	"""
@@ -29,12 +28,12 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 
 			# Print arguments
 			if glob.debug == True:
-				requestHelper.printArguments(self)
+				requestsManager.printArguments(self)
 
 			# TODO: Maintenance check
 
 			# Check required arguments
-			if requestHelper.checkArguments(self.request.arguments, ["c", "f", "i", "m", "us", "v", "mods"]) == False:
+			if requestsManager.checkArguments(self.request.arguments, ["c", "f", "i", "m", "us", "v", "mods"]) == False:
 				raise exceptions.invalidArgumentsException(MODULE_NAME)
 
 			# GET parameters
@@ -47,10 +46,10 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 			scoreboardType = int(self.get_argument("v"))
 
 			# Login and ban check
-			userID = userHelper.getID(username)
+			userID = userUtils.getID(username)
 			if userID == 0:
 				raise exceptions.loginFailedException(MODULE_NAME, userID)
-			if userHelper.checkLogin(userID, password, ip) == False:
+			if userUtils.checkLogin(userID, password, ip) == False:
 				raise exceptions.loginFailedException(MODULE_NAME, username)
 			# Ban check is pointless here, since there's no message on the client
 			#if userHelper.isBanned(userID) == True:
@@ -58,9 +57,9 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 
 			# Hax check
 			if "a" in self.request.arguments:
-				if int(self.get_argument("a")) == 1 and not userHelper.getAqn(userID):
+				if int(self.get_argument("a")) == 1 and not userUtils.getAqn(userID):
 					log.warning("Found AQN folder on user {} ({})".format(username, userID), "cm")
-					userHelper.setAqn(userID)
+					userUtils.setAqn(userID)
 
 			# Scoreboard type
 			country = False
@@ -72,7 +71,7 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 			elif scoreboardType == 2:
 				# Mods leaderboard, replace mods (-1, every mod) with "mods" GET parameters
 				mods = int(self.get_argument("mods"))
-			elif scoreboardType == 3 and userHelper.getPrivileges(userID) & privileges.USER_DONOR > 0:
+			elif scoreboardType == 3 and userUtils.getPrivileges(userID) & privileges.USER_DONOR > 0:
 				# Friends leaderboard
 				friends = True
 
@@ -93,7 +92,7 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 			self.write(data)
 
 			# Datadog stats
-			glob.dog.increment("lets.served_leaderboards")
+			glob.dog.increment(glob.DATADOG_PREFIX+".served_leaderboards")
 		except exceptions.invalidArgumentsException:
 			self.write("error: meme")
 		except exceptions.userBannedException:

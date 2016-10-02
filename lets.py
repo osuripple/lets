@@ -1,52 +1,45 @@
 # General imports
-import sys
 import os
-
-import glob
-from helpers import consoleHelper
-from helpers import databaseHelperNew
-from helpers import config
-from helpers import generalHelper
-from helpers import userHelper
-from constants import bcolors
-from helpers import logHelper as log
+import sys
 from multiprocessing.pool import ThreadPool
 
-# Handlers
-from handlers import getScoresHandler
-from handlers import submitModularHandler
-from handlers import banchoConnectHandler
-from handlers import getReplayHandler
-from handlers import mapsHandler
-from handlers import uploadScreenshotHandler
-from handlers import getScreenshotHandler
-from handlers import osuSearchHandler
-from handlers import osuSearchSetHandler
-from handlers import apiStatusHandler
-from handlers import apiPPHandler
-from handlers import downloadMapHandler
-from handlers import getFullReplayHandler
-from handlers import checkUpdatesHandler
-from handlers import osuErrorHandler
-
-from handlers import redirectHandler
-from handlers import defaultHandler
-from handlers import emptyHandler
-from handlers import apiCacheBeatmapHandler
-
-from handlers import loadTestHandler
-
-# Tornado
+import tornado.gen
+import tornado.httpserver
 import tornado.ioloop
 import tornado.web
-import tornado.httpserver
-import tornado.gen
-
-# Raven
 from raven.contrib.tornado import AsyncSentryClient
 
-# Datadog
-import datadogClient
+from common.constants import bcolors
+from common.db import dbConnector
+from common.ddog import datadogClient
+from common.log import logUtils as log
+from common.ripple import userUtils
+from common.web import schiavo
+from handlers import apiCacheBeatmapHandler
+from handlers import apiPPHandler
+from handlers import apiStatusHandler
+from handlers import banchoConnectHandler
+from handlers import checkUpdatesHandler
+from handlers import defaultHandler
+from handlers import downloadMapHandler
+from handlers import emptyHandler
+from handlers import getFullReplayHandler
+from handlers import getReplayHandler
+from handlers import getScoresHandler
+from handlers import getScreenshotHandler
+from handlers import loadTestHandler
+from handlers import mapsHandler
+from handlers import osuErrorHandler
+from handlers import osuSearchHandler
+from handlers import osuSearchSetHandler
+from handlers import redirectHandler
+from handlers import submitModularHandler
+from handlers import uploadScreenshotHandler
+from helpers import config
+from helpers import consoleHelper
+from common import generalUtils
+from objects import glob
+
 
 def make_app():
 	return tornado.web.Application([
@@ -116,7 +109,8 @@ if __name__ == "__main__":
 		else:
 			consoleHelper.printError()
 			consoleHelper.printColored("[!] Oppai not found! Please put oppai(.exe) in {}/oppai/oppai(.exe) and run LETS again.".format(os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))), bcolors.YELLOW)
-			consoleHelper.printColored("[!] You can download oppai's source here -> {}https://github.com/osuripple/oppai".format(bcolors.UNDERLINE), bcolors.YELLOW)
+			consoleHelper.printColored("[!] You can download oppai's source here -> {}https://github.com/osuripple/oppai".format(
+				bcolors.UNDERLINE), bcolors.YELLOW)
 			sys.exit()
 
 		# Create data/oppai maps folder if needed
@@ -130,7 +124,8 @@ if __name__ == "__main__":
 		# Connect to db
 		try:
 			consoleHelper.printNoNl("> Connecting to MySQL database... ")
-			glob.db = databaseHelperNew.db(glob.conf.config["db"]["host"], glob.conf.config["db"]["username"], glob.conf.config["db"]["password"], glob.conf.config["db"]["database"], int(glob.conf.config["db"]["workers"]))
+			glob.db = dbConnector.db(glob.conf.config["db"]["host"], glob.conf.config["db"]["username"], glob.conf.config["db"]["password"], glob.conf.config["db"]["database"], int(
+				glob.conf.config["db"]["workers"]))
 			consoleHelper.printNoNl(" ")
 			consoleHelper.printDone()
 		except:
@@ -149,18 +144,19 @@ if __name__ == "__main__":
 			consoleHelper.printColored("[!] Error while creating threads pool. Please check your config.ini and run the server again", bcolors.RED)
 
 		# Check osuapi
-		if generalHelper.stringToBool(glob.conf.config["osuapi"]["enable"]) == False:
+		if generalUtils.stringToBool(glob.conf.config["osuapi"]["enable"]) == False:
 			consoleHelper.printColored("[!] osu!api features are disabled. If you don't have a valid beatmaps table, all beatmaps will show as unranked", bcolors.YELLOW)
 			if int(glob.conf.config["server"]["beatmapcacheexpire"]) > 0:
 				consoleHelper.printColored("[!] IMPORTANT! Your beatmapcacheexpire in config.ini is > 0 and osu!api features are disabled.\nWe do not reccoment this, because too old beatmaps will be shown as unranked.\nSet beatmapcacheexpire to 0 to disable beatmap latest update check and fix that issue.", bcolors.YELLOW)
 
 		# Discord
-		glob.discord = generalHelper.stringToBool(glob.conf.config["discord"]["enable"])
-		if glob.discord == False:
+		if generalUtils.stringToBool(glob.conf.config["discord"]["enable"]):
+			glob.schiavo = schiavo.schiavo(glob.conf.config["discord"]["boturl"])
+		else:
 			consoleHelper.printColored("[!] Warning! Discord logging is disabled!", bcolors.YELLOW)
 
 		# Check debug mods
-		glob.debug = generalHelper.stringToBool(glob.conf.config["server"]["debug"])
+		glob.debug = generalUtils.stringToBool(glob.conf.config["server"]["debug"])
 		if glob.debug == True:
 			consoleHelper.printColored("[!] Warning! Server running in debug mode!", bcolors.YELLOW)
 
@@ -175,7 +171,7 @@ if __name__ == "__main__":
 
 		# Set up sentry
 		try:
-			glob.sentry = generalHelper.stringToBool(glob.conf.config["sentry"]["enable"])
+			glob.sentry = generalUtils.stringToBool(glob.conf.config["sentry"]["enable"])
 			if glob.sentry == True:
 				glob.application.sentry_client = AsyncSentryClient(glob.conf.config["sentry"]["dns"], release=glob.VERSION)
 			else:
@@ -185,7 +181,7 @@ if __name__ == "__main__":
 
 		# Set up Datadog
 		try:
-			if generalHelper.stringToBool(glob.conf.config["datadog"]["enable"]):
+			if generalUtils.stringToBool(glob.conf.config["datadog"]["enable"]):
 				glob.dog = datadogClient.datadogClient(glob.conf.config["datadog"]["apikey"], glob.conf.config["datadog"]["appkey"])
 			else:
 				consoleHelper.printColored("[!] Warning! Datadog stats tracking is disabled!", bcolors.YELLOW)
@@ -193,11 +189,11 @@ if __name__ == "__main__":
 			consoleHelper.printColored("[!] Error while starting Datadog client! Please check your config.ini and run the server again", bcolors.RED)
 
 		# Cloudflare meme
-		glob.cloudflare = generalHelper.stringToBool(glob.conf.config["server"]["cloudflare"])
+		glob.cloudflare = generalUtils.stringToBool(glob.conf.config["server"]["cloudflare"])
 
 		# Cache user ids
 		consoleHelper.printNoNl("> Caching user IDs... ")
-		userHelper.cacheUserIDs()
+		userUtils.cacheUserIDs()
 		consoleHelper.printDone()
 
 		# Server start message and console output

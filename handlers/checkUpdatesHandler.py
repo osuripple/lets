@@ -1,11 +1,14 @@
-from helpers import requestHelper
-from helpers import logHelper as log
-import tornado.web
-import tornado.gen
-import requests
 from urllib.parse import urlencode
 
-class handler(requestHelper.asyncRequestHandler):
+import requests
+import tornado.gen
+import tornado.web
+
+from common.log import logUtils as log
+from common.web import requestsManager
+
+
+class handler(requestsManager.asyncRequestHandler):
 	@tornado.web.asynchronous
 	@tornado.gen.engine
 	def asyncGet(self):

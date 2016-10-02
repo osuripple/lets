@@ -1,21 +1,20 @@
-import glob
-from constants import exceptions
-from helpers import generalHelper
-from helpers import requestHelper
 import os
-from helpers import logHelper as log
-from helpers.exceptionsTracker import trackExceptions
-from helpers import userHelper
-
-# Exception tracking
-import tornado.web
-import tornado.gen
 import sys
 import traceback
+
+import tornado.gen
+import tornado.web
 from raven.contrib.tornado import SentryMixin
 
+from common.log import logUtils as log
+from common.ripple import userUtils
+from common.web import requestsManager
+from constants import exceptions
+from common import generalUtils
+from objects import glob
+
 MODULE_NAME = "screenshot"
-class handler(SentryMixin, requestHelper.asyncRequestHandler):
+class handler(SentryMixin, requestsManager.asyncRequestHandler):
 	"""
 	Handler for /web/osu-screenshot.php
 	"""
@@ -24,25 +23,25 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 	def asyncPost(self):
 		try:
 			if glob.debug == True:
-				requestHelper.printArguments(self)
+				requestsManager.printArguments(self)
 
 			# Make sure screenshot file was passed
 			if "ss" not in self.request.files:
 				raise exceptions.invalidArgumentsException(MODULE_NAME)
 
 			# Check user auth because of sneaky people
-			if not requestHelper.checkArguments(self.request.arguments, ["u", "p"]):
+			if not requestsManager.checkArguments(self.request.arguments, ["u", "p"]):
 				raise exceptions.invalidArgumentsException(MODULE_NAME)
 			username = self.get_argument("u")
 			password = self.get_argument("p")
-			userID = userHelper.getID(username)
-			if not userHelper.checkLogin(userID, password):
+			userID = userUtils.getID(username)
+			if not userUtils.checkLogin(userID, password):
 				raise exceptions.loginFailedException(MODULE_NAME, username)
 
 			# Get a random screenshot id
 			found = False
 			while found == False:
-				screenshotID = generalHelper.randomString(8)
+				screenshotID = generalUtils.randomString(8)
 				if os.path.isfile(".data/screenshots/{}.jpg".format(screenshotID)) == False:
 					found = True
 

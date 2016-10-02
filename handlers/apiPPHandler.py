@@ -1,24 +1,22 @@
 import json
-from helpers import requestHelper
-from constants import exceptions
-import beatmap
-from helpers import osuapiHelper
-from pp import rippoppai
-#from pp import wifipiano2
-import traceback
 import sys
-from helpers import logHelper as log
-from helpers.exceptionsTracker import trackExceptions
-import glob
-from constants import gameModes
+import traceback
 
-# Exception tracking
-import tornado.web
 import tornado.gen
+import tornado.web
 from raven.contrib.tornado import SentryMixin
 
+import beatmap
+from common.constants import gameModes
+from common.log import logUtils as log
+from common.web import requestsManager
+from constants import exceptions
+from helpers import osuapiHelper
+from objects import glob
+from pp import rippoppai
+
 MODULE_NAME = "api/pp"
-class handler(SentryMixin, requestHelper.asyncRequestHandler):
+class handler(SentryMixin, requestsManager.asyncRequestHandler):
 	"""
 	Handler for /api/v1/pp
 	"""
@@ -29,7 +27,7 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 		data = {"message": "unknown error"}
 		try:
 			# Check arguments
-			if requestHelper.checkArguments(self.request.arguments, ["b"]) == False:
+			if requestsManager.checkArguments(self.request.arguments, ["b"]) == False:
 				raise exceptions.invalidArgumentsException(MODULE_NAME)
 
 			# Get beatmap ID and make sure it's a valid number

@@ -1,19 +1,18 @@
-from constants import exceptions
-from helpers import requestHelper
-from helpers import userHelper
-from helpers import osuapiHelper
-from helpers import logHelper as log
-import glob
-
-# Exception tracking
-import tornado.web
-import tornado.gen
 import sys
 import traceback
+
+import tornado.gen
+import tornado.web
 from raven.contrib.tornado import SentryMixin
 
+from common.log import logUtils as log
+from common.web import requestsManager
+from constants import exceptions
+from helpers import osuapiHelper
+from objects import glob
+
 MODULE_NAME = "direct_np"
-class handler(SentryMixin, requestHelper.asyncRequestHandler):
+class handler(SentryMixin, requestsManager.asyncRequestHandler):
 	"""
 	Handler for /web/osu-search-set.php
 	"""

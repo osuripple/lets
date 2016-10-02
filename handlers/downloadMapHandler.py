@@ -1,16 +1,15 @@
-from helpers import requestHelper
-import requests
-import glob
-
-# Exception tracking
-import tornado.web
-import tornado.gen
 import sys
 import traceback
+
+import tornado.gen
+import tornado.web
 from raven.contrib.tornado import SentryMixin
 
+from common.web import requestsManager
+from objects import glob
+
 MODULE_NAME = "direct_download"
-class handler(SentryMixin, requestHelper.asyncRequestHandler):
+class handler(SentryMixin, requestsManager.asyncRequestHandler):
 	"""
 	Handler for /d/
 	"""

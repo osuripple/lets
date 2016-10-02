@@ -1,19 +1,18 @@
-from helpers import userHelper
-import glob
-from constants import exceptions
-from helpers import requestHelper
-from helpers import logHelper as log
-from helpers.exceptionsTracker import trackExceptions
-
-# Exception tracking
-import tornado.web
-import tornado.gen
 import sys
 import traceback
+
+import tornado.gen
+import tornado.web
 from raven.contrib.tornado import SentryMixin
 
+from common.log import logUtils as log
+from common.ripple import userUtils
+from common.web import requestsManager
+from constants import exceptions
+from objects import glob
+
 MODULE_NAME = "bancho_connect"
-class handler(SentryMixin, requestHelper.asyncRequestHandler):
+class handler(SentryMixin, requestsManager.asyncRequestHandler):
 	"""
 	Handler for /web/bancho_connect.php
 	"""
@@ -25,34 +24,34 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 			ip = self.getRequestIP()
 
 			# Argument check
-			if requestHelper.checkArguments(self.request.arguments, ["u", "h"]) == False:
+			if requestsManager.checkArguments(self.request.arguments, ["u", "h"]) == False:
 				raise exceptions.invalidArgumentsException(MODULE_NAME)
 
 			# Get user ID
 			username = self.get_argument("u")
-			userID = userHelper.getID(username)
+			userID = userUtils.getID(username)
 			if userID == None:
 				raise exceptions.loginFailedException(MODULE_NAME, username)
 
 			# Check login
 			log.info("{} ({}) wants to connect".format(username, userID))
-			if userHelper.checkLogin(userID, self.get_argument("h"), ip) == False:
+			if userUtils.checkLogin(userID, self.get_argument("h"), ip) == False:
 				raise exceptions.loginFailedException(MODULE_NAME, username)
 
 			# Ban check
-			if userHelper.isBanned(userID) == True:
+			if userUtils.isBanned(userID) == True:
 				raise exceptions.userBannedException(MODULE_NAME, username)
 
 			# Lock check
-			if userHelper.isLocked(userID) == True:
+			if userUtils.isLocked(userID) == True:
 				raise exceptions.userLockedException(MODULE_NAME, username)
 
 			# 2FA check
-			if userHelper.check2FA(userID, ip):
+			if userUtils.check2FA(userID, ip):
 				raise exceptions.need2FAException(MODULE_NAME, username, ip)
 
 			# Update latest activity
-			userHelper.updateLatestActivity(userID)
+			userUtils.updateLatestActivity(userID)
 
 			# Get country and output it
 			country = glob.db.fetch("SELECT country FROM users_stats WHERE id = %s", [userID])["country"]

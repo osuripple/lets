@@ -5,13 +5,10 @@ This file has been written taking by reference code from
 osu-performance (https://github.com/ppy/osu-performance)
 by Tom94, licensed under the GNU AGPL 3 License.
 """
-import math
-import beatmap
-import score
-from constants import mods
-from helpers import logHelper as log
+from common.constants import mods
+from common.log import logUtils as log
 from constants import exceptions
-from helpers import consoleHelper
+
 
 class piano:
 	def __init__(self, __beatmap, __score):

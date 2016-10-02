@@ -1,5 +1,5 @@
-from helpers import userHelper
-from helpers import logHelper as log
+from common.log import logUtils as log
+
 
 class personalBestCache:
 	def __init__(self):

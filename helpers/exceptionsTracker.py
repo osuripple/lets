@@ -1,7 +1,9 @@
-from helpers import logHelper as log
-from functools import wraps
-import traceback
 import sys
+import traceback
+from functools import wraps
+
+from common.log import logUtils as log
+
 
 def trackExceptions(moduleName=""):
 	def _trackExceptions(func):

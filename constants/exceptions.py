@@ -1,4 +1,5 @@
-from helpers import logHelper as log
+from common.log import logUtils as log
+
 
 class invalidArgumentsException(Exception):
 	def __init__(self, handler):

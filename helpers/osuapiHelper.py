@@ -1,12 +1,12 @@
-import requests
 import json
-from lets import glob
-from helpers import generalHelper
-import glob
 from urllib.parse import quote
-from helpers import logHelper as log
-import sys
-import traceback
+
+import requests
+
+from common.log import logUtils as log
+from common import generalUtils
+from objects import glob
+
 
 def osuApiRequest(request, params, getFirst=True):
 	"""
@@ -17,7 +17,7 @@ def osuApiRequest(request, params, getFirst=True):
 	return -- dictionary with json response if success, None if failed or empty response.
 	"""
 	# Make sure osuapi is enabled
-	if generalHelper.stringToBool(glob.conf.config["osuapi"]["enable"]) == False:
+	if generalUtils.stringToBool(glob.conf.config["osuapi"]["enable"]) == False:
 		log.warning("osu!api is disabled")
 		return None
 
@@ -36,7 +36,7 @@ def osuApiRequest(request, params, getFirst=True):
 		else:
 			resp = data
 	finally:
-		glob.dog.increment("lets.osu_api.requests")
+		glob.dog.increment(glob.DATADOG_PREFIX+".osu_api.requests")
 		log.debug(str(resp).encode("utf-8"))
 		return resp
 
@@ -49,7 +49,7 @@ def getOsuFileFromName(fileName):
 	return -- .osu file content if success, None if failed
 	"""
 	# Make sure osuapi is enabled
-	if generalHelper.stringToBool(glob.conf.config["osuapi"]["enable"]) == False:
+	if generalUtils.stringToBool(glob.conf.config["osuapi"]["enable"]) == False:
 		print("osuapi is disabled")
 		return None
 
@@ -60,7 +60,7 @@ def getOsuFileFromName(fileName):
 		req.encoding = "utf-8"
 		response = req.text
 	finally:
-		glob.dog.increment("lets.osu_api.osu_file_requests")
+		glob.dog.increment(glob.DATADOG_PREFIX+".osu_api.osu_file_requests")
 		return response
 
 def getOsuFileFromID(beatmapID):
@@ -72,7 +72,7 @@ def getOsuFileFromID(beatmapID):
 	return -- .osu file content if success, None if failed
 	"""
 	# Make sure osuapi is enabled
-	if generalHelper.stringToBool(glob.conf.config["osuapi"]["enable"]) == False:
+	if generalUtils.stringToBool(glob.conf.config["osuapi"]["enable"]) == False:
 		print("osuapi is disabled")
 		return None
 
@@ -81,7 +81,7 @@ def getOsuFileFromID(beatmapID):
 		URL = "{}/osu/{}".format(glob.conf.config["osuapi"]["apiurl"], beatmapID)
 		response = requests.get(URL, timeout=20).text
 	finally:
-		glob.dog.increment("lets.osu_api.osu_file_requests")
+		glob.dog.increment(glob.DATADOG_PREFIX+".osu_api.osu_file_requests")
 		return response
 
 def bloodcatRequest(URL):
@@ -90,7 +90,7 @@ def bloodcatRequest(URL):
 		response = requests.get(URL, timeout=10).text
 		response = json.loads(response)
 	finally:
-		glob.dog.increment("lets.bloodcat.beatmaps_index_requests")
+		glob.dog.increment(glob.DATADOG_PREFIX+".bloodcat.beatmaps_index_requests")
 		return response
 
 def bloodcatToDirect(data, np = False):

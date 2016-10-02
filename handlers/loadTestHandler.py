@@ -1,10 +1,11 @@
-import glob
-
-from helpers import requestHelper
-import tornado.web
 import tornado.gen
+import tornado.web
 
-class handler(requestHelper.asyncRequestHandler):
+from common.web import requestsManager
+from objects import glob
+
+
+class handler(requestsManager.asyncRequestHandler):
 	@tornado.web.asynchronous
 	@tornado.gen.engine
 	def asyncGet(self):

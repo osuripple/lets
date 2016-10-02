@@ -1,15 +1,15 @@
-from lets import glob
-from helpers import userHelper
-from helpers import scoreHelper
-from helpers import generalHelper
-from constants import rankedStatuses
-from constants import gameModes
-import beatmap
-import os
 import time
-from helpers import logHelper as log
-from pp import wifipiano2
+
+import beatmap
+from common.constants import gameModes
+from common.log import logUtils as log
+from common.ripple import userUtils
+from constants import rankedStatuses
+from helpers import scoreHelper
+from objects import glob
 from pp import rippoppai
+from pp import wifipiano2
+
 
 class score:
 	def __init__(self, scoreID = None, rank = None, setData = True):
@@ -123,7 +123,7 @@ class score:
 		if "username" in data:
 			self.playerName = data["username"]
 		else:
-			self.playerName = userHelper.getUsername(data["userid"])
+			self.playerName = userUtils.getUsername(data["userid"])
 		self.playerUserID = data["userid"]
 		self.score = data["score"]
 		self.maxCombo = data["max_combo"]
@@ -200,7 +200,7 @@ class score:
 		self.completed = 0
 		if self.passed == True and scoreHelper.isRankable(self.mods):
 			# Get userID
-			userID = userHelper.getID(self.playerName)
+			userID = userUtils.getID(self.playerName)
 
 			# Make sure we don't have another score identical to this one
 			duplicate = glob.db.fetch("SELECT id FROM scores WHERE userid = %s AND beatmap_md5 = %s AND play_mode = %s AND score = %s LIMIT 1", [userID, self.fileMd5, self.gameMode, self.score])
@@ -238,7 +238,7 @@ class score:
 		# Add this score
 		if self.completed >= 2:
 			query = "INSERT INTO scores (id, beatmap_md5, userid, score, max_combo, full_combo, mods, 300_count, 100_count, 50_count, katus_count, gekis_count, misses_count, time, play_mode, completed, accuracy, pp) VALUES (NULL, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);"
-			self.scoreID = int(glob.db.execute(query, [self.fileMd5, userHelper.getID(self.playerName), self.score, self.maxCombo, 1 if self.fullCombo == True else 0, self.mods, self.c300, self.c100, self.c50, self.cKatu, self.cGeki, self.cMiss, self.playDateTime, self.gameMode, self.completed, self.accuracy*100, self.pp]))
+			self.scoreID = int(glob.db.execute(query, [self.fileMd5, userUtils.getID(self.playerName), self.score, self.maxCombo, 1 if self.fullCombo == True else 0, self.mods, self.c300, self.c100, self.c50, self.cKatu, self.cGeki, self.cMiss, self.playDateTime, self.gameMode, self.completed, self.accuracy * 100, self.pp]))
 
 			# Set old personal best to completed = 2
 			if self.oldPersonalBest != 0:

@@ -1,7 +1,8 @@
 import score
-import glob
-from helpers import userHelper
+from common.ripple import userUtils
 from constants import rankedStatuses
+from objects import glob
+
 
 class scoreboard:
 	def __init__(self, username, gameMode, beatmap, setScores = True, country = False, friends = False, mods = -1):
@@ -17,7 +18,7 @@ class scoreboard:
 		self.totalScores = 0
 		self.personalBestRank = -1		# our personal best rank, -1 if not found yet
 		self.username = username		# username of who's requesting the scoreboard. None if not known
-		self.userID = userHelper.getID(self.username)	# username's userID
+		self.userID = userUtils.getID(self.username)	# username's userID
 		self.gameMode = gameMode		# requested gameMode
 		self.beatmap = beatmap			# beatmap objecy relative to this leaderboard
 		self.country = country

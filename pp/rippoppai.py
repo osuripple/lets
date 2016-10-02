@@ -2,23 +2,16 @@
 oppai interface for ripple 2 / LETS
 """
 
-import subprocess
 import os
-from helpers import scoreHelper
-from helpers import osuapiHelper
-from helpers import discordBotHelper
+import subprocess
+
+from common.constants import bcolors
 from constants import exceptions
 from helpers import consoleHelper
-from constants import bcolors
-from helpers import generalHelper
-import score
-import beatmap
-import math
-import time
-import glob
-import threading
-import traceback
-import sys
+from common import generalUtils
+from helpers import osuapiHelper
+from helpers import scoreHelper
+from objects import glob
 
 # constants
 MODULE_NAME = "rippoppai"
@@ -105,7 +98,7 @@ class oppai:
 					download = True
 				else:
 					# File exists, check md5
-					if generalHelper.fileMd5(mapFile) != self.beatmap.fileMD5:
+					if generalUtils.fileMd5(mapFile) != self.beatmap.fileMD5:
 						# MD5 don't match, redownload .osu file
 						if glob.debug == True:
 							consoleHelper.printColored("[!] Beatmaps md5 don't match".format(mapFile), bcolors.YELLOW)

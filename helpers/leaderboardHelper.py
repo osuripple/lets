@@ -1,9 +1,7 @@
-import glob
+from common.log import logUtils as log
 from helpers import scoreHelper
-from helpers import userHelper
-from helpers import logHelper as log
-import sys
-import traceback
+from objects import glob
+
 
 def getUserRank(userID, gameMode):
 	"""

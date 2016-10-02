@@ -1,20 +1,19 @@
 import os
-from helpers import requestHelper
-from helpers import userHelper
-from constants import exceptions
-import glob
 import sys
 import traceback
-from helpers import logHelper as log
-from helpers.exceptionsTracker import trackExceptions
 
-# Exception tracking
-import tornado.web
 import tornado.gen
+import tornado.web
 from raven.contrib.tornado import SentryMixin
 
+from common.log import logUtils as log
+from common.ripple import userUtils
+from common.web import requestsManager
+from constants import exceptions
+from objects import glob
+
 MODULE_NAME = "get_replay"
-class handler(SentryMixin, requestHelper.asyncRequestHandler):
+class handler(SentryMixin, requestsManager.asyncRequestHandler):
 	"""
 	Handler for osu-getreplay.php
 	"""
@@ -26,7 +25,7 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 			ip = self.getRequestIP()
 
 			# Check arguments
-			if requestHelper.checkArguments(self.request.arguments, ["c", "u", "h"]) == False:
+			if requestsManager.checkArguments(self.request.arguments, ["c", "u", "h"]) == False:
 				raise exceptions.invalidArgumentsException(MODULE_NAME)
 
 			# Get arguments
@@ -35,10 +34,10 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 			replayID = self.get_argument("c")
 
 			# Login check
-			userID = userHelper.getID(username)
+			userID = userUtils.getID(username)
 			if userID == 0:
 				raise exceptions.loginFailedException(MODULE_NAME, userID)
-			if userHelper.checkLogin(userID, password, ip) == False:
+			if userUtils.checkLogin(userID, password, ip) == False:
 				raise exceptions.loginFailedException(MODULE_NAME, username)
 
 			# Get user ID
@@ -47,7 +46,7 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 			# Increment 'replays watched by others' if needed
 			if replayData != None:
 				if username != replayData["uname"]:
-					userHelper.incrementReplaysWatched(replayData["userid"], replayData["play_mode"])
+					userUtils.incrementReplaysWatched(replayData["userid"], replayData["play_mode"])
 
 			# Serve replay
 			log.info("Serving replay_{}.osr".format(replayID))

@@ -1,22 +1,21 @@
-from helpers import config
-from helpers import databaseHelperNew
-from constants import rankedStatuses
-from helpers import userHelper
-import progressbar
-import sys
-import glob
 import argparse
+import math
 import os
-from helpers import consoleHelper
-from helpers import logHelper
-from helpers import generalHelper
-import math
-from constants import bcolors
-import score
-import beatmap
-import math
-import time
 import threading
+import time
+
+import progressbar
+
+import beatmap
+import score
+from common.constants import bcolors
+from common.db import dbConnector
+from common.ripple import userUtils
+from constants import rankedStatuses
+from helpers import config
+from helpers import consoleHelper
+from common import generalUtils
+from objects import glob
 
 # constants
 MAX_WORKERS = 32
@@ -209,13 +208,14 @@ if __name__ == "__main__":
 	# Load config
 	consoleHelper.printNoNl("> Reading config file... ")
 	glob.conf = config.config("config.ini")
-	glob.debug = generalHelper.stringToBool(glob.conf.config["server"]["debug"])
+	glob.debug = generalUtils.stringToBool(glob.conf.config["server"]["debug"])
 	consoleHelper.printDone()
 
 	# Connect to MySQL
 	try:
 		consoleHelper.printNoNl("> Connecting to MySQL db")
-		glob.db = databaseHelperNew.db(glob.conf.config["db"]["host"], glob.conf.config["db"]["username"], glob.conf.config["db"]["password"], glob.conf.config["db"]["database"], int(glob.conf.config["db"]["workers"]))
+		glob.db = dbConnector.db(glob.conf.config["db"]["host"], glob.conf.config["db"]["username"], glob.conf.config["db"]["password"], glob.conf.config["db"]["database"], int(
+			glob.conf.config["db"]["workers"]))
 		consoleHelper.printNoNl(" ")
 		consoleHelper.printDone()
 	except:
@@ -270,7 +270,7 @@ if __name__ == "__main__":
 	elif args.username != None:
 		# Username recalc
 		print("> Recalculating pp for user {}".format(args.username))
-		uid = userHelper.getID(args.username)
+		uid = userUtils.getID(args.username)
 		if uid != 0:
 			scores = glob.db.fetchAll("SELECT * FROM scores LEFT JOIN beatmaps ON scores.beatmap_md5 = beatmaps.beatmap_md5 WHERE (scores.play_mode = 0 OR scores.play_mode = 3) AND scores.completed = 3 AND scores.userid = %s;", [uid])
 			massRecalc(scores, workers)

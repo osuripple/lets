@@ -1,4 +1,5 @@
-from constants import mods
+from common.constants import mods
+
 
 def isRankable(m):
 	"""

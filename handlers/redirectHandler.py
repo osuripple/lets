@@ -1,6 +1,7 @@
-from helpers import requestHelper
+from common.web import requestsManager
 
-class handler(requestHelper.asyncRequestHandler):
+
+class handler(requestsManager.asyncRequestHandler):
 	def initialize(self, destination):
 		self.destination = destination
 

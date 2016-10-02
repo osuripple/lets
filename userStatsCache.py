@@ -1,5 +1,6 @@
-from helpers import userHelper
-from helpers import logHelper as log
+from common.log import logUtils as log
+from common.ripple import userUtils
+
 
 class userStatsCache:
 	def __init__(self):
@@ -16,7 +17,7 @@ class userStatsCache:
 		"""
 		if userID not in self.cache[gameMode]:
 			log.debug("userStatsCache miss")
-			self.cache[gameMode][userID] = userHelper.getUserStats(userID, gameMode)
+			self.cache[gameMode][userID] = userUtils.getUserStats(userID, gameMode)
 		log.debug("userStatsCache hit")
 		return self.cache[gameMode][userID]
 
@@ -29,6 +30,6 @@ class userStatsCache:
 		data -- updated stats dictionary. Optional. If not passed, will get from db
 		"""
 		if len(data) == 0:
-			data = userHelper.getUserStats(userID, gameMode)
+			data = userUtils.getUserStats(userID, gameMode)
 		log.debug("userStatsCache set {}".format(data))
 		self.cache[gameMode][userID] = data

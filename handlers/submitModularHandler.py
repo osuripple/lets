@@ -1,30 +1,29 @@
-from helpers import aeshelper
-from helpers import userHelper
-import score
+import collections
 import os
-import glob
-from constants import gameModes
-from constants import exceptions
-from constants import rankedStatuses
-from helpers import requestHelper
-from helpers import leaderboardHelper
 import sys
 import traceback
-from helpers import logHelper as log
-import beatmap
-import scoreboard
-import collections
+from urllib.parse import urlencode
 
-# Exception tracking
-import tornado.web
+import requests
 import tornado.gen
+import tornado.web
 from raven.contrib.tornado import SentryMixin
 
-from urllib.parse import urlencode
-import requests
+import beatmap
+import score
+import scoreboard
+from common.constants import gameModes
+from common.log import logUtils as log
+from common.ripple import userUtils
+from common.web import requestsManager
+from constants import exceptions
+from constants import rankedStatuses
+from helpers import aeshelper
+from helpers import leaderboardHelper
+from objects import glob
 
 MODULE_NAME = "submit_modular"
-class handler(SentryMixin, requestHelper.asyncRequestHandler):
+class handler(SentryMixin, requestsManager.asyncRequestHandler):
 	"""
 	Handler for /web/osu-submit-modular.php
 	"""
@@ -40,10 +39,10 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 
 			# Print arguments
 			if glob.debug == True:
-				requestHelper.printArguments(self)
+				requestsManager.printArguments(self)
 
 			# Check arguments
-			if requestHelper.checkArguments(self.request.arguments, ["score", "iv", "pass"]) == False:
+			if requestsManager.checkArguments(self.request.arguments, ["score", "iv", "pass"]) == False:
 				raise exceptions.invalidArgumentsException(MODULE_NAME)
 
 			# TODO: Maintenance check
@@ -74,26 +73,26 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 			username = scoreData[1].strip()
 
 			# Login and ban check
-			userID = userHelper.getID(username)
+			userID = userUtils.getID(username)
 			# User exists check
 			if userID == 0:
 				raise exceptions.loginFailedException(MODULE_NAME, userID)
 			# Bancho session/username-pass combo check
-			if userHelper.checkLogin(userID, password, ip) == False:
+			if userUtils.checkLogin(userID, password, ip) == False:
 				raise exceptions.loginFailedException(MODULE_NAME, username)
 			# Generic bancho session check
-			if userHelper.checkBanchoSession(userID) == False:
+			if userUtils.checkBanchoSession(userID) == False:
 				# TODO: Ban (see except exceptions.noBanchoSessionException block)
 				raise exceptions.noBanchoSessionException(MODULE_NAME, username, ip)
 			# Ban check
-			if userHelper.isBanned(userID) == True:
+			if userUtils.isBanned(userID) == True:
 				raise exceptions.userBannedException(MODULE_NAME, username)
 			# Data length check
 			if len(scoreData) < 16:
 				raise exceptions.invalidArgumentsException(MODULE_NAME)
 
 			# Get restricted
-			restricted = userHelper.isRestricted(userID)
+			restricted = userUtils.isRestricted(userID)
 
 			# Create score object and set its data
 			log.info("{} has submitted a score on {}...".format(username, scoreData[0]))
@@ -116,8 +115,8 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 
 			# Restrict obvious cheaters
 			if (s.pp >= 700 and s.gameMode == gameModes.STD) and restricted == False:
-				userHelper.restrict(userID)
-				userHelper.appendNotes(userID, "-- Restricted due to too high pp gain ({}pp)".format(s.pp))
+				userUtils.restrict(userID)
+				userUtils.appendNotes(userID, "-- Restricted due to too high pp gain ({}pp)".format(s.pp))
 				log.warning("**{}** ({}) has been restricted due to too high pp gain **({}pp)**".format(username, userID, s.pp), "cm")
 
 			# Check notepad hack
@@ -127,8 +126,8 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 				pass
 			elif bmk != bml and restricted == False:
 				# bmk and bml passed and they are different, restrict the user
-				userHelper.restrict(userID)
-				userHelper.appendNotes(userID, "-- Restricted due to notepad hack")
+				userUtils.restrict(userID)
+				userUtils.appendNotes(userID, "-- Restricted due to notepad hack")
 				log.warning("**{}** ({}) has been restricted due to notepad hack".format(username, userID), "cm")
 				return
 
@@ -148,8 +147,8 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 
 			# Make sure process list has been passed
 			if s.completed == 3 and "pl" not in self.request.arguments and restricted == False:
-				userHelper.restrict(userID)
-				userHelper.appendNotes(userID, "-- Restricted due to missing process list while submitting a score (most likely he used a score submitter)")
+				userUtils.restrict(userID)
+				userUtils.appendNotes(userID, "-- Restricted due to missing process list while submitting a score (most likely he used a score submitter)")
 				log.warning("**{}** ({}) has been restricted due to missing process list".format(username, userID), "cm")
 
 			# Save replay
@@ -157,8 +156,8 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 				if "score" not in self.request.files:
 					if restricted == False:
 						# Ban if no replay passed
-						userHelper.restrict(userID)
-						userHelper.appendNotes(userID, "-- Restricted due to missing replay while submitting a score (most likely he used a score submitter)")
+						userUtils.restrict(userID)
+						userUtils.appendNotes(userID, "-- Restricted due to missing replay while submitting a score (most likely he used a score submitter)")
 						log.warning("**{}** ({}) has been restricted due to replay not found on map {}".format(username, userID, s.fileMd5), "cm")
 				else:
 					# Otherwise, save the replay
@@ -191,14 +190,14 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 			# Always update users stats (total/ranked score, playcount, level, acc and pp)
 			# even if not passed
 			log.debug("Updating {}'s stats...".format(username))
-			userHelper.updateStats(userID, s)
+			userUtils.updateStats(userID, s)
 
 			# Get "after" stats for ranking panel
 			# and to determine if we should update the leaderboard
 			# (only if we passed that song)
 			if s.passed == True:
 				# Get new stats
-				newUserData = userHelper.getUserStats(userID, s.gameMode)
+				newUserData = userUtils.getUserStats(userID, s.gameMode)
 				glob.userStatsCache.update(userID, s.gameMode, newUserData)
 
 				# Use pp/score as "total" based on game mode
@@ -213,10 +212,10 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 
 			# TODO: Update total hits and max combo
 			# Update latest activity
-			userHelper.updateLatestActivity(userID)
+			userUtils.updateLatestActivity(userID)
 
 			# IP log
-			userHelper.IPLog(userID, ip)
+			userUtils.IPLog(userID, ip)
 
 			# Score submission and stats update done
 			log.debug("Score submission and user stats update done!")
@@ -307,7 +306,7 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 				self.write("ok")
 
 			# Datadog stats
-			glob.dog.increment("lets.submitted_scores")
+			glob.dog.increment(glob.DATADOG_PREFIX+".submitted_scores")
 		except exceptions.invalidArgumentsException:
 			pass
 		except exceptions.loginFailedException:

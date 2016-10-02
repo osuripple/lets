@@ -1,23 +1,21 @@
 import os
-from helpers import requestHelper
-from constants import exceptions
-import glob
-
-from helpers import binaryHelper
-from constants import dataTypes
-from helpers import generalHelper
-from helpers.exceptionsTracker import trackExceptions
-from helpers import logHelper as log
-
-# Exception tracking
-import tornado.web
-import tornado.gen
 import sys
 import traceback
+
+import tornado.gen
+import tornado.web
 from raven.contrib.tornado import SentryMixin
 
+from common.log import logUtils as log
+from common.web import requestsManager
+from constants import dataTypes
+from constants import exceptions
+from helpers import binaryHelper
+from common import generalUtils
+from objects import glob
+
 MODULE_NAME = "get_full_replay"
-class handler(SentryMixin, requestHelper.asyncRequestHandler):
+class handler(SentryMixin, requestsManager.asyncRequestHandler):
 	"""
 	Handler for /replay/
 	"""
@@ -40,8 +38,8 @@ class handler(SentryMixin, requestHelper.asyncRequestHandler):
 				rawReplay = f.read()
 
 			# Calculate missing replay data
-			rank = generalHelper.getRank(int(scoreData["play_mode"]), int(scoreData["mods"]), int(scoreData["accuracy"]), int(scoreData["300_count"]), int(scoreData["100_count"]), int(scoreData["50_count"]), int(scoreData["misses_count"]))
-			magicHash = generalHelper.stringMd5("{}p{}o{}o{}t{}a{}r{}e{}y{}o{}u{}{}{}".format(int(scoreData["100_count"]) + int(scoreData["300_count"]), scoreData["50_count"], scoreData["gekis_count"], scoreData["katus_count"], scoreData["misses_count"], scoreData["beatmap_md5"], scoreData["max_combo"], "True" if int(scoreData["full_combo"]) == 1 else "False", scoreData["username"], scoreData["score"], rank, scoreData["mods"], "True"))
+			rank = generalUtils.getRank(int(scoreData["play_mode"]), int(scoreData["mods"]), int(scoreData["accuracy"]), int(scoreData["300_count"]), int(scoreData["100_count"]), int(scoreData["50_count"]), int(scoreData["misses_count"]))
+			magicHash = generalUtils.stringMd5("{}p{}o{}o{}t{}a{}r{}e{}y{}o{}u{}{}{}".format(int(scoreData["100_count"]) + int(scoreData["300_count"]), scoreData["50_count"], scoreData["gekis_count"], scoreData["katus_count"], scoreData["misses_count"], scoreData["beatmap_md5"], scoreData["max_combo"], "True" if int(scoreData["full_combo"]) == 1 else "False", scoreData["username"], scoreData["score"], rank, scoreData["mods"], "True"))
 			# Add headers (convert to full replay)
 			fullReplay =  binaryHelper.binaryWrite([
 				[scoreData["play_mode"], dataTypes.byte],

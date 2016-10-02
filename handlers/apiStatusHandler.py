@@ -1,7 +1,9 @@
 import json
-from helpers import requestHelper
 
-class handler(requestHelper.asyncRequestHandler):
+from common.web import requestsManager
+
+
+class handler(requestsManager.asyncRequestHandler):
 	"""
 	Handler for /api/v1/status
 	"""
