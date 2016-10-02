@@ -16,10 +16,15 @@ This server handles every non real time client feature, so:
 - Bcrypt
 - Progressbar2 (only for `tomejerry.py`  )
 - Raven
+- Datadog
 - oppai
 
 ## How to set up LETS
-First of all, install all the dependencies
+First of all, initialize and update the submodules
+```
+$ git submodule init && git submodule update
+```
+afterwards, install the required dependencies with pip
 ```
 $ pip install -r requirements.txt
 ```

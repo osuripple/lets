@@ -3,3 +3,4 @@ mysqlclient
 bcrypt
 progressbar2
 raven
+datadog
