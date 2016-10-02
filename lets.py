@@ -86,7 +86,7 @@ if __name__ == "__main__":
 		consoleHelper.printNoNl("> Reading config file... ")
 		glob.conf = config.config("config.ini")
 
-		if glob.conf.default == True:
+		if glob.conf.default:
 			# We have generated a default config.ini, quit server
 			consoleHelper.printWarning()
 			consoleHelper.printColored("[!] config.ini not found. A default one has been generated.", bcolors.YELLOW)
@@ -94,7 +94,7 @@ if __name__ == "__main__":
 			sys.exit()
 
 		# If we haven't generated a default config.ini, check if it's valid
-		if glob.conf.checkConfig() == False:
+		if not glob.conf.checkConfig():
 			consoleHelper.printError()
 			consoleHelper.printColored("[!] Invalid config.ini. Please configure it properly", bcolors.RED)
 			consoleHelper.printColored("[!] Delete your config.ini to generate a default one", bcolors.RED)
@@ -144,7 +144,7 @@ if __name__ == "__main__":
 			consoleHelper.printColored("[!] Error while creating threads pool. Please check your config.ini and run the server again", bcolors.RED)
 
 		# Check osuapi
-		if generalUtils.stringToBool(glob.conf.config["osuapi"]["enable"]) == False:
+		if not generalUtils.stringToBool(glob.conf.config["osuapi"]["enable"]):
 			consoleHelper.printColored("[!] osu!api features are disabled. If you don't have a valid beatmaps table, all beatmaps will show as unranked", bcolors.YELLOW)
 			if int(glob.conf.config["server"]["beatmapcacheexpire"]) > 0:
 				consoleHelper.printColored("[!] IMPORTANT! Your beatmapcacheexpire in config.ini is > 0 and osu!api features are disabled.\nWe do not reccoment this, because too old beatmaps will be shown as unranked.\nSet beatmapcacheexpire to 0 to disable beatmap latest update check and fix that issue.", bcolors.YELLOW)
@@ -157,7 +157,7 @@ if __name__ == "__main__":
 
 		# Check debug mods
 		glob.debug = generalUtils.stringToBool(glob.conf.config["server"]["debug"])
-		if glob.debug == True:
+		if glob.debug:
 			consoleHelper.printColored("[!] Warning! Server running in debug mode!", bcolors.YELLOW)
 
 		# Server port
@@ -172,7 +172,7 @@ if __name__ == "__main__":
 		# Set up sentry
 		try:
 			glob.sentry = generalUtils.stringToBool(glob.conf.config["sentry"]["enable"])
-			if glob.sentry == True:
+			if glob.sentry:
 				glob.application.sentry_client = AsyncSentryClient(glob.conf.config["sentry"]["dns"], release=glob.VERSION)
 			else:
 				consoleHelper.printColored("[!] Warning! Sentry logging is disabled!", bcolors.YELLOW)

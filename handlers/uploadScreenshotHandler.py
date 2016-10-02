@@ -22,7 +22,7 @@ class handler(SentryMixin, requestsManager.asyncRequestHandler):
 	@tornado.gen.engine
 	def asyncPost(self):
 		try:
-			if glob.debug == True:
+			if glob.debug:
 				requestsManager.printArguments(self)
 
 			# Make sure screenshot file was passed
@@ -40,9 +40,9 @@ class handler(SentryMixin, requestsManager.asyncRequestHandler):
 
 			# Get a random screenshot id
 			found = False
-			while found == False:
+			while not found:
 				screenshotID = generalUtils.randomString(8)
-				if os.path.isfile(".data/screenshots/{}.jpg".format(screenshotID)) == False:
+				if not os.path.isfile(".data/screenshots/{}.jpg".format(screenshotID)):
 					found = True
 
 			# Write screenshot file to .data folder

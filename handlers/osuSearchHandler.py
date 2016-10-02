@@ -107,7 +107,7 @@ class handler(SentryMixin, requestsManager.asyncRequestHandler):
 			bcQ = bcQ.replace(" ", "+")
 
 			# Build the URL with popular.php or normal bloodcat API
-			if bcPopular == True:
+			if bcPopular:
 				bcURL = "http://bloodcat.com/osu/popular.php?mod=json&m={}&p={}".format(bcM, bcP)
 			else:
 				bcURL = "http://bloodcat.com/osu/?mod=json&m={}&s={}&q={}&p={}".format(bcM, bcS, bcQ, bcP)
@@ -116,7 +116,7 @@ class handler(SentryMixin, requestsManager.asyncRequestHandler):
 			bcData = osuapiHelper.bloodcatRequest(bcURL)
 
 			# Make sure we got some data from bloodcat
-			if bcData == None:
+			if bcData is None:
 				self.write("")	# this should work, why shouldn't it?
 				return
 

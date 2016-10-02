@@ -25,7 +25,7 @@ class handler(SentryMixin, requestsManager.asyncRequestHandler):
 		try:
 			# Make sure the score exists
 			scoreData = glob.db.fetch("SELECT scores.*, users.username FROM scores LEFT JOIN users ON scores.userid = users.id WHERE scores.id = %s", [replayID])
-			if scoreData == None:
+			if scoreData is None:
 				raise exceptions.fileNotFoundException(MODULE_NAME, replayID)
 
 			# Make sure raw replay exists

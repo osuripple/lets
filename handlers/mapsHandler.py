@@ -18,7 +18,7 @@ class handler(SentryMixin, requestsManager.asyncRequestHandler):
 	def asyncGet(self, fileName = None):
 		try:
 			# Check arguments
-			if fileName == None:
+			if fileName is None:
 				raise exceptions.invalidArgumentsException(MODULE_NAME)
 			if fileName == "":
 				raise exceptions.invalidArgumentsException(MODULE_NAME)
@@ -28,7 +28,7 @@ class handler(SentryMixin, requestsManager.asyncRequestHandler):
 
 			# Get .osu file from osu! server
 			fileContent = osuapiHelper.getOsuFileFromName(fileName)
-			if fileContent == None:
+			if fileContent is None:
 				# TODO: Sentry capture message here
 				raise exceptions.osuApiFailException(MODULE_NAME)
 			self.write(fileContent)

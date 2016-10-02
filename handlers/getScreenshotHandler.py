@@ -21,7 +21,7 @@ class handler(SentryMixin, requestsManager.asyncRequestHandler):
 	def asyncGet(self, screenshotID = None):
 		try:
 			# Make sure the screenshot exists
-			if screenshotID == None or os.path.isfile(".data/screenshots/{}".format(screenshotID)) == False:
+			if screenshotID is None or os.path.isfile(".data/screenshots/{}".format(screenshotID)) == False:
 				raise exceptions.fileNotFoundException(MODULE_NAME, screenshotID)
 
 			# Read screenshot

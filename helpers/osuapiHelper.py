@@ -17,7 +17,7 @@ def osuApiRequest(request, params, getFirst=True):
 	return -- dictionary with json response if success, None if failed or empty response.
 	"""
 	# Make sure osuapi is enabled
-	if generalUtils.stringToBool(glob.conf.config["osuapi"]["enable"]) == False:
+	if not generalUtils.stringToBool(glob.conf.config["osuapi"]["enable"]):
 		log.warning("osu!api is disabled")
 		return None
 
@@ -49,7 +49,7 @@ def getOsuFileFromName(fileName):
 	return -- .osu file content if success, None if failed
 	"""
 	# Make sure osuapi is enabled
-	if generalUtils.stringToBool(glob.conf.config["osuapi"]["enable"]) == False:
+	if not generalUtils.stringToBool(glob.conf.config["osuapi"]["enable"]):
 		print("osuapi is disabled")
 		return None
 
@@ -72,7 +72,7 @@ def getOsuFileFromID(beatmapID):
 	return -- .osu file content if success, None if failed
 	"""
 	# Make sure osuapi is enabled
-	if generalUtils.stringToBool(glob.conf.config["osuapi"]["enable"]) == False:
+	if not generalUtils.stringToBool(glob.conf.config["osuapi"]["enable"]):
 		print("osuapi is disabled")
 		return None
 
@@ -95,7 +95,7 @@ def bloodcatRequest(URL):
 
 def bloodcatToDirect(data, np = False):
 	s = ""
-	if np == True:
+	if np:
 		s = "{id}.osz|{artist}|{title}|{creator}|{status}|10.00|{synced}|{id}|{id}|0|0|0|".format(**data)
 	else:
 		s = "{id}.osz|{artist}|{title}|{creator}|{status}|10.00|{synced}|{id}|".format(**data)

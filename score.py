@@ -3,7 +3,7 @@ import time
 import beatmap
 from common.constants import gameModes
 from common.log import logUtils as log
-from common.ripple import userUtils, scoreUtils
+from common.ripple import userUtils
 from constants import rankedStatuses
 from common.ripple import scoreUtils
 from objects import glob
@@ -50,7 +50,7 @@ class score:
 		self.oldPersonalBest = 0
 		self.rankedScoreIncrease = 0
 
-		if scoreID != None and setData == True:
+		if scoreID is not None and setData == True:
 			self.setDataFromDB(scoreID, rank)
 
 	def calculateAccuracy(self):
@@ -107,7 +107,7 @@ class score:
 		rank -- rank in scoreboard. Optional.
 		"""
 		data = glob.db.fetch("SELECT scores.*, users.username FROM scores LEFT JOIN users ON users.id = scores.userid WHERE scores.id = %s LIMIT 1", [scoreID])
-		if data != None:
+		if data is not None:
 			self.setDataFromDict(data, rank)
 
 	def setDataFromDict(self, data, rank = None):
@@ -136,7 +136,7 @@ class score:
 		self.cGeki = data["gekis_count"]
 		self.fullCombo = True if data["full_combo"] == 1 else False
 		self.mods = data["mods"]
-		self.rank = rank if rank != None else ""
+		self.rank = rank if rank is not None else ""
 		self.date = data["time"]
 		self.fileMd5 = data["beatmap_md5"]
 		self.completed = data["completed"]
@@ -204,7 +204,7 @@ class score:
 
 			# Make sure we don't have another score identical to this one
 			duplicate = glob.db.fetch("SELECT id FROM scores WHERE userid = %s AND beatmap_md5 = %s AND play_mode = %s AND score = %s LIMIT 1", [userID, self.fileMd5, self.gameMode, self.score])
-			if duplicate != None:
+			if duplicate is not None:
 				# Found same score in db. Don't save this score.
 				self.completed = -1
 				return
@@ -212,7 +212,7 @@ class score:
 			# No duplicates found.
 			# Get right "completed" value
 			personalBest = glob.db.fetch("SELECT id, score FROM scores WHERE userid = %s AND beatmap_md5 = %s AND play_mode = %s AND completed = 3 LIMIT 1", [userID, self.fileMd5, self.gameMode])
-			if personalBest == None:
+			if personalBest is None:
 				# This is our first score on this map, so it's our best score
 				self.completed = 3
 				self.rankedScoreIncrease = self.score
@@ -250,7 +250,7 @@ class score:
 		"""
 		if self.completed == 3:
 			# Create beatmap object
-			if b == None:
+			if b is None:
 				b = beatmap.beatmap(self.fileMd5, 0)
 
 			# Create an instance of the magic pp calculator and calculate pp

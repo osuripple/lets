@@ -21,12 +21,11 @@ class handler(SentryMixin, requestsManager.asyncRequestHandler):
 	@tornado.web.asynchronous
 	@tornado.gen.engine
 	def asyncPost(self):
-		log.warning("I BEI MEMINI DEI GRANDI CAZZI!!!")
 		statusCode = 400
 		data = {"message": "unknown error"}
 		try:
 			# Check arguments
-			if requestsManager.checkArguments(self.request.arguments, ["sid", "refresh"]) == False:
+			if not requestsManager.checkArguments(self.request.arguments, ["sid", "refresh"]):
 				raise exceptions.invalidArgumentsException(MODULE_NAME)
 
 			# Get beatmap set data from osu api

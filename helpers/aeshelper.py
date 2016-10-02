@@ -136,7 +136,7 @@ def mul4(a, bs):
 	for b in bs:
 		r <<= 8
 		if b != 0:
-			r = r | mul(a, b)
+			r |= mul(a, b)
 	return r
 
 T1 = []
@@ -363,7 +363,7 @@ def decrypt(key, block):
 
 class zeropad:
 	def __init__(self, block_size):
-		assert block_size > 0 and block_size < 256
+		assert 0 < block_size < 256
 		self.block_size = block_size
 
 	def pad(self, pt):
@@ -377,7 +377,7 @@ class zeropad:
 		if offset == 0:
 			return ''
 		end = offset - self.block_size + 1
-		while (offset > end):
+		while offset > end:
 			offset -= 1
 			if ppt[offset] != "\0":
 				return ppt[:offset + 1]
@@ -396,7 +396,7 @@ class cbc:
 		offset = 0
 		ct = ''
 		v = self.iv
-		while (offset < len(ppt)):
+		while offset < len(ppt):
 			block = ppt[offset:offset + self.cipher.block_size]
 			block = self.xorblock(block, v)
 			block = self.cipher.encrypt(block)
@@ -410,7 +410,7 @@ class cbc:
 		ppt = ''
 		offset = 0
 		v = self.iv
-		while (offset < len(ct)):
+		while offset < len(ct):
 			block = ct[offset:offset + self.cipher.block_size]
 			decrypted = self.cipher.decrypt(block)
 			ppt += self.xorblock(decrypted, v)
@@ -423,7 +423,7 @@ class cbc:
 		# sorry, not very Pythonesk
 		i = 0
 		r = ''
-		while (i < self.cipher.block_size):
+		while i < self.cipher.block_size:
 			r += chr(ord(b1[i]) ^ ord(b2[i]))
 			i += 1
 		return r
@@ -439,7 +439,7 @@ def decryptRinjdael(key, iv, data, areBase64 = False):
 	data -- data to decrypt (string)
 	areBase64 -- if True, iv and data are passed in base64
 	"""
-	if areBase64 == True:
+	if areBase64:
 		iv = base64.b64decode(iv).decode("latin_1")
 		data = base64.b64decode(data).decode("latin_1")
 

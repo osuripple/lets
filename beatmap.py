@@ -40,7 +40,7 @@ class beatmap:
 		# Force refresh from osu api
 		self.refresh = refresh
 
-		if md5 != None and beatmapSetID != None:
+		if md5 is not None and beatmapSetID is not None:
 			self.setData(md5, beatmapSetID)
 
 	def addBeatmapToDB(self):
@@ -49,7 +49,7 @@ class beatmap:
 		"""
 		# Make sure the beatmap is not already in db
 		bdata = glob.db.fetch("SELECT id, ranked_status_freezed, ranked FROM beatmaps WHERE beatmap_md5 = %s OR beatmap_id = %s LIMIT 1", [self.fileMD5, self.beatmapID])
-		if bdata != None:
+		if bdata is not None:
 			# This beatmap is already in db, remove old record
 			# Get current frozen status
 			frozen = bdata["ranked_status_freezed"]
@@ -93,7 +93,7 @@ class beatmap:
 		data = glob.db.fetch("SELECT * FROM beatmaps WHERE beatmap_md5 = %s LIMIT 1", [md5])
 
 		# Make sure the query returned something
-		if data == None:
+		if data is None:
 			return False
 
 		# Make sure the beatmap is not an old one
@@ -159,36 +159,36 @@ class beatmap:
 		dataTaiko = osuapiHelper.osuApiRequest("get_beatmaps", "h={}&a=1&m=1".format(md5))
 		dataCtb = osuapiHelper.osuApiRequest("get_beatmaps", "h={}&a=1&m=2".format(md5))
 		dataMania = osuapiHelper.osuApiRequest("get_beatmaps", "h={}&a=1&m=3".format(md5))
-		if dataStd != None:
+		if dataStd is not None:
 			mainData = dataStd
-		elif dataTaiko != None:
+		elif dataTaiko is not None:
 			mainData = dataTaiko
-		elif dataCtb != None:
+		elif dataCtb is not None:
 			mainData = dataCtb
-		elif dataMania != None:
+		elif dataMania is not None:
 			mainData = dataMania
 
 		# If the beatmap is frozen and still valid from osu!api, return True so we don't overwrite anything
-		if mainData != None and self.rankedStatusFrozen == 1:
+		if mainData is not None and self.rankedStatusFrozen == 1:
 			return True
 
 		# Can't fint beatmap by MD5. The beatmap has been updated. Check with beatmap set ID
-		if mainData == None:
+		if mainData is None:
 			log.debug("osu!api data is None")
 			dataStd = osuapiHelper.osuApiRequest("get_beatmaps", "s={}&a=1&m=0".format(beatmapSetID))
 			dataTaiko = osuapiHelper.osuApiRequest("get_beatmaps", "s={}&a=1&m=1".format(beatmapSetID))
 			dataCtb = osuapiHelper.osuApiRequest("get_beatmaps", "s={}&a=1&m=2".format(beatmapSetID))
 			dataMania = osuapiHelper.osuApiRequest("get_beatmaps", "s={}&a=1&m=3".format(beatmapSetID))
-			if dataStd != None:
+			if dataStd is not None:
 				mainData = dataStd
-			elif dataTaiko != None:
+			elif dataTaiko is not None:
 				mainData = dataTaiko
-			elif dataCtb != None:
+			elif dataCtb is not None:
 				mainData = dataCtb
-			elif dataMania != None:
+			elif dataMania is not None:
 				mainData = dataMania
 
-			if mainData == None:
+			if mainData is None:
 				# Still no data, beatmap is not submitted
 				return False
 			else:
@@ -213,18 +213,18 @@ class beatmap:
 		self.starsTaiko = 0
 		self.starsCtb = 0
 		self.starsMania = 0
-		if dataStd != None:
+		if dataStd is not None:
 			self.starsStd = dataStd["difficultyrating"]
-		if dataTaiko != None:
+		if dataTaiko is not None:
 			self.starsTaiko = dataTaiko["difficultyrating"]
-		if dataCtb != None:
+		if dataCtb is not None:
 			self.starsCtb = dataCtb["difficultyrating"]
-		if dataMania != None:
+		if dataMania is not None:
 			self.starsMania = dataMania["difficultyrating"]
 
 		self.maxCombo = int(mainData["max_combo"]) if mainData["max_combo"] is not None else 0
 		self.hitLength = int(mainData["hit_length"])
-		if mainData["bpm"] != None:
+		if mainData["bpm"] is not None:
 			self.bpm = int(float(mainData["bpm"]))
 		else:
 			self.bpm = -1
@@ -246,11 +246,11 @@ class beatmap:
 		if dbResult == True and self.refresh:
 			dbResult = False
 
-		if dbResult == False:
+		if not dbResult:
 			log.debug("Beatmap not found in db")
 			# If this beatmap is not in db, get it from osu!api
 			apiResult = self.setDataFromOsuApi(md5, beatmapSetID)
-			if apiResult == False:
+			if not apiResult:
 				# If it's not even in osu!api, this beatmap is not submitted
 				self.rankedStatus = rankedStatuses.NOT_SUBMITTED
 			elif self.rankedStatus != rankedStatuses.NOT_SUBMITTED and self.rankedStatus != rankedStatuses.NEED_UPDATE:
@@ -283,7 +283,7 @@ class beatmap:
 		return -- list with pp values. [0,0,0,0] if not cached.
 		"""
 		data = glob.db.fetch("SELECT pp_100, pp_99, pp_98, pp_95 FROM beatmaps WHERE beatmap_md5 = %s LIMIT 1", [self.fileMD5])
-		if data == None:
+		if data is None:
 			return [0,0,0,0]
 		return [data["pp_100"], data["pp_99"], data["pp_98"], data["pp_95"]]
 
@@ -323,5 +323,5 @@ def incrementPlaycount(md5, passed):
 	passed -- if True, increment passcount too
 	"""
 	glob.db.execute("UPDATE beatmaps SET playcount = playcount+1 WHERE beatmap_md5 = %s LIMIT 1", [md5])
-	if passed == True:
+	if passed:
 		glob.db.execute("UPDATE beatmaps SET passcount = passcount+1 WHERE beatmap_md5 = %s LIMIT 1", [md5])

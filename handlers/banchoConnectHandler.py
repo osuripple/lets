@@ -24,26 +24,26 @@ class handler(SentryMixin, requestsManager.asyncRequestHandler):
 			ip = self.getRequestIP()
 
 			# Argument check
-			if requestsManager.checkArguments(self.request.arguments, ["u", "h"]) == False:
+			if not requestsManager.checkArguments(self.request.arguments, ["u", "h"]):
 				raise exceptions.invalidArgumentsException(MODULE_NAME)
 
 			# Get user ID
 			username = self.get_argument("u")
 			userID = userUtils.getID(username)
-			if userID == None:
+			if userID is None:
 				raise exceptions.loginFailedException(MODULE_NAME, username)
 
 			# Check login
 			log.info("{} ({}) wants to connect".format(username, userID))
-			if userUtils.checkLogin(userID, self.get_argument("h"), ip) == False:
+			if not userUtils.checkLogin(userID, self.get_argument("h"), ip):
 				raise exceptions.loginFailedException(MODULE_NAME, username)
 
 			# Ban check
-			if userUtils.isBanned(userID) == True:
+			if userUtils.isBanned(userID):
 				raise exceptions.userBannedException(MODULE_NAME, username)
 
 			# Lock check
-			if userUtils.isLocked(userID) == True:
+			if userUtils.isLocked(userID):
 				raise exceptions.userLockedException(MODULE_NAME, username)
 
 			# 2FA check

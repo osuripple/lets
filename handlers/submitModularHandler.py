@@ -38,11 +38,11 @@ class handler(SentryMixin, requestsManager.asyncRequestHandler):
 			ip = self.getRequestIP()
 
 			# Print arguments
-			if glob.debug == True:
+			if glob.debug:
 				requestsManager.printArguments(self)
 
 			# Check arguments
-			if requestsManager.checkArguments(self.request.arguments, ["score", "iv", "pass"]) == False:
+			if not requestsManager.checkArguments(self.request.arguments, ["score", "iv", "pass"]):
 				raise exceptions.invalidArgumentsException(MODULE_NAME)
 
 			# TODO: Maintenance check
@@ -78,14 +78,14 @@ class handler(SentryMixin, requestsManager.asyncRequestHandler):
 			if userID == 0:
 				raise exceptions.loginFailedException(MODULE_NAME, userID)
 			# Bancho session/username-pass combo check
-			if userUtils.checkLogin(userID, password, ip) == False:
+			if not userUtils.checkLogin(userID, password, ip):
 				raise exceptions.loginFailedException(MODULE_NAME, username)
 			# Generic bancho session check
-			if userUtils.checkBanchoSession(userID) == False:
+			if not userUtils.checkBanchoSession(userID):
 				# TODO: Ban (see except exceptions.noBanchoSessionException block)
 				raise exceptions.noBanchoSessionException(MODULE_NAME, username, ip)
 			# Ban check
-			if userUtils.isBanned(userID) == True:
+			if userUtils.isBanned(userID):
 				raise exceptions.userBannedException(MODULE_NAME, username)
 			# Data length check
 			if len(scoreData) < 16:
@@ -120,7 +120,7 @@ class handler(SentryMixin, requestsManager.asyncRequestHandler):
 				log.warning("**{}** ({}) has been restricted due to too high pp gain **({}pp)**".format(username, userID, s.pp), "cm")
 
 			# Check notepad hack
-			if bmk == None and bml == None:
+			if bmk is None and bml is None:
 				# No bmk and bml params passed, edited or super old client
 				#log.warning("{} ({}) most likely submitted a score from an edited client or a super old client".format(username, userID), "cm")
 				pass
@@ -154,7 +154,7 @@ class handler(SentryMixin, requestsManager.asyncRequestHandler):
 			# Save replay
 			if s.passed == True and s.completed == 3:
 				if "score" not in self.request.files:
-					if restricted == False:
+					if not restricted:
 						# Ban if no replay passed
 						userUtils.restrict(userID)
 						userUtils.appendNotes(userID, "-- Restricted due to missing replay while submitting a score (most likely he used a score submitter)")
@@ -174,7 +174,7 @@ class handler(SentryMixin, requestsManager.asyncRequestHandler):
 			beatmap.incrementPlaycount(s.fileMd5, s.passed)
 
 			# Get "before" stats for ranking panel (only if passed)
-			if s.passed == True:
+			if s.passed:
 				# Get stats and rank
 				oldUserData = glob.userStatsCache.get(userID, s.gameMode)
 				oldRank = leaderboardHelper.getUserRank(userID, s.gameMode)
@@ -195,7 +195,7 @@ class handler(SentryMixin, requestsManager.asyncRequestHandler):
 			# Get "after" stats for ranking panel
 			# and to determine if we should update the leaderboard
 			# (only if we passed that song)
-			if s.passed == True:
+			if s.passed:
 				# Get new stats
 				newUserData = userUtils.getUserStats(userID, s.gameMode)
 				glob.userStatsCache.update(userID, s.gameMode, newUserData)
@@ -226,7 +226,7 @@ class handler(SentryMixin, requestsManager.asyncRequestHandler):
 
 			# Output ranking panel only if we passed the song
 			# and we got valid beatmap info from db
-			if beatmapInfo != None and beatmapInfo != False and s.passed == True:
+			if beatmapInfo is not None and beatmapInfo != False and s.passed == True:
 				log.debug("Started building ranking panel")
 
 				# Get personal best after submitting the score
@@ -334,5 +334,5 @@ class handler(SentryMixin, requestsManager.asyncRequestHandler):
 			# Every other exception returns a 408 error (timeout)
 			# This avoids lost scores due to score server crash
 			# because the client will send the score again after some time.
-			if keepSending == True:
+			if keepSending:
 				self.set_status(408)

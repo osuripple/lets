@@ -25,7 +25,7 @@ class handler(SentryMixin, requestsManager.asyncRequestHandler):
 			ip = self.getRequestIP()
 
 			# Check arguments
-			if requestsManager.checkArguments(self.request.arguments, ["c", "u", "h"]) == False:
+			if not requestsManager.checkArguments(self.request.arguments, ["c", "u", "h"]):
 				raise exceptions.invalidArgumentsException(MODULE_NAME)
 
 			# Get arguments
@@ -37,14 +37,14 @@ class handler(SentryMixin, requestsManager.asyncRequestHandler):
 			userID = userUtils.getID(username)
 			if userID == 0:
 				raise exceptions.loginFailedException(MODULE_NAME, userID)
-			if userUtils.checkLogin(userID, password, ip) == False:
+			if not userUtils.checkLogin(userID, password, ip):
 				raise exceptions.loginFailedException(MODULE_NAME, username)
 
 			# Get user ID
 			replayData = glob.db.fetch("SELECT scores.*, users.username AS uname FROM scores LEFT JOIN users ON scores.userid = users.id WHERE scores.id = %s", [replayID])
 
 			# Increment 'replays watched by others' if needed
-			if replayData != None:
+			if replayData is not None:
 				if username != replayData["uname"]:
 					userUtils.incrementReplaysWatched(replayData["userid"], replayData["play_mode"])
 

@@ -6,6 +6,7 @@ import tornado.web
 from raven.contrib.tornado import SentryMixin
 
 from common.web import requestsManager
+from common.log import logUtils as log
 from objects import glob
 
 MODULE_NAME = "direct_download"

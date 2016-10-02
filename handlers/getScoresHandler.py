@@ -27,13 +27,13 @@ class handler(SentryMixin, requestsManager.asyncRequestHandler):
 			ip = self.getRequestIP()
 
 			# Print arguments
-			if glob.debug == True:
+			if glob.debug:
 				requestsManager.printArguments(self)
 
 			# TODO: Maintenance check
 
 			# Check required arguments
-			if requestsManager.checkArguments(self.request.arguments, ["c", "f", "i", "m", "us", "v", "mods"]) == False:
+			if not requestsManager.checkArguments(self.request.arguments, ["c", "f", "i", "m", "us", "v", "mods"]):
 				raise exceptions.invalidArgumentsException(MODULE_NAME)
 
 			# GET parameters
@@ -49,7 +49,7 @@ class handler(SentryMixin, requestsManager.asyncRequestHandler):
 			userID = userUtils.getID(username)
 			if userID == 0:
 				raise exceptions.loginFailedException(MODULE_NAME, userID)
-			if userUtils.checkLogin(userID, password, ip) == False:
+			if not userUtils.checkLogin(userID, password, ip):
 				raise exceptions.loginFailedException(MODULE_NAME, username)
 			# Ban check is pointless here, since there's no message on the client
 			#if userHelper.isBanned(userID) == True:

@@ -10,9 +10,9 @@ def uleb128Encode(num):
 		return bytearray(b"\x00")
 	while num > 0:
 		arr.append(num & 127)
-		num = num >> 7
+		num >>= 7
 		if num != 0:
-			arr[length] = arr[length] | 128
+			arr[length] |= 128
 		length+=1
 	return arr
 
@@ -52,7 +52,7 @@ def packData(__data, __dataType):
 		data += __data
 	else:
 		packType = "<B"
-	if pack == True:
+	if pack:
 		data += struct.pack(packType, __data)
 	return data
 

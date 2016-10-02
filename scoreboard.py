@@ -24,7 +24,7 @@ class scoreboard:
 		self.country = country
 		self.friends = friends
 		self.mods = mods
-		if setScores == True:
+		if setScores:
 			self.setScores()
 
 
@@ -62,7 +62,7 @@ class scoreboard:
 				mods = "AND mods = %(mods)s"
 
 			# Friends ranking
-			if self.friends == True:
+			if self.friends:
 				friends = "AND (scores.userid IN (SELECT user2 FROM users_relationships WHERE user1 = %(userid)s) OR scores.userid = %(userid)s)"
 
 			# Sort and limit at the end
@@ -77,7 +77,7 @@ class scoreboard:
 			personalBestScore = None
 
 		# Output our personal best if found
-		if personalBestScore != None:
+		if personalBestScore is not None:
 			s = score.score(personalBestScore["id"])
 			self.scores[0] = s
 		else:
@@ -89,7 +89,7 @@ class scoreboard:
 		joins = "FROM scores STRAIGHT_JOIN users ON scores.userid = users.id STRAIGHT_JOIN users_stats ON users.id = users_stats.id WHERE scores.beatmap_md5 = %(beatmap_md5)s AND scores.play_mode = %(play_mode)s AND scores.completed = 3 AND (users.privileges & 1 > 0 OR users.id = %(userid)s)"
 
 		# Country ranking
-		if self.country == True:
+		if self.country:
 			country = "AND users_stats.country = (SELECT country FROM users_stats WHERE id = %(userid)s LIMIT 1)"
 		else:
 			country = ""
@@ -101,7 +101,7 @@ class scoreboard:
 			mods = ""
 
 		# Friends ranking
-		if self.friends == True:
+		if self.friends:
 			friends = "AND (scores.userid IN (SELECT user2 FROM users_relationships WHERE user1 = %(userid)s) OR scores.userid = %(userid)s)"
 		else:
 			friends = ""
@@ -117,7 +117,7 @@ class scoreboard:
 
 		# Set data for all scores
 		c = 1
-		if topScores != None:
+		if topScores is not None:
 			for i in topScores:
 				# Create score object
 				s = score.score(i["id"], setData=False)
@@ -151,11 +151,11 @@ class scoreboard:
 			self.totalScores = c-1'''
 
 		# If personal best score was not in top 50, try to get it from cache
-		if personalBestScore != None and self.personalBestRank < 1:
+		if personalBestScore is not None and self.personalBestRank < 1:
 			self.personalBestRank = glob.personalBestCache.get(self.userID, self.beatmap.fileMD5, self.country, self.friends, self.mods)
 
 		# It's not even in cache, get it from db
-		if personalBestScore != None and self.personalBestRank < 1:
+		if personalBestScore is not None and self.personalBestRank < 1:
 			self.setPersonalBest()
 
 		# Cache our personal best rank so we can eventually use it later as
@@ -174,12 +174,12 @@ class scoreboard:
 		if self.mods > -1:
 			query += " AND scores.mods = %(mods)s"
 		# Friends ranking
-		if self.friends == True:
+		if self.friends:
 			query += " AND (scores.userid IN (SELECT user2 FROM users_relationships WHERE user1 = %(userid)s) OR scores.userid = %(userid)s)"
 		# Sort and limit at the end
 		query += " LIMIT 1"
 		hasScore = glob.db.fetch(query, {"md5": self.beatmap.fileMD5, "userid": self.userID, "mode": self.gameMode, "mods": self.mods})
-		if hasScore == None:
+		if hasScore is None:
 			return
 
 		# We have a score, run the huge query
@@ -188,18 +188,18 @@ class scoreboard:
 		SELECT score FROM scores WHERE beatmap_md5 = %(md5)s AND play_mode = %(mode)s AND completed = 3 AND userid = %(userid)s LIMIT 1
 		) AND scores.beatmap_md5 = %(md5)s AND scores.play_mode = %(mode)s AND scores.completed = 3 AND users.privileges & 1 > 0"""
 		# Country
-		if self.country == True:
+		if self.country:
 			query += " AND users_stats.country = (SELECT country FROM users_stats WHERE id = %(userid)s LIMIT 1)"
 		# Mods
 		if self.mods > -1:
 			query += " AND scores.mods = %(mods)s"
 		# Friends
-		if self.friends == True:
+		if self.friends:
 			query += " AND (scores.userid IN (SELECT user2 FROM users_relationships WHERE user1 = %(userid)s) OR scores.userid = %(userid)s)"
 		# Sort and limit at the end
 		query += " ORDER BY score DESC LIMIT 1"
 		result = glob.db.fetch(query, {"md5": self.beatmap.fileMD5, "userid": self.userID, "mode": self.gameMode, "mods": self.mods})
-		if result != None:
+		if result is not None:
 			self.personalBestRank = result["rank"]
 
 	def getScoresData(self):

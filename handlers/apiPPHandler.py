@@ -27,7 +27,7 @@ class handler(SentryMixin, requestsManager.asyncRequestHandler):
 		data = {"message": "unknown error"}
 		try:
 			# Check arguments
-			if requestsManager.checkArguments(self.request.arguments, ["b"]) == False:
+			if not requestsManager.checkArguments(self.request.arguments, ["b"]):
 				raise exceptions.invalidArgumentsException(MODULE_NAME)
 
 			# Get beatmap ID and make sure it's a valid number
@@ -69,7 +69,7 @@ class handler(SentryMixin, requestsManager.asyncRequestHandler):
 			# Get beatmap md5 from osuapi
 			# TODO: Move this to beatmap object
 			osuapiData = osuapiHelper.osuApiRequest("get_beatmaps", "b={}".format(beatmapID))
-			if osuapiData == None or "file_md5" not in osuapiData or "beatmapset_id" not in osuapiData:
+			if osuapiData is None or "file_md5" not in osuapiData or "beatmapset_id" not in osuapiData:
 				raise exceptions.invalidBeatmapException(MODULE_NAME)
 			beatmapMd5 = osuapiData["file_md5"]
 			beatmapSetID = osuapiData["beatmapset_id"]
