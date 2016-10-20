@@ -188,9 +188,6 @@ if __name__ == "__main__":
 		except:
 			consoleHelper.printColored("[!] Error while starting Datadog client! Please check your config.ini and run the server again", bcolors.RED)
 
-		# Cloudflare meme
-		glob.cloudflare = generalUtils.stringToBool(glob.conf.config["server"]["cloudflare"])
-
 		# Cache user ids
 		consoleHelper.printNoNl("> Caching user IDs... ")
 		userUtils.cacheUserIDs()

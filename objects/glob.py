@@ -19,7 +19,6 @@ pool = None
 busyThreads = 0
 debug = False
 sentry = False
-cloudflare = False
 
 # Cache and objects
 fLocks = fileLocks.fileLocks()
