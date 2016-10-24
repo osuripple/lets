@@ -62,7 +62,7 @@ class score:
 			totalPoints = self.c50*50+self.c100*100+self.c300*300
 			totalHits = self.c300+self.c100+self.c50+self.cMiss
 			if totalHits == 0:
-				self.accuracy = 100
+				self.accuracy = 1
 			else:
 				self.accuracy = totalPoints/(totalHits*300)
 		elif self.gameMode == 1:
@@ -70,7 +70,7 @@ class score:
 			totalPoints = (self.c100*50)+(self.c300*100)
 			totalHits = self.cMiss+self.c100+self.c300
 			if totalHits == 0:
-				self.accuracy = 100
+				self.accuracy = 1
 			else:
 				self.accuracy = totalPoints / (totalHits * 100)
 		elif self.gameMode == 2:
@@ -78,7 +78,7 @@ class score:
 			fruits = self.c300+self.c100+self.c50
 			totalFruits = fruits+self.cMiss+self.cKatu
 			if totalFruits == 0:
-				self.accuracy = 100
+				self.accuracy = 1
 			else:
 				self.accuracy = fruits / totalFruits
 		elif self.gameMode == 3:
