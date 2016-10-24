@@ -33,7 +33,7 @@ class handler(SentryMixin, requestsManager.asyncRequestHandler):
 			# TODO: Maintenance check
 
 			# Check required arguments
-			if not requestsManager.checkArguments(self.request.arguments, ["c", "f", "i", "m", "us", "v", "mods"]):
+			if not requestsManager.checkArguments(self.request.arguments, ["c", "f", "i", "m", "us", "v", "vv", "mods"]):
 				raise exceptions.invalidArgumentsException(MODULE_NAME)
 
 			# GET parameters
@@ -44,6 +44,7 @@ class handler(SentryMixin, requestsManager.asyncRequestHandler):
 			username = self.get_argument("us")
 			password = self.get_argument("ha")
 			scoreboardType = int(self.get_argument("v"))
+			scoreboardVersion = int(self.get_argument("vv"))
 
 			# Login and ban check
 			userID = userUtils.getID(username)
@@ -87,7 +88,7 @@ class handler(SentryMixin, requestsManager.asyncRequestHandler):
 
 			# Data to return
 			data = ""
-			data += bmap.getData(sboard.totalScores)
+			data += bmap.getData(sboard.totalScores, scoreboardVersion)
 			data += sboard.getScoresData()
 			self.write(data)
 

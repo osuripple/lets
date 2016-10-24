@@ -261,13 +261,18 @@ class beatmap:
 
 		log.debug("{}\n{}\n{}\n{}".format(self.starsStd, self.starsTaiko, self.starsCtb, self.starsMania))
 
-	def getData(self, totalScores=0):
+	def getData(self, totalScores=0, version=4):
 		"""
 		Return this beatmap's data (header) for getscores
 
 		return -- beatmap header for getscores
 		"""
-		data = "{}|false".format(self.rankedStatus)
+		# Fix loved maps for old clients
+		if version < 4 and self.rankedStatus == rankedStatuses.LOVED:
+			rankedStatusOutput = rankedStatuses.QUALIFIED
+		else:
+			rankedStatusOutput = self.rankedStatus
+		data = "{}|false".format(rankedStatusOutput)
 		if self.rankedStatus != rankedStatuses.NOT_SUBMITTED and self.rankedStatus != rankedStatuses.NEED_UPDATE and self.rankedStatus != rankedStatuses.UNKNOWN:
 			# If the beatmap is updated and exists, the client needs more data
 			data += "|{}|{}|{}\n{}\n{}\n{}\n".format(self.beatmapID, self.beatmapSetID, totalScores, self.offset, self.songName, self.rating)
@@ -312,6 +317,8 @@ def convertRankedStatus(approvedStatus):
 		return rankedStatuses.APPROVED
 	elif approvedStatus == 3:
 		return rankedStatuses.QUALIFIED
+	elif approvedStatus == 4:
+		return rankedStatuses.LOVED
 	else:
 		return rankedStatuses.UNKNOWN
 
