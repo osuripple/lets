@@ -1,6 +1,6 @@
 tornado
 mysqlclient
-bcrypt=3.1.1
 progressbar2
 raven
 datadog
+bcrypt>=3.1.1
