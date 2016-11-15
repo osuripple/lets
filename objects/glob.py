@@ -12,6 +12,7 @@ except:
 
 DATADOG_PREFIX = "lets"
 db = None
+redis = None
 conf = None
 application = None
 pool = None

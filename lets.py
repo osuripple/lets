@@ -8,6 +8,7 @@ import tornado.httpserver
 import tornado.ioloop
 import tornado.web
 from raven.contrib.tornado import AsyncSentryClient
+import redis
 
 from common.constants import bcolors
 from common.db import dbConnector
@@ -133,6 +134,26 @@ if __name__ == "__main__":
 			consoleHelper.printError()
 			consoleHelper.printColored("[!] Error while connection to database. Please check your config.ini and run the server again", bcolors.RED)
 			raise
+
+		# Connect to redis
+		try:
+			consoleHelper.printNoNl("> Connecting to redis... ")
+			glob.redis = redis.Redis(glob.conf.config["redis"]["host"], glob.conf.config["redis"]["port"], glob.conf.config["redis"]["database"], glob.conf.config["redis"]["password"])
+			glob.redis.ping()
+			consoleHelper.printNoNl(" ")
+			consoleHelper.printDone()
+		except:
+			# Exception while connecting to db
+			consoleHelper.printError()
+			consoleHelper.printColored("[!] Error while connection to redis. Please check your config.ini and run the server again", bcolors.RED)
+			raise
+
+		# Empty redis cache
+		try:
+			glob.redis.eval("return redis.call('del', unpack(redis.call('keys', ARGV[1])))", 0, "lets:*")
+		except redis.exceptions.ResponseError:
+			# Script returns error if there are no keys starting with peppy:*
+			pass
 
 		# Create threads pool
 		try:
