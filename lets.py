@@ -155,6 +155,9 @@ if __name__ == "__main__":
 			# Script returns error if there are no keys starting with peppy:*
 			pass
 
+		# Save lets version in redis
+		glob.redis.set("lets:version", glob.VERSION)
+
 		# Create threads pool
 		try:
 			consoleHelper.printNoNl("> Creating threads pool... ")
