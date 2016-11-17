@@ -22,6 +22,7 @@ class personalBestCache:
 			data = glob.redis.get("lets:personal_best_cache:{}".format(userID))
 			if data is None:
 				raise cacheMiss()
+
 			# Unpack cached data
 			data = data.decode("utf-8").split("|")
 			cachedpersonalBestRank = int(data[0])
@@ -29,14 +30,16 @@ class personalBestCache:
 			cachedCountry = generalUtils.stringToBool(data[2])
 			cachedFriends = generalUtils.stringToBool(data[3])
 			cachedMods = int(data[4])
+
 			# Check if everything matches
 			if fileMd5 != cachedfileMd5 or country != cachedCountry or friends != cachedFriends or mods != cachedMods:
 				raise cacheMiss()
+
 			# Cache hit
-			log.warning("personalBestCache hit")
+			log.debug("personalBestCache hit")
 			return cachedpersonalBestRank
 		except cacheMiss:
-			log.warning("personalBestCache miss")
+			log.debug("personalBestCache miss")
 			return 0
 
 	def set(self, userID, rank, fileMd5, country=False, friends=False, mods=-1):
@@ -52,4 +55,4 @@ class personalBestCache:
 		:return:
 		"""
 		glob.redis.set("lets:personal_best_cache:{}".format(userID), "{}|{}|{}|{}|{}".format(rank, fileMd5, country, friends, mods), 1800)
-		log.warning("personalBestCache set")
+		log.debug("personalBestCache set")
