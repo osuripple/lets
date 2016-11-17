@@ -1,35 +1,39 @@
 from common.log import logUtils as log
 from common.ripple import userUtils
-
+from objects import glob
+import json
 
 class userStatsCache:
-	def __init__(self):
-		self.cache = [{}, {}, {}, {}]
-
 	def get(self, userID, gameMode):
 		"""
-		Get cached user stats.
-		If cached values are not found, they'll be read from db, cached and returned
+		Get cached user stats from redis.
+		If user stats are not cached, they'll be read from db, cached and returned
 
-		userID --
-		gameMode -- gameMode number
-		return -- userStats dictionary (rankedScore, totalScore, pp, accuracy, playcount)
+		:param userID: userID
+		:param gameMode: game mode number
+		:return: userStats dictionary (rankedScore, totalScore, pp, accuracy, playcount)
 		"""
-		if userID not in self.cache[gameMode]:
+		data = glob.redis.get("lets:user_stats_cache:{}:{}".format(gameMode, userID))
+		if data is None:
+			# If data is not cached, cache it and call get function again
 			log.debug("userStatsCache miss")
-			self.cache[gameMode][userID] = userUtils.getUserStats(userID, gameMode)
+			self.update(userID, gameMode)
+			return self.get(userID, gameMode)
+
 		log.debug("userStatsCache hit")
-		return self.cache[gameMode][userID]
+		retData = json.loads(data.decode("utf-8"))
+		return retData
 
 	def update(self, userID, gameMode, data = {}):
 		"""
-		Update cached user stats with new values
+		Update cached user stats in redis with new values
 
-		userID --
-		gameMode -- gameMode number
-		data -- updated stats dictionary. Optional. If not passed, will get from db
+		:param userID: userID
+		:param gameMode: game mode number
+		:param data: data to cache. Optional. If not passed, will get from db
+		:return:
 		"""
 		if len(data) == 0:
 			data = userUtils.getUserStats(userID, gameMode)
 		log.debug("userStatsCache set {}".format(data))
-		self.cache[gameMode][userID] = data
+		glob.redis.set("lets:user_stats_cache:{}:{}".format(gameMode, userID), json.dumps(data), 1800)
