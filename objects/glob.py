@@ -8,7 +8,7 @@ try:
 	with open("version") as f:
 		VERSION = f.read()
 except:
-	VERSION = "¯\_(xd)_/¯"
+	VERSION = "Unknown"
 
 DATADOG_PREFIX = "lets"
 db = None
