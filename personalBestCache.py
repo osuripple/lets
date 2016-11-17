@@ -1,44 +1,55 @@
 from common.log import logUtils as log
+from common import generalUtils
+from objects import glob
 
+class cacheMiss(Exception):
+	pass
 
 class personalBestCache:
-	def __init__(self):
-		# Key: 		userID,
-		# Value: 	(personalBestRank, fileMd5, country, friends, mods)
-		self.cache = {}
-
 	def get(self, userID, fileMd5, country=False, friends=False, mods=-1):
 		"""
-		Get cached personal best rank.
+		Get cached personal best rank
 
-		userID --
-		fileMd5 -- beatmap md5
-		return -- 	cached personal best rank if fileMd5 match,
-					0 if fileMd5 is different or user not found in cache
+		:param userID: userID
+		:param fileMd5: beatmap md5
+		:param country: True if country leaderboard, otherwise False
+		:param friends: True if friends leaderboard, otherwise False
+		:param mods: leaderboard mods
+		:return: 0 if cache miss, otherwise rank number
 		"""
 		try:
 			# Make sure the value is in cache
-			if userID not in self.cache:
-				raise
-			# Unpack cache tuple
-			cachedpersonalBestRank, cachedfileMd5, cachedCountry, cachedFriends, cachedMods = self.cache[userID]
+			data = glob.redis.get("lets:personal_best_cache:{}".format(userID))
+			if data is None:
+				raise cacheMiss()
+			# Unpack cached data
+			data = data.decode("utf-8").split("|")
+			cachedpersonalBestRank = int(data[0])
+			cachedfileMd5 = str(data[1])
+			cachedCountry = generalUtils.stringToBool(data[2])
+			cachedFriends = generalUtils.stringToBool(data[3])
+			cachedMods = int(data[4])
 			# Check if everything matches
 			if fileMd5 != cachedfileMd5 or country != cachedCountry or friends != cachedFriends or mods != cachedMods:
-				raise
+				raise cacheMiss()
 			# Cache hit
-			log.debug("personalBestCache hit")
-			return self.cache[userID][0]
-		except:
-			log.debug("personalBestCache miss")
+			log.warning("personalBestCache hit")
+			return cachedpersonalBestRank
+		except cacheMiss:
+			log.warning("personalBestCache miss")
 			return 0
 
 	def set(self, userID, rank, fileMd5, country=False, friends=False, mods=-1):
 		"""
-		Update cached personal best rank value
+		Set userID's redis personal best cache
 
-		userID --
-		rank -- new rank
-		fileMd5 -- beatmap md5
+		:param userID: userID
+		:param rank: leaderboard rank
+		:param fileMd5: beatmap md5
+		:param country: True if country leaderboard, otherwise False
+		:param friends: True if friends leaderboard, otherwise False
+		:param mods: leaderboard mods
+		:return:
 		"""
-		self.cache[userID] = (rank, fileMd5, country, friends, mods)
-		log.debug("personalBestCache set {}".format(self.cache[userID]))
+		glob.redis.set("lets:personal_best_cache:{}".format(userID), "{}|{}|{}|{}|{}".format(rank, fileMd5, country, friends, mods), 1800)
+		log.warning("personalBestCache set")

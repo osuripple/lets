@@ -23,7 +23,6 @@ sentry = False
 
 # Cache and objects
 fLocks = fileLocks.fileLocks()
-userIDCache = {}
 userStatsCache = userStatsCache.userStatsCache()
 personalBestCache = personalBestCache.personalBestCache()
 fileBuffers = fileBuffer.buffersList()
