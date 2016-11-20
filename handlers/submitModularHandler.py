@@ -82,9 +82,9 @@ class handler(SentryMixin, requestsManager.asyncRequestHandler):
 			if not userUtils.checkLogin(userID, password, ip):
 				raise exceptions.loginFailedException(MODULE_NAME, username)
 			# Generic bancho session check
-			if not userUtils.checkBanchoSession(userID):
+			#if not userUtils.checkBanchoSession(userID):
 				# TODO: Ban (see except exceptions.noBanchoSessionException block)
-				raise exceptions.noBanchoSessionException(MODULE_NAME, username, ip)
+			#	raise exceptions.noBanchoSessionException(MODULE_NAME, username, ip)
 			# Ban check
 			if userUtils.isBanned(userID):
 				raise exceptions.userBannedException(MODULE_NAME, username)
