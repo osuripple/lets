@@ -1,4 +1,5 @@
 import collections
+import json
 import os
 import sys
 import traceback
@@ -229,6 +230,9 @@ class handler(SentryMixin, requestsManager.asyncRequestHandler):
 			if beatmapInfo is not None and beatmapInfo != False and s.passed == True:
 				log.debug("Started building ranking panel")
 
+				# Trigger bancho stats cache update
+				glob.redis.publish("peppy:update_cached_stats", userID)
+
 				# Get personal best after submitting the score
 				newScoreboard = scoreboard.scoreboard(username, s.gameMode, beatmapInfo, False)
 				newScoreboard.setPersonalBest()
@@ -304,6 +308,16 @@ class handler(SentryMixin, requestsManager.asyncRequestHandler):
 			else:
 				# No ranking panel, send just "ok"
 				self.write("ok")
+
+			# Send username change request to bancho if needed
+			# (key is deleted bancho-side)
+			newUsername = glob.redis.get("ripple:change_username_pending:{}".format(userID))
+			if newUsername is not None:
+				log.debug("Sending username change request for user {} to Bancho".format(userID))
+				glob.redis.publish("peppy:change_username", json.dumps({
+					"userID": userID,
+					"newUsername": newUsername.decode("utf-8")
+				}))
 
 			# Datadog stats
 			glob.dog.increment(glob.DATADOG_PREFIX+".submitted_scores")
