@@ -14,7 +14,7 @@ from common.constants import bcolors
 from common.db import dbConnector
 from common.ddog import datadogClient
 from common.log import logUtils as log
-from common.ripple import userUtils
+from common.redis import pubSub
 from common.web import schiavo
 from handlers import apiCacheBeatmapHandler
 from handlers import apiPPHandler
@@ -40,6 +40,7 @@ from helpers import config
 from helpers import consoleHelper
 from common import generalUtils
 from objects import glob
+from pubSubHandlers import beatmapUpdateHandler
 
 
 def make_app():
@@ -215,6 +216,11 @@ if __name__ == "__main__":
 		# Server start message and console output
 		consoleHelper.printColored("> L.E.T.S. is listening for clients on 127.0.0.1:{}...".format(serverPort), bcolors.GREEN)
 		log.logMessage("Server started!", discord="bunker", of="info.txt", stdout=False)
+
+		# Connect to pubsub channels
+		pubSub.listener(glob.redis, {
+			"lets:beatmap_updates": beatmapUpdateHandler.handler(),
+		}).start()
 
 		# Start Tornado
 		glob.application.listen(serverPort)

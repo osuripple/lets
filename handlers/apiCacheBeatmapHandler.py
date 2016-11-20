@@ -32,7 +32,7 @@ class handler(SentryMixin, requestsManager.asyncRequestHandler):
 			beatmapSetID = self.get_argument("sid")
 			refresh = int(self.get_argument("refresh"))
 			if refresh == 1:
-				log.info("Forced refresh")
+				log.debug("Forced refresh")
 			apiResponse = osuapiHelper.osuApiRequest("get_beatmaps", "s={}".format(beatmapSetID), False)
 			if len(apiResponse) == 0:
 				raise exceptions.invalidBeatmapException
