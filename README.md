@@ -1,4 +1,8 @@
 ## LETS
+
+- Origin: https://git.zxq.co/ripple/lets
+- Mirror: https://github.com/osuripple/lets
+
 ## Latest Essential Tatoe Server
 This server handles every non real time client feature, so:
 - Ingame scoreboards
