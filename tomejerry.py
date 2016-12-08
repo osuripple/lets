@@ -6,8 +6,8 @@ import time
 
 import progressbar
 
-import beatmap
-import score
+from objects import beatmap
+from objects import score
 from common.constants import bcolors
 from common.db import dbConnector
 from common.ripple import userUtils

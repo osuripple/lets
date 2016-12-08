@@ -1,6 +1,6 @@
 from common.redis import generalPubSubHandler
 from helpers import osuapiHelper
-import beatmap
+from objects import beatmap
 
 def updateSet(beatmapSetID):
 	apiResponse = osuapiHelper.osuApiRequest("get_beatmaps", "s={}".format(beatmapSetID), False)

@@ -10,9 +10,9 @@ import tornado.gen
 import tornado.web
 from raven.contrib.tornado import SentryMixin
 
-import beatmap
-import score
-import scoreboard
+from objects import beatmap
+from objects import score
+from objects import scoreboard
 from common.constants import gameModes
 from common.log import logUtils as log
 from common.ripple import userUtils

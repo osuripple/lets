@@ -6,7 +6,7 @@ import tornado.gen
 import tornado.web
 from raven.contrib.tornado import SentryMixin
 
-import beatmap
+from objects import beatmap
 from common.log import logUtils as log
 from common.web import requestsManager
 from constants import exceptions

@@ -1,6 +1,6 @@
 import time
 
-import beatmap
+from objects import beatmap
 from common.constants import gameModes
 from common.log import logUtils as log
 from common.ripple import userUtils

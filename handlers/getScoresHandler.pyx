@@ -5,14 +5,15 @@ import tornado.gen
 import tornado.web
 from raven.contrib.tornado import SentryMixin
 
-import beatmap
-import scoreboard
+from objects import beatmap
+from objects import scoreboard
 from common.constants import privileges
 from common.log import logUtils as log
 from common.ripple import userUtils
 from common.web import requestsManager
 from constants import exceptions
 from objects import glob
+import time
 
 MODULE_NAME = "get_scores"
 class handler(SentryMixin, requestsManager.asyncRequestHandler):

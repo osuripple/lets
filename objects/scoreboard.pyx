@@ -1,4 +1,4 @@
-import score
+from objects import score
 from common.ripple import userUtils
 from constants import rankedStatuses
 from objects import glob
@@ -44,13 +44,13 @@ class scoreboard:
 			return
 
 		# Query parts
-		select = ""
-		joins = ""
-		country = ""
-		mods = ""
-		friends = ""
-		order = ""
-		limit = ""
+		cdef str select = ""
+		cdef str joins = ""
+		cdef str country = ""
+		cdef str mods = ""
+		cdef str friends = ""
+		cdef str order = ""
+		cdef str limit = ""
 
 		# Find personal best score
 		if self.userID != 0:
@@ -116,14 +116,15 @@ class scoreboard:
 		topScores = glob.db.fetchAll(query, params)
 
 		# Set data for all scores
-		c = 1
+		cdef int c = 1
+		cdef dict topScore
 		if topScores is not None:
-			for i in topScores:
+			for topScore in topScores:
 				# Create score object
-				s = score.score(i["id"], setData=False)
+				s = score.score(topScore["id"], setData=False)
 
 				# Set data and rank from topScores's row
-				s.setDataFromDict(i)
+				s.setDataFromDict(topScore)
 				s.setRank(c)
 
 				# Check if this top 50 score is our personal best
@@ -169,7 +170,7 @@ class scoreboard:
 		Ikr, that query is HUGE but xd
 		"""
 		# Before running the HUGE query, make sure we have a score on that map
-		query = "SELECT id FROM scores WHERE beatmap_md5 = %(md5)s AND userid = %(userid)s AND play_mode = %(mode)s AND completed = 3"
+		cdef str query = "SELECT id FROM scores WHERE beatmap_md5 = %(md5)s AND userid = %(userid)s AND play_mode = %(mode)s AND completed = 3"
 		# Mods
 		if self.mods > -1:
 			query += " AND scores.mods = %(mods)s"
