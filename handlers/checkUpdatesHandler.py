@@ -22,7 +22,7 @@ class handler(requestsManager.asyncRequestHandler):
 			#	args["time"] = self.get_argument("time")
 
 			# Pass all arguments otherwise it doesn't work
-			for key, value in self.request.arguments.items():
+			for key, _ in self.request.arguments.items():
 				args[key] = self.get_argument(key)
 
 			if args["action"].lower() == "put":

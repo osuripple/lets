@@ -132,7 +132,6 @@ if __name__ == "__main__":
 			workersNum = min(math.ceil(totalScores/200), MAX_WORKERS)
 
 		# Start from the first score
-		start = 0
 		end = 0
 
 		# Create workers list

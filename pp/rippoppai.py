@@ -81,8 +81,6 @@ class oppai:
 		return -- total pp
 		"""
 		# Set variables
-		command = None
-		output = None
 		self.pp = 0
 		try:
 			# Build .osu map file path
@@ -101,7 +99,7 @@ class oppai:
 					if generalUtils.fileMd5(mapFile) != self.beatmap.fileMD5:
 						# MD5 don't match, redownload .osu file
 						if glob.debug:
-							consoleHelper.printColored("[!] Beatmaps md5 don't match".format(mapFile), bcolors.YELLOW)
+							consoleHelper.printColored("[!] Beatmaps md5 don't match", bcolors.YELLOW)
 						download = True
 
 				# Download .osu file if needed

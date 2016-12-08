@@ -20,9 +20,6 @@ class handler(SentryMixin, requestsManager.asyncRequestHandler):
 	@tornado.gen.engine
 	def asyncGet(self):
 		try:
-			# Get request ip
-			ip = self.getRequestIP()
-
 			# Check arguments
 			#if requestHelper.checkArguments(self.request.arguments, ["u", "h", "m", "r"]) == False:
 			#	raise exceptions.invalidArgumentsException(MODULE_NAME)
@@ -47,7 +44,7 @@ class handler(SentryMixin, requestsManager.asyncRequestHandler):
 			#userHelper.checkLogin(userID, password, ip)
 
 			# Default values for bloodcat query
-			bcM = "0"
+			#bcM = "0"
 			bcS = "1,2,3,0"
 			bcQ = ""
 			bcPopular = False

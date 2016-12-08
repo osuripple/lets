@@ -19,6 +19,7 @@ def uleb128Encode(num):
 def packData(__data, __dataType):
 	data = bytes()
 	pack = True
+	packType = "<B"
 	if __dataType == dataTypes.bbytes:
 		pack = False
 		data = __data
@@ -50,16 +51,15 @@ def packData(__data, __dataType):
 		pack = False
 		data += packData(len(__data), dataTypes.uInt32)
 		data += __data
-	else:
-		packType = "<B"
 	if pack:
 		data += struct.pack(packType, __data)
 	return data
 
 
-def binaryWrite(structure = []):
+def binaryWrite(structure = None):
+	if structure is None:
+		structure = []
 	packetData = bytes()
 	for i in structure:
 		packetData += packData(i[0], i[1])
-	#print(str(packetData))
 	return packetData

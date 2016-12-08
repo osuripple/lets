@@ -40,6 +40,7 @@ class handler(SentryMixin, requestsManager.asyncRequestHandler):
 
 			# Get a random screenshot id
 			found = False
+			screenshotID = ""
 			while not found:
 				screenshotID = generalUtils.randomString(8)
 				if not os.path.isfile(".data/screenshots/{}.jpg".format(screenshotID)):

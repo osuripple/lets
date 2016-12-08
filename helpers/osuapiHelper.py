@@ -94,7 +94,6 @@ def bloodcatRequest(URL):
 		return response
 
 def bloodcatToDirect(data, np = False):
-	s = ""
 	if np:
 		s = "{id}.osz|{artist}|{title}|{creator}|{status}|10.00|{synced}|{id}|{id}|0|0|0|".format(**data)
 	else:
