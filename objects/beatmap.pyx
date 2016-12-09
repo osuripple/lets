@@ -67,7 +67,7 @@ class beatmap:
 			self.beatmapID,
 			self.beatmapSetID,
 			self.fileMD5,
-			self.songName,
+			self.songName.encode("utf-8", "ignore").decode("utf-8"),
 			self.AR,
 			self.OD,
 			self.starsStd,
