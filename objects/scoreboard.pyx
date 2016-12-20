@@ -1,6 +1,7 @@
 from objects import score
 from common.ripple import userUtils
 from constants import rankedStatuses
+from common.constants import mods as modsEnum
 from objects import glob
 
 
@@ -94,8 +95,8 @@ class scoreboard:
 		else:
 			country = ""
 
-		# Mods ranking
-		if self.mods > -1:
+		# Mods ranking (ignore auto, since we use it for pp sorting)
+		if self.mods > -1 and self.mods & modsEnum.AUTOPLAY == 0:
 			mods = "AND scores.mods = %(mods)s"
 		else:
 			mods = ""
@@ -107,7 +108,12 @@ class scoreboard:
 			friends = ""
 
 		# Sort and limit at the end
-		order = "ORDER BY score DESC"
+		if self.mods <= -1 or self.mods & modsEnum.AUTOPLAY == 0:
+			# Order by score if we aren't filtering by mods or autoplay mod is disabled
+			order = "ORDER BY score DESC"
+		elif self.mods & modsEnum.AUTOPLAY > 0:
+			# Otherwise, filter by pp
+			order = "ORDER BY pp DESC"
 		limit = "LIMIT 50"
 
 		# Build query, get params and run query
@@ -216,27 +222,13 @@ class scoreboard:
 			# We don't have a personal best score
 			data += "\n"
 		else:
-			# NOTE: wtf is this code?!?!?
-			# We have a personal best score
-			#if self.personalBestRank == -1:
-			#	# ...but we don't know our rank in scoreboard. Get it.
-			#	c=1
-			#	self.userID = userHelper.getID(self.username)
-			#	scores = glob.db.fetchAll("SELECT DISTINCT userid, score FROM scores WHERE beatmap_md5 = %s AND play_mode = %s AND completed = 3 ORDER BY score DESC", [self.beatmap.fileMD5, self.gameMode])
-			#	if scores != None:
-			#		log.debug("w00t p00t")
-			#		for i in scores:
-			#			if i["userid"] == self.userID:
-			#				self.personalBestRank = c
-			#			c+=1
-
 			# Set personal best score rank
 			self.setPersonalBest()	# sets self.personalBestRank with the huge query
 			self.scores[0].setRank(self.personalBestRank)
-			data += self.scores[0].getData(self.username)
+			data += self.scores[0].getData()
 
 		# Output top 50 scores
 		for i in self.scores[1:]:
-			data += i.getData(self.username)
+			data += i.getData(pp=self.mods > -1 and self.mods & modsEnum.AUTOPLAY > 0)
 
 		return data

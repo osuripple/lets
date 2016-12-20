@@ -1,6 +1,7 @@
 import sys
 import traceback
 
+import json
 import tornado.gen
 import tornado.web
 from raven.contrib.tornado import SentryMixin
@@ -13,7 +14,7 @@ from common.ripple import userUtils
 from common.web import requestsManager
 from constants import exceptions
 from objects import glob
-import time
+from common.constants import mods
 
 MODULE_NAME = "get_scores"
 class handler(SentryMixin, requestsManager.asyncRequestHandler):
@@ -64,16 +65,21 @@ class handler(SentryMixin, requestsManager.asyncRequestHandler):
 					userUtils.setAqn(userID)
 
 			# Scoreboard type
+			isDonor = userUtils.getPrivileges(userID) & privileges.USER_DONOR > 0
 			country = False
 			friends = False
-			mods = -1
+			modsFilter = -1
 			if scoreboardType == 4:
 				# Country leaderboard
 				country = True
 			elif scoreboardType == 2:
 				# Mods leaderboard, replace mods (-1, every mod) with "mods" GET parameters
-				mods = int(self.get_argument("mods"))
-			elif scoreboardType == 3 and userUtils.getPrivileges(userID) & privileges.USER_DONOR > 0:
+				modsFilter = int(self.get_argument("mods"))
+
+				# Disable automod (pp sort) if we are not donors
+				if not isDonor:
+					modsFilter = modsFilter & ~mods.AUTOPLAY
+			elif scoreboardType == 3 and isDonor:
 				# Friends leaderboard
 				friends = True
 
@@ -85,13 +91,25 @@ class handler(SentryMixin, requestsManager.asyncRequestHandler):
 			bmap = beatmap.beatmap(md5, beatmapSetID, gameMode)
 
 			# Create leaderboard object, link it to bmap and get all scores
-			sboard = scoreboard.scoreboard(username, gameMode, bmap, setScores=True, country=country, mods=mods, friends=friends)
+			sboard = scoreboard.scoreboard(username, gameMode, bmap, setScores=True, country=country, mods=modsFilter, friends=friends)
 
 			# Data to return
 			data = ""
 			data += bmap.getData(sboard.totalScores, scoreboardVersion)
 			data += sboard.getScoresData()
 			self.write(data)
+
+			# Send bancho notification if needed
+			if modsFilter > -1:
+				knowsPPLeaderboard = False if glob.redis.get("lets:knows_pp_leaderboard:{}".format(userID)) is None else True
+				if modsFilter & mods.AUTOPLAY > 0 and not knowsPPLeaderboard:
+					log.warning("memando i mem")
+					glob.redis.set("lets:knows_pp_leaderboard:{}".format(userID), "1", 1800)
+					glob.redis.publish("peppy:notification", json.dumps({
+						"userID": userID,
+						"message": "Hi there! Scores are now sorted by PP. You can change scores sort mode by toggling the 'Auto' mod and filtering the leaderboard by Active mods. Note that this option is available only for donors and we don't recommend saving replays when the leaderboard is sorted by pp, due to some client limitations."
+					}))
+
 
 			# Datadog stats
 			glob.dog.increment(glob.DATADOG_PREFIX+".served_leaderboards")

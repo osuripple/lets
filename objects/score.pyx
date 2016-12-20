@@ -140,6 +140,8 @@ class score:
 		self.date = data["time"]
 		self.fileMd5 = data["beatmap_md5"]
 		self.completed = data["completed"]
+		#if "pp" in data:
+		self.pp = data["pp"]
 		self.calculateAccuracy()
 
 	def setDataFromScoreData(self, scoreData):
@@ -174,12 +176,12 @@ class score:
 			self.setCompletedStatus()
 
 
-	def getData(self, username):
+	def getData(self, pp=False):
 		"""Return score row relative to this score for getscores"""
 		return "{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|1\n".format(
 			self.scoreID,
 			self.playerName,
-			self.score,
+			int(self.pp) if pp else self.score,
 			self.maxCombo,
 			self.c50,
 			self.c100,
