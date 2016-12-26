@@ -66,7 +66,7 @@ def update(userID, newScore, gameMode):
 		target = glob.db.fetch("SELECT * FROM leaderboard_{} ORDER BY position DESC LIMIT 1".format(mode))
 		plus = 1
 
-	# Set $newT
+	# Set newT
 	if target is None:
 		# Okay, nevermind. It's not this user to suck. It's just that no-one has ever entered the leaderboard thus far.
 		# So, the player is now #1. Yay!
@@ -82,8 +82,8 @@ def update(userID, newScore, gameMode):
 		glob.db.execute("DELETE FROM leaderboard_{} WHERE user = %s".format(mode), [userID])
 		glob.db.execute("UPDATE leaderboard_{} SET position = position + 1 WHERE position < %s AND position >= %s ORDER BY position DESC".format(mode), [us["position"], newT])
 
-	if newT <= 1:
-		log.info("{} is now #{} ({})".format(userID, newT, mode), "bunker")
+	#if newT <= 1:
+	#	log.info("{} is now #{} ({})".format(userID, newT, mode), "bunker")
 
 	# Finally, insert the user back.
 	glob.db.execute("INSERT INTO leaderboard_{} (position, user, v) VALUES (%s, %s, %s);".format(mode), [newT, userID, newScore])
