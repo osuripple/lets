@@ -3,8 +3,8 @@ import tornado.web
 
 from common.web import requestsManager
 from constants import exceptions
-from helpers import osuapiHelper
 from common.sentry import sentry
+from helpers import levbodHelper
 
 MODULE_NAME = "direct"
 class handler(requestsManager.asyncRequestHandler):
@@ -25,7 +25,7 @@ class handler(requestsManager.asyncRequestHandler):
 				query = ""
 
 			# Get data from levbod API
-			levbodData = osuapiHelper.levbodRequest(True, rankedStatus=rankedStatus, page=page, gameMode=gameMode, query=query)
+			levbodData = levbodHelper.getListing(rankedStatus=rankedStatus, page=page, gameMode=gameMode, query=query)
 			if levbodData is None:
 				raise exceptions.noAPIDataError()
 
@@ -33,7 +33,7 @@ class handler(requestsManager.asyncRequestHandler):
 			output += "999" if len(levbodData) == 100 else str(len(levbodData))
 			output += "\n"
 			for beatmapSet in levbodData:
-				output += osuapiHelper.levbodToDirect(beatmapSet)+"\r\n"
+				output += levbodHelper.levbodToDirect(beatmapSet)+"\r\n"
 		except exceptions.noAPIDataError:
 			output = "0\n"
 		finally:
