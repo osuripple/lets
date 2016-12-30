@@ -10,11 +10,13 @@ from common.web import requestsManager
 from constants import exceptions
 from helpers import osuapiHelper
 from objects import glob
+from common.sentry import sentry
 
 MODULE_NAME = "maps"
-class handler(SentryMixin, requestsManager.asyncRequestHandler):
+class handler(requestsManager.asyncRequestHandler):
 	@tornado.web.asynchronous
 	@tornado.gen.engine
+	@sentry.captureTornado
 	def asyncGet(self, fileName = None):
 		try:
 			# Check arguments
@@ -36,9 +38,3 @@ class handler(SentryMixin, requestsManager.asyncRequestHandler):
 			self.set_status(500)
 		except exceptions.osuApiFailException:
 			self.set_status(500)
-		except:
-			log.error("Unknown error in {}!\n```{}\n{}```".format(MODULE_NAME, sys.exc_info(), traceback.format_exc()))
-			if glob.sentry:
-				yield tornado.gen.Task(self.captureException, exc_info=True)
-		#finally:
-		#	self.finish()

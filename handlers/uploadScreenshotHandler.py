@@ -12,14 +12,16 @@ from common.web import requestsManager
 from constants import exceptions
 from common import generalUtils
 from objects import glob
+from common.sentry import sentry
 
 MODULE_NAME = "screenshot"
-class handler(SentryMixin, requestsManager.asyncRequestHandler):
+class handler(requestsManager.asyncRequestHandler):
 	"""
 	Handler for /web/osu-screenshot.php
 	"""
 	@tornado.web.asynchronous
 	@tornado.gen.engine
+	@sentry.captureTornado
 	def asyncPost(self):
 		try:
 			if glob.debug:
@@ -59,9 +61,3 @@ class handler(SentryMixin, requestsManager.asyncRequestHandler):
 			pass
 		except exceptions.loginFailedException:
 			pass
-		except:
-			log.error("Unknown error in {}!\n```{}\n{}```".format(MODULE_NAME, sys.exc_info(), traceback.format_exc()))
-			if glob.sentry:
-				yield tornado.gen.Task(self.captureException, exc_info=True)
-		#finally:
-		#	self.finish()

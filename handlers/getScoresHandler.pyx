@@ -1,10 +1,6 @@
-import sys
-import traceback
-
 import json
 import tornado.gen
 import tornado.web
-from raven.contrib.tornado import SentryMixin
 
 from objects import beatmap
 from objects import scoreboard
@@ -15,14 +11,16 @@ from common.web import requestsManager
 from constants import exceptions
 from objects import glob
 from common.constants import mods
+from common.sentry import sentry
 
 MODULE_NAME = "get_scores"
-class handler(SentryMixin, requestsManager.asyncRequestHandler):
+class handler(requestsManager.asyncRequestHandler):
 	"""
 	Handler for /web/osu-osz2-getscores.php
 	"""
 	@tornado.web.asynchronous
 	@tornado.gen.engine
+	@sentry.captureTornado
 	def asyncGet(self):
 		try:
 			# Get request ip
@@ -119,9 +117,3 @@ class handler(SentryMixin, requestsManager.asyncRequestHandler):
 			self.write("error: ban")
 		except exceptions.loginFailedException:
 			self.write("error: pass")
-		except:
-			log.error("Unknown error!\n```\n{}\n{}```".format(sys.exc_info(), traceback.format_exc()))
-			if glob.sentry:
-				yield tornado.gen.Task(self.captureException, exc_info=True)
-		#finally:
-		#	self.finish()

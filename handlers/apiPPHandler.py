@@ -14,14 +14,16 @@ from constants import exceptions
 from helpers import osuapiHelper
 from objects import glob
 from pp import rippoppai
+from common.sentry import sentry
 
 MODULE_NAME = "api/pp"
-class handler(SentryMixin, requestsManager.asyncRequestHandler):
+class handler(requestsManager.asyncRequestHandler):
 	"""
 	Handler for /api/v1/pp
 	"""
 	@tornado.web.asynchronous
 	@tornado.gen.engine
+	@sentry.captureTornado
 	def asyncGet(self):
 		statusCode = 400
 		data = {"message": "unknown error"}
@@ -151,10 +153,6 @@ class handler(SentryMixin, requestsManager.asyncRequestHandler):
 		except exceptions.unsupportedGameModeException:
 			statusCode = 400
 			data["message"] = "Unsupported gamemode"
-		except:
-			log.error("Unknown error in {}!\n```{}\n{}```".format(MODULE_NAME, sys.exc_info(), traceback.format_exc()))
-			if glob.sentry:
-				yield tornado.gen.Task(self.captureException, exc_info=True)
 		finally:
 			# Add status code to data
 			data["status"] = statusCode

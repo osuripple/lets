@@ -11,14 +11,16 @@ from common.ripple import userUtils
 from common.web import requestsManager
 from constants import exceptions
 from objects import glob
+from common.sentry import sentry
 
 MODULE_NAME = "get_replay"
-class handler(SentryMixin, requestsManager.asyncRequestHandler):
+class handler(requestsManager.asyncRequestHandler):
 	"""
 	Handler for osu-getreplay.php
 	"""
 	@tornado.web.asynchronous
 	@tornado.gen.engine
+	@sentry.captureTornado
 	def asyncGet(self):
 		try:
 			# Get request ip
@@ -62,9 +64,3 @@ class handler(SentryMixin, requestsManager.asyncRequestHandler):
 			pass
 		except exceptions.loginFailedException:
 			pass
-		except:
-			log.error("Unknown error in {}!\n```{}\n{}```".format(MODULE_NAME, sys.exc_info(), traceback.format_exc()))
-			if glob.sentry:
-				yield tornado.gen.Task(self.captureException, exc_info=True)
-		#finally:
-		#	self.finish()

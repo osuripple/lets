@@ -10,14 +10,16 @@ from common.log import logUtils as log
 from common.web import requestsManager
 from constants import exceptions
 from objects import glob
+from common.sentry import sentry
 
 MODULE_NAME = "get_screenshot"
-class handler(SentryMixin, requestsManager.asyncRequestHandler):
+class handler(requestsManager.asyncRequestHandler):
 	"""
 	Handler for /ss/
 	"""
 	@tornado.web.asynchronous
 	@tornado.gen.engine
+	@sentry.captureTornado
 	def asyncGet(self, screenshotID = None):
 		try:
 			# Make sure the screenshot exists
@@ -37,9 +39,3 @@ class handler(SentryMixin, requestsManager.asyncRequestHandler):
 			self.set_header("Content-length", len(data))
 		except exceptions.fileNotFoundException:
 			self.set_status(404)
-		except:
-			log.error("Unknown error in {}!\n```{}\n{}```".format(MODULE_NAME, sys.exc_info(), traceback.format_exc()))
-			if glob.sentry:
-				yield tornado.gen.Task(self.captureException, exc_info=True)
-		#finally:
-		#	self.finish()

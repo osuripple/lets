@@ -8,7 +8,6 @@ from urllib.parse import urlencode
 import requests
 import tornado.gen
 import tornado.web
-from raven.contrib.tornado import SentryMixin
 
 from objects import beatmap
 from objects import score
@@ -22,14 +21,16 @@ from constants import rankedStatuses
 from helpers import aeshelper
 from helpers import leaderboardHelper
 from objects import glob
+from common.sentry import sentry
 
 MODULE_NAME = "submit_modular"
-class handler(SentryMixin, requestsManager.asyncRequestHandler):
+class handler(requestsManager.asyncRequestHandler):
 	"""
 	Handler for /web/osu-submit-modular.php
 	"""
 	@tornado.web.asynchronous
 	@tornado.gen.engine
+	#@sentry.captureTornado
 	def asyncPost(self):
 		try:
 			# Resend the score in case of unhandled exceptions

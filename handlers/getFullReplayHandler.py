@@ -13,14 +13,16 @@ from constants import exceptions
 from helpers import binaryHelper
 from common import generalUtils
 from objects import glob
+from common.sentry import sentry
 
 MODULE_NAME = "get_full_replay"
-class handler(SentryMixin, requestsManager.asyncRequestHandler):
+class handler(requestsManager.asyncRequestHandler):
 	"""
 	Handler for /replay/
 	"""
 	@tornado.web.asynchronous
 	@tornado.gen.engine
+	@sentry.captureTornado
 	def asyncGet(self, replayID):
 		try:
 			# Make sure the score exists
@@ -72,9 +74,3 @@ class handler(SentryMixin, requestsManager.asyncRequestHandler):
 			self.set_header ("Content-Disposition", "attachment; filename=\"{}.osr\"".format(scoreData["id"]))
 		except exceptions.fileNotFoundException:
 			self.write("Replay not found")
-		except:
-			log.error("Unknown error in {}!\n```{}\n{}```".format(MODULE_NAME, sys.exc_info(), traceback.format_exc()))
-			if glob.sentry:
-				yield tornado.gen.Task(self.captureException, exc_info=True)
-		#finally:
-		#	self.finish()
