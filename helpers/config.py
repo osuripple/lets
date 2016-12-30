@@ -72,6 +72,8 @@ class config:
 			self.config.get("osuapi","apiurl")
 			self.config.get("osuapi","apikey")
 
+			self.config.get("levbod", "url")
+
 			self.config.get("discord","enable")
 			self.config.get("discord","boturl")
 			self.config.get("discord", "devgroup")
@@ -123,6 +125,9 @@ class config:
 		self.config.set("osuapi", "enable", "True")
 		self.config.set("osuapi", "apiurl", "https://osu.ppy.sh")
 		self.config.set("osuapi", "apikey", "YOUR_OSU_API_KEY_HERE")
+
+		self.config.add_section("levbod")
+		self.config.set("levbod", "url", "http://127.0.0.1:5588")
 
 		self.config.add_section("discord")
 		self.config.set("discord", "enable", "False")

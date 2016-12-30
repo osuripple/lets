@@ -6,6 +6,7 @@ import requests
 from common.log import logUtils as log
 from common import generalUtils
 from objects import glob
+from constants import exceptions
 
 
 def osuApiRequest(request, params, getFirst=True):
@@ -101,6 +102,40 @@ def bloodcatToDirect(data, np = False):
 		s += "{}|0|0|0||".format(data["beatmaps"][0]["id"])
 		for i in data["beatmaps"]:
 			s += "{name}@{mode},".format(**i)
+		s = s.strip(",")
+		s += '|'
+
+	return s
+
+def levbodRequest(listing, rankedStatus=4, page=0, gameMode=-1, query=""):
+	if listing:
+		try:
+			r = requests.get("{}/listing".format(glob.conf.config["levbod"]["url"]), params={
+				"mode": gameMode,
+				"status": rankedStatus,
+				"query": query,
+				"page": page,
+			})
+			if r.status_code != 200:
+				raise exceptions.noAPIDataError()
+			data = json.loads(r.text)
+			if "data" not in data:
+				raise exceptions.noAPIDataError()
+			return data["data"]
+		except (json.JSONDecodeError, ValueError, requests.RequestException, KeyError, exceptions.noAPIDataError):
+			return None
+	else:
+		return None
+
+def levbodToDirect(data, np=False):
+	if np:
+		s = "{beatmapset_id}.osz|{artist}|{title}|{creator}|{ranked_status}|10.00|0|{beatmapset_id}|{beatmapset_id}|0|0|0|".format(**data)
+	else:
+		s = "{beatmapset_id}.osz|{artist}|{title}|{creator}|{ranked_status}|10.00|0|{beatmapset_id}|".format(**data)
+		if len(data["beatmaps"]) > 0:
+			s += "{}|0|0|0||".format(data["beatmaps"][0]["beatmap_id"])
+			for i in data["beatmaps"]:
+				s += "{difficulty_name}@{game_mode},".format(**i)
 		s = s.strip(",")
 		s += '|'
 
