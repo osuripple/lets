@@ -118,7 +118,7 @@ class handler(requestsManager.asyncRequestHandler):
 			# Restrict obvious cheaters
 			if (s.pp >= 700 and s.gameMode == gameModes.STD) and restricted == False:
 				userUtils.restrict(userID)
-				userUtils.appendNotes(userID, "-- Restricted due to too high pp gain ({}pp)".format(s.pp))
+				userUtils.appendNotes(userID, "Restricted due to too high pp gain ({}pp)".format(s.pp))
 				log.warning("**{}** ({}) has been restricted due to too high pp gain **({}pp)**".format(username, userID, s.pp), "cm")
 
 			# Check notepad hack
@@ -129,7 +129,7 @@ class handler(requestsManager.asyncRequestHandler):
 			elif bmk != bml and restricted == False:
 				# bmk and bml passed and they are different, restrict the user
 				userUtils.restrict(userID)
-				userUtils.appendNotes(userID, "-- Restricted due to notepad hack")
+				userUtils.appendNotes(userID, "Restricted due to notepad hack")
 				log.warning("**{}** ({}) has been restricted due to notepad hack".format(username, userID), "cm")
 				return
 
@@ -150,7 +150,7 @@ class handler(requestsManager.asyncRequestHandler):
 			# Make sure process list has been passed
 			if s.completed == 3 and "pl" not in self.request.arguments and restricted == False:
 				userUtils.restrict(userID)
-				userUtils.appendNotes(userID, "-- Restricted due to missing process list while submitting a score (most likely he used a score submitter)")
+				userUtils.appendNotes(userID, "Restricted due to missing process list while submitting a score (most likely he used a score submitter)")
 				log.warning("**{}** ({}) has been restricted due to missing process list".format(username, userID), "cm")
 
 			# Save replay
@@ -159,7 +159,7 @@ class handler(requestsManager.asyncRequestHandler):
 					if not restricted:
 						# Ban if no replay passed
 						userUtils.restrict(userID)
-						userUtils.appendNotes(userID, "-- Restricted due to missing replay while submitting a score (most likely he used a score submitter)")
+						userUtils.appendNotes(userID, "Restricted due to missing replay while submitting a score (most likely he used a score submitter)")
 						log.warning("**{}** ({}) has been restricted due to replay not found on map {}".format(username, userID, s.fileMd5), "cm")
 				else:
 					# Otherwise, save the replay
