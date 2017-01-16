@@ -1,10 +1,11 @@
 import tornado.gen
 import tornado.web
 
-from common.web import requestsManager
-from constants import exceptions
 from common.sentry import sentry
-from helpers import levbodHelper
+from common.web import requestsManager
+from common.web import cheesegull
+from common.log import logUtils as log
+from constants import exceptions
 
 MODULE_NAME = "direct_np"
 class handler(requestsManager.asyncRequestHandler):
@@ -19,19 +20,23 @@ class handler(requestsManager.asyncRequestHandler):
 		try:
 			# Get data by beatmap id or beatmapset id
 			if "b" in self.request.arguments:
-				data = levbodHelper.getBeatmap(self.get_argument("b"))
+				id = self.get_argument("b")
+				data = cheesegull.getBeatmap(id)
 			elif "s" in self.request.arguments:
-				data = levbodHelper.getBeatmap(self.get_argument("s"))
+				id = self.get_argument("s")
+				data = cheesegull.getBeatmapSet(id)
 			else:
 				raise exceptions.invalidArgumentsException(MODULE_NAME)
 
-			# Make sure levbod returned some valid data
+			log.info("Requested osu!direct np: {}/{}".format("b" if "b" in self.request.arguments else "s", id))
+
+			# Make sure cheesegull returned some valid data
 			if data is None or len(data) == 0:
 				raise exceptions.osuApiFailException(MODULE_NAME)
 
 			# Write the response
-			output = levbodHelper.levbodToDirectNp(data)+"\r\n"
-		except (exceptions.invalidArgumentsException, exceptions.osuApiFailException):
+			output = cheesegull.toDirectNp(data) + "\r\n"
+		except (exceptions.invalidArgumentsException, exceptions.osuApiFailException, KeyError):
 			output = ""
 		finally:
 			self.write(output)
