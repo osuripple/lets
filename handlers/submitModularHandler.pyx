@@ -136,6 +136,10 @@ class handler(requestsManager.asyncRequestHandler):
 			# Save score in db
 			s.saveScoreInDB()
 
+			# Let the api know of this score
+			if s.scoreID:
+				glob.redis.publish("api:score_submission", s.scoreID)
+
 			# Client anti-cheat flags
 			'''ignoreFlags = 4
 			if glob.debug == True:
