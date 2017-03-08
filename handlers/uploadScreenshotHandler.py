@@ -36,9 +36,12 @@ class handler(requestsManager.asyncRequestHandler):
 				raise exceptions.invalidArgumentsException(MODULE_NAME)
 			username = self.get_argument("u")
 			password = self.get_argument("p")
+			ip = self.getRequestIP()
 			userID = userUtils.getID(username)
 			if not userUtils.checkLogin(userID, password):
 				raise exceptions.loginFailedException(MODULE_NAME, username)
+			if userUtils.check2FA(userID, ip):
+				raise exceptions.need2FAException(MODULE_NAME, username, ip)
 
 			# Get a random screenshot id
 			found = False
@@ -57,6 +60,8 @@ class handler(requestsManager.asyncRequestHandler):
 
 			# Return screenshot link
 			self.write("{}/ss/{}.jpg".format(glob.conf.config["server"]["serverurl"], screenshotID))
+		except exceptions.need2FAException:
+			pass
 		except exceptions.invalidArgumentsException:
 			pass
 		except exceptions.loginFailedException:

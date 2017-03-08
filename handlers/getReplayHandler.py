@@ -41,6 +41,8 @@ class handler(requestsManager.asyncRequestHandler):
 				raise exceptions.loginFailedException(MODULE_NAME, userID)
 			if not userUtils.checkLogin(userID, password, ip):
 				raise exceptions.loginFailedException(MODULE_NAME, username)
+			if userUtils.check2FA(userID, ip):
+				raise exceptions.need2FAException(MODULE_NAME, username, ip)
 
 			# Get user ID
 			replayData = glob.db.fetch("SELECT scores.*, users.username AS uname FROM scores LEFT JOIN users ON scores.userid = users.id WHERE scores.id = %s", [replayID])
@@ -61,6 +63,8 @@ class handler(requestsManager.asyncRequestHandler):
 				log.warning("Replay {} doesn't exist".format(replayID))
 				self.write("")
 		except exceptions.invalidArgumentsException:
+			pass
+		except exceptions.need2FAException:
 			pass
 		except exceptions.loginFailedException:
 			pass

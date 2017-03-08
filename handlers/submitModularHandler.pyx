@@ -82,6 +82,9 @@ class handler(requestsManager.asyncRequestHandler):
 			# Bancho session/username-pass combo check
 			if not userUtils.checkLogin(userID, password, ip):
 				raise exceptions.loginFailedException(MODULE_NAME, username)
+			# 2FA Check
+			if userUtils.check2FA(userID, ip):
+				raise exceptions.need2FAException(MODULE_NAME, userID, ip)
 			# Generic bancho session check
 			#if not userUtils.checkBanchoSession(userID):
 				# TODO: Ban (see except exceptions.noBanchoSessionException block)
@@ -330,6 +333,12 @@ class handler(requestsManager.asyncRequestHandler):
 			pass
 		except exceptions.loginFailedException:
 			self.write("error: pass")
+		except exceptions.need2FAException:
+			# Send error pass to notify the user
+			# resend the score at regular intervals
+			# for users with memy connection
+			self.set_status(408)
+			self.write("error: 2fa")
 		except exceptions.userBannedException:
 			self.write("error: ban")
 		except exceptions.noBanchoSessionException:
