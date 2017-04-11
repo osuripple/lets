@@ -225,20 +225,6 @@ if __name__ == "__main__":
 			"lets:beatmap_updates": beatmapUpdateHandler.handler(),
 		}).start()
 
-		# Convert leaderboard (remove)
-		log.logMessage("Converting leaderboard...")
-		users = glob.db.fetchAll("SELECT users_stats.* FROM users_stats WHERE 1")
-		for user in users:
-			for mode in range(0,4):
-				leaderboardHelper.update(user["id"], user["pp_{}".format(scoreUtils.readableGameMode(mode))], mode)
-		log.logMessage("Done!")
-		#for mode in ["std", "ctb", "taiko", "mania"]:
-		#	users = glob.db.fetchAll("SELECT * FROM leaderboard_{} WHERE 1".format(mode))
-		#	log.logMessage("{} ({})".format(mode, len(users)))
-		#	for user in users:
-		#		glob.redis.zadd("ripple:leaderboard:{}".format(mode), str(user["user"]), str(user["v"]))
-
-
 		# Start Tornado
 		glob.application.listen(serverPort)
 		tornado.ioloop.IOLoop.instance().start()
