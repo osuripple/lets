@@ -21,7 +21,6 @@ from constants import rankedStatuses
 from helpers import aeshelper
 from helpers import leaderboardHelper
 from objects import glob
-from common.sentry import sentry
 
 MODULE_NAME = "submit_modular"
 class handler(requestsManager.asyncRequestHandler):
@@ -215,9 +214,10 @@ class handler(requestsManager.asyncRequestHandler):
 				else:
 					criteria = "rankedScore"
 
-				# Update leaderboard if score/pp has changed
+				# Update leaderboard (global and country) if score/pp has changed
 				if s.completed == 3 and newUserData[criteria] != oldUserData[criteria]:
 					leaderboardHelper.update(userID, newUserData[criteria], s.gameMode)
+					leaderboardHelper.updateCountry(userID, newUserData[criteria], s.gameMode)
 
 			# TODO: Update total hits and max combo
 			# Update latest activity
