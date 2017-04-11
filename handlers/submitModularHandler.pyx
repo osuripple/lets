@@ -186,7 +186,7 @@ class handler(requestsManager.asyncRequestHandler):
 			if s.passed:
 				# Get stats and rank
 				oldUserData = glob.userStatsCache.get(userID, s.gameMode)
-				oldRank = leaderboardHelper.getUserRank(userID, s.gameMode)
+				oldRank = userUtils.getGameRank(userID, s.gameMode)
 
 				# Try to get oldPersonalBestRank from cache
 				oldPersonalBestRank = glob.personalBestCache.get(userID, s.fileMd5)

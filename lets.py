@@ -15,6 +15,8 @@ from common.db import dbConnector
 from common.ddog import datadogClient
 from common.log import logUtils as log
 from common.redis import pubSub
+from common.ripple import scoreUtils
+from common.ripple import userUtils
 from common.web import schiavo
 from handlers import apiCacheBeatmapHandler
 from handlers import apiPPHandler
@@ -39,6 +41,7 @@ from handlers import uploadScreenshotHandler
 from helpers import config
 from helpers import consoleHelper
 from common import generalUtils
+from helpers import leaderboardHelper
 from objects import glob
 from pubSubHandlers import beatmapUpdateHandler
 
@@ -221,6 +224,20 @@ if __name__ == "__main__":
 		pubSub.listener(glob.redis, {
 			"lets:beatmap_updates": beatmapUpdateHandler.handler(),
 		}).start()
+
+		# Convert leaderboard (remove)
+		log.logMessage("Converting leaderboard...")
+		users = glob.db.fetchAll("SELECT users_stats.* FROM users_stats WHERE 1")
+		for user in users:
+			for mode in range(0,4):
+				leaderboardHelper.update(user["id"], user["pp_{}".format(scoreUtils.readableGameMode(mode))], mode)
+		log.logMessage("Done!")
+		#for mode in ["std", "ctb", "taiko", "mania"]:
+		#	users = glob.db.fetchAll("SELECT * FROM leaderboard_{} WHERE 1".format(mode))
+		#	log.logMessage("{} ({})".format(mode, len(users)))
+		#	for user in users:
+		#		glob.redis.zadd("ripple:leaderboard:{}".format(mode), str(user["user"]), str(user["v"]))
+
 
 		# Start Tornado
 		glob.application.listen(serverPort)
