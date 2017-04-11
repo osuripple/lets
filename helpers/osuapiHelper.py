@@ -51,7 +51,7 @@ def getOsuFileFromName(fileName):
 	"""
 	# Make sure osuapi is enabled
 	if not generalUtils.stringToBool(glob.conf.config["osuapi"]["enable"]):
-		print("osuapi is disabled")
+		log.warning("osuapi is disabled")
 		return None
 
 	response = None
@@ -74,7 +74,7 @@ def getOsuFileFromID(beatmapID):
 	"""
 	# Make sure osuapi is enabled
 	if not generalUtils.stringToBool(glob.conf.config["osuapi"]["enable"]):
-		print("osuapi is disabled")
+		log.warning("osuapi is disabled")
 		return None
 
 	response = None

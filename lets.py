@@ -16,7 +16,6 @@ from common.ddog import datadogClient
 from common.log import logUtils as log
 from common.redis import pubSub
 from common.ripple import scoreUtils
-from common.ripple import userUtils
 from common.web import schiavo
 from handlers import apiCacheBeatmapHandler
 from handlers import apiPPHandler
