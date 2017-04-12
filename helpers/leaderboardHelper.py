@@ -13,7 +13,7 @@ def getRankInfo(userID, gameMode):
 	"""
 	data = {"nextUsername": "", "difference": 0, "currentRank": 0}
 	k = "ripple:leaderboard:{}".format(scoreUtils.readableGameMode(gameMode))
-	position = userUtils.getGameRank(userID, gameMode)
+	position = userUtils.getGameRank(userID, gameMode) - 1
 	log.debug("Our position is {}".format(position))
 	if position is not None and position > 0:
 		aboveUs = glob.redis.zrevrange(k, position - 1, position)
@@ -27,7 +27,7 @@ def getRankInfo(userID, gameMode):
 				data["nextUsername"] = nextUsername
 				data["difference"] = int(myScore) - int(otherScore)
 
-	data["currentRank"] = position
+	data["currentRank"] = position + 1
 	return data
 
 def update(userID, newScore, gameMode):
