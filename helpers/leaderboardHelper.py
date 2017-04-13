@@ -26,32 +26,42 @@ def getRankInfo(userID, gameMode):
 			if nextUsername is not None and myScore is not None and otherScore is not None:
 				data["nextUsername"] = nextUsername
 				data["difference"] = int(myScore) - int(otherScore)
+	else:
+		position = 0
 
 	data["currentRank"] = position + 1
 	return data
 
 def update(userID, newScore, gameMode):
 	"""
-	Update gamemode's leaderboard
+	Update gamemode's leaderboard.
+	Doesn't do anything if userID is banned/restricted.
 
 	:param userID: user
 	:param newScore: new score or pp
 	:param gameMode: gameMode number
 	"""
-	log.debug("Updating leaderboard...")
-	glob.redis.zadd("ripple:leaderboard:{}".format(scoreUtils.readableGameMode(gameMode)), str(userID), str(newScore))
+	if userUtils.isAllowed(userID):
+		log.debug("Updating leaderboard...")
+		glob.redis.zadd("ripple:leaderboard:{}".format(scoreUtils.readableGameMode(gameMode)), str(userID), str(newScore))
+	else:
+		log.debug("Leaderboard update for user {} skipped (not allowed)".format(userID))
 
 def updateCountry(userID, newScore, gameMode):
 	"""
 	Update gamemode's country leaderboard.
+	Doesn't do anything if userID is banned/restricted.
 
 	:param userID: user, country is determined by the user
 	:param newScore: new score or pp
 	:param gameMode: gameMode number
 	:return:
 	"""
-	country = userUtils.getCountry(userID)
-	if country is not None and len(country) > 0 and country.lower() != "xx":
-		log.debug("Updating {} country leaderboard...".format(country))
-		k = "ripple:leaderboard:{}:{}".format(scoreUtils.readableGameMode(gameMode), country.lower())
-		glob.redis.zadd(k, str(userID), str(newScore))
+	if userUtils.isAllowed(userID):
+		country = userUtils.getCountry(userID)
+		if country is not None and len(country) > 0 and country.lower() != "xx":
+			log.debug("Updating {} country leaderboard...".format(country))
+			k = "ripple:leaderboard:{}:{}".format(scoreUtils.readableGameMode(gameMode), country.lower())
+			glob.redis.zadd(k, str(userID), str(newScore))
+	else:
+		log.debug("Country leaderboard update for user {} skipped (not allowed)".format(userID))
