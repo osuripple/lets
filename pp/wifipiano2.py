@@ -39,9 +39,8 @@ class piano:
 				scoreMultiplier *= 2.00
 			if scoreMods & mods.NOFAIL > 0:
 				scoreMultiplier *= 2.00
-			# NOTE: HT gives less pp tho
-			#if scoreMods & mods.HALFTIME > 0:
-			#	scoreMultiplier *= 2.00
+			if scoreMods & mods.HALFTIME > 0:  #Doubles score if HT?
+				scoreMultiplier *= 0.50
 			if scoreMultiplier <= 0:
 				strainPP = 0
 			else:
