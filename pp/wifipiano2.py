@@ -35,11 +35,9 @@ class piano:
 			# ---------- STRAIN PP
 			# Scale score to mods multiplier
 			scoreMultiplier = 1.0
-			if scoreMods & mods.EASY > 0:
-				scoreMultiplier *= 2.00
-			if scoreMods & mods.NOFAIL > 0:
-				scoreMultiplier *= 2.00
-			if scoreMods & mods.HALFTIME > 0:  #Doubles score if HT?
+			if scoreMods & mods.EASY > 0: #Doubles score if EZ
+				scoreMultiplier *= 0.50
+			if scoreMods & mods.HALFTIME > 0:  #Doubles score if HT
 				scoreMultiplier *= 0.50
 			if scoreMultiplier <= 0:
 				strainPP = 0
@@ -61,7 +59,13 @@ class piano:
 					strainPP *= 0.95 + float(score - 900000) / 100000.0 * 0.05
 
 			# ---------- ACC PP
-			hitWindow300 = 64-3*float(od)
+            if scoreMods & mods.EASY > 0: #Assuming Halved OD by EZ submitted by osu. Can't test this on my end.
+				od *= 2;
+			scrubbedOD = min(10.0, max(0, 10.0 - od)); #makes sure OD is in range 0-10. If this is done elsewhere, remove this.
+			hitWindow300 = (34 + 3 * scrubbedOD);      #old formula but done backwards.
+			if (scoreMods & mods.EASY): #increases hitWindow if EZ is on
+            	hitWindow300 *= 1.4;
+			hitWindow300 = int(hitWindow300) + 0.5; #makes hitwindow match what it is ingame.
 			accPP = pow((150.0 / hitWindow300) * pow(accuracy, 16), 1.8) * 2.5
 			accPP *= min(1.15, pow(float(objects) / 1500.0, 0.3))
 
@@ -69,8 +73,8 @@ class piano:
 			multiplier = 1.1
 			if scoreMods & mods.NOFAIL > 0:
 				multiplier *= 0.90
-			if scoreMods & mods.SPUNOUT > 0:
-				multiplier *= 0.95
+			#if scoreMods & mods.SPUNOUT > 0: #Why was this here. Mania doesn't have spunout lol.
+			#	multiplier *= 0.95
 			if scoreMods & mods.EASY > 0:
 				multiplier *= 0.50
 			pp = pow(pow(strainPP, 1.1) + pow(accPP, 1.1), 1.0 / 1.1) * multiplier
