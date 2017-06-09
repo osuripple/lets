@@ -72,7 +72,7 @@ class piano:
 			elif scoremods & mods.HALFTIME != 0:
 				hitWindow300 *= 0.75
 			hitWindow300 = int(hitWindow300) + 0.5; #makes hitwindow match what it is ingame.
-            if scoremods & mods.DOUBLETIME != 0: 
+			if scoremods & mods.DOUBLETIME != 0: 
 				hitWindow300 /= 1.5
 			elif scoremods & mods.HALFTIME != 0:
 				hitWindow300 /= 0.75
