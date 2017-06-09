@@ -34,7 +34,7 @@ class oppai:
 	"""
 	# Folder where oppai is placed
 	OPPAI_FOLDER = "../oppai"
-    __slots__ = ['pp','score','acc','mods','combo','misses','stars','beatmap','map']
+	__slots__ = ['pp','score','acc','mods','combo','misses','stars','beatmap','map']
 	def __init__(self, __beatmap, __score = None, acc = 0, mods = 0, tillerino = False, stars = False):
 		"""
 		Set oppai params.
