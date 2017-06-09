@@ -66,7 +66,7 @@ class piano:
 			hitWindow300 = (34 + 3 * scrubbedOD)      #old formula but done backwards.
 			if scoreMods & mods.EASY != 0: #increases hitWindow if EZ is on
 				hitWindow300 *= 1.4
-            #Fiddles with DT and HT to make them match hitWindow300's ingame.
+			#Fiddles with DT and HT to make them match hitWindow300's ingame.
 			if scoremods & mods.DOUBLETIME != 0: #DT is used more often than HT so its checked first.
 				hitWindow300 *= 1.5
 			elif scoremods & mods.HALFTIME != 0:
