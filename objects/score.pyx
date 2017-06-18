@@ -12,7 +12,9 @@ from pp import wifipiano2
 
 
 class score:
-	__slots__ = ['scoreID','playerName','score','maxCombo','c50','c100','c300','cMiss','CKatu','cGeki','fullCombo','mods','playerUserID','rank','date', 'hasReplay','fileMd5','passed','playDateTime','gameMode','completed','accuracy','pp','oldPersonalBest','rankedScoreIncrease']
+	__slots__ = ["scoreID", "playerName", "score", "maxCombo", "c50", "c100", "c300", "cMiss", "cKatu", "cGeki",
+	             "fullCombo", "mods", "playerUserID","rank","date", "hasReplay", "fileMd5", "passed", "playDateTime",
+	             "gameMode", "completed", "accuracy", "pp", "oldPersonalBest", "rankedScoreIncrease"]
 	def __init__(self, scoreID = None, rank = None, setData = True):
 		"""
 		Initialize a (empty) score object.

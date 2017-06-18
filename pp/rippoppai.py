@@ -32,9 +32,11 @@ class oppai:
 	"""
 	Oppai calculator
 	"""
+
 	# Folder where oppai is placed
 	OPPAI_FOLDER = "../oppai"
-	__slots__ = ['pp','score','acc','mods','combo','misses','stars','beatmap','map']
+	__slots__ = ["pp", "score", "acc", "mods", "combo", "misses", "stars", "beatmap", "map"]
+
 	def __init__(self, __beatmap, __score = None, acc = 0, mods = 0, tillerino = False, stars = False):
 		"""
 		Set oppai params.
@@ -166,7 +168,7 @@ class oppai:
 
 			output = output.split(sep)
 
-			# get rid of pesky warnings!!!
+			# Get rid of pesky warnings!!!
 			try:
 				float(output[0])
 			except ValueError:
