@@ -60,8 +60,6 @@ class piano:
 					strainPP *= 0.95 + float(score - 900000) / 100000.0 * 0.05
 
 			# ---------- ACC PP
-			if scoreMods & mods.EASY != 0: #Assuming Halved OD by EZ submitted by osu. Can't test this on my end.
-				od *= 2
 			scrubbedOD = min(10.0, max(0, 10.0 - od)) #makes sure OD is in range 0-10. If this is done elsewhere, remove this.
 			hitWindow300 = (34 + 3 * scrubbedOD)      #old formula but done backwards.
 			if scoreMods & mods.EASY != 0: #increases hitWindow if EZ is on
@@ -83,7 +81,7 @@ class piano:
 			multiplier = 1.1
 			if scoreMods & mods.NOFAIL != 0:
 				multiplier *= 0.90
-			#if scoreMods & mods.SPUNOUT != 0: #Why was this here. Mania doesn't have spunout lol.
+			#if scoreMods & mods.SPUNOUT != 0: #Why was this here. Mania doesn't have spunout.
 			#	multiplier *= 0.95
 			if scoreMods & mods.EASY != 0:
 				multiplier *= 0.50
