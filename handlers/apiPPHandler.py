@@ -108,7 +108,7 @@ class handler(requestsManager.asyncRequestHandler):
 						# Cached pp not found, calculate them
 						oppai = rippoppai.oppai(bmap, mods=modsEnum, tillerino=True, stars=True)
 						returnPP = oppai.pp
-						bmap.stars = oppai.stars
+						bmap.starsStd = oppai.stars
 
 						# Cache values in DB
 						log.debug("Saving cached pp...")
