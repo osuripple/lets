@@ -41,8 +41,8 @@ class piano:
 			# Doubles score if EZ/HT
 			if scoreMods & mods.EASY != 0:
 				scoreMultiplier *= 0.50
-			if scoreMods & mods.HALFTIME != 0:
-				scoreMultiplier *= 0.50
+			#if scoreMods & mods.HALFTIME != 0:
+			#	scoreMultiplier *= 0.50
 
 			# Calculate strain PP
 			if scoreMultiplier <= 0:
