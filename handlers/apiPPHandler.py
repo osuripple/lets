@@ -106,19 +106,19 @@ class handler(requestsManager.asyncRequestHandler):
 					else:
 						log.debug("Cached pp not found. Calculating pp with oppai...")
 						# Cached pp not found, calculate them
-						oppai = rippoppai.oppai(bmap, mods=modsEnum, tillerino=True, stars=True)
+						oppai = rippoppai.oppai(bmap, mods=modsEnum, tillerino=True)
 						returnPP = oppai.pp
 						bmap.starsStd = oppai.stars
 
 						# Cache values in DB
 						log.debug("Saving cached pp...")
-						if len(returnPP) == 4:
+						if type(returnPP) == list and len(returnPP) == 4:
 							bmap.saveCachedTillerinoPP(returnPP)
 				else:
 					# Specific accuracy, calculate
 					# Create oppai instance
 					log.debug("Specific request ({}%/{}). Calculating pp with oppai...".format(accuracy, modsEnum))
-					oppai = rippoppai.oppai(bmap, mods=modsEnum, tillerino=True, stars=True)
+					oppai = rippoppai.oppai(bmap, mods=modsEnum, tillerino=True)
 					bmap.starsStd = oppai.stars
 					if accuracy > 0:
 						returnPP.append(calculatePPFromAcc(oppai, accuracy))
@@ -130,7 +130,7 @@ class handler(requestsManager.asyncRequestHandler):
 			# Data to return
 			data = {
 				"song_name": bmap.songName,
-				"pp": returnPP,
+				"pp": [round(x, 2) for x in returnPP] if type(returnPP) == list else returnPP,
 				"length": bmap.hitLength,
 				"stars": bmap.starsStd,
 				"ar": bmap.AR,
@@ -168,5 +168,5 @@ class handler(requestsManager.asyncRequestHandler):
 
 def calculatePPFromAcc(ppcalc, acc):
 	ppcalc.acc = acc
-	ppcalc.getPP()
+	ppcalc.calculatePP()
 	return ppcalc.pp

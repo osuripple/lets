@@ -106,20 +106,9 @@ if __name__ == "__main__":
 		else:
 			consoleHelper.printDone()
 
-		# Check oppai
-		consoleHelper.printNoNl("> Checking oppai... ")
-		if os.path.isfile("../oppai/oppai") or os.path.isfile("../oppai/oppai.exe"):
-			consoleHelper.printDone()
-		else:
-			consoleHelper.printError()
-			consoleHelper.printColored("[!] Oppai not found! Please put oppai(.exe) in {}/oppai/oppai(.exe) and run LETS again.".format(os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))), bcolors.YELLOW)
-			consoleHelper.printColored("[!] You can download oppai's source here -> {}https://github.com/osuripple/oppai".format(
-				bcolors.UNDERLINE), bcolors.YELLOW)
-			sys.exit()
-
 		# Create data/oppai maps folder if needed
 		consoleHelper.printNoNl("> Checking folders... ")
-		paths = [".data", ".data/replays", ".data/screenshots", "../oppai", "../oppai/maps"]
+		paths = [".data", ".data/replays", ".data/screenshots", ".data/oppai", ".data/oppai/cache", ".data/oppai/maps"]
 		for i in paths:
 			if not os.path.exists(i):
 				os.makedirs(i, 0o770)

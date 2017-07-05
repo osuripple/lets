@@ -3,11 +3,12 @@ oppai interface for ripple 2 / LETS
 """
 
 import os
-import subprocess
+
+import pyoppai
 
 from common import generalUtils
+from common.log import logUtils as log
 from common.constants import bcolors
-from common.ripple import scoreUtils
 from constants import exceptions
 from helpers import consoleHelper
 from helpers import osuapiHelper
@@ -28,16 +29,23 @@ def fixPath(command):
 		return command
 	return command.replace("/", "\\")
 
+
+class OppaiError(Exception):
+	def __init__(self, error):
+		self.error = error
+
+
 class oppai:
 	"""
-	Oppai calculator
+	Oppai cacalculator
 	"""
 
 	# Folder where oppai is placed
-	OPPAI_FOLDER = "../oppai"
-	__slots__ = ["pp", "score", "acc", "mods", "combo", "misses", "stars", "beatmap", "map"]
+	OPPAI_FOLDER = ".data/oppai"
+	BUFSIZE = 2000000
+	# __slots__ = ["pp", "score", "acc", "mods", "combo", "misses", "stars", "beatmap", "map"]
 
-	def __init__(self, __beatmap, __score = None, acc = 0, mods = 0, tillerino = False, stars = False):
+	def __init__(self, __beatmap, __score = None, acc = 0, mods = 0, tillerino = False):
 		"""
 		Set oppai params.
 
@@ -46,16 +54,16 @@ class oppai:
 		acc -- manual acc. Used in tillerino-like bot. You don't need this if you pass __score object
 		mods -- manual mods. Used in tillerino-like bot. You don't need this if you pass __score object
 		tillerino -- If True, self.pp will be a list with pp values for 100%, 99%, 98% and 95% acc. Optional.
-		stars -- If True, self.stars will be the star difficulty for the map (including mods)
 		"""
 		# Default values
-		self.pp = 0
+		self.pp = None
 		self.score = None
 		self.acc = 0
 		self.mods = 0
 		self.combo = 0
 		self.misses = 0
 		self.stars = 0
+		self.tillerino = tillerino
 
 		# Beatmap object
 		self.beatmap = __beatmap
@@ -73,20 +81,36 @@ class oppai:
 			self.acc = acc
 			self.mods = mods
 
-		# Calculate pp
-		self.getPP(tillerino, stars)
+		# Oppai stuff
+		self._oppai_ctx = pyoppai.new_ctx()
+		self._oppai_beatmap = pyoppai.new_beatmap(self._oppai_ctx)
+		self._oppai_buffer = pyoppai.new_buffer(self.BUFSIZE)
+		self._oppai_diffcalc_ctx = None
 
-	def getPP(self, tillerino = False, stars = False):
+		# Calculate pp
+		log.debug("oppai ~> Initialized oppai diffcalc")
+		self.calculatePP()
+
+	def checkOppaiErrors(self):
+		log.debug("oppai ~> Checking oppai errors...")
+		err = pyoppai.err(self._oppai_ctx)
+		if err:
+			log.error(str(err))
+			raise OppaiError(err)
+		log.debug("oppai ~> No errors!")
+
+	def calculatePP(self):
 		"""
 		Calculate total pp value with oppai and return it
 
 		return -- total pp
 		"""
 		# Set variables
-		self.pp = 0
+		self.pp = None
 		try:
 			# Build .osu map file path
 			mapFile = "{path}/maps/{map}".format(path=self.OPPAI_FOLDER, map=self.map)
+			log.debug("oppai ~> Map file: {}".format(mapFile))
 
 			try:
 				# Check if we have to download the .osu file
@@ -106,8 +130,8 @@ class oppai:
 
 				# Download .osu file if needed
 				if download:
-					if glob.debug:
-						consoleHelper.printRippoppaiMessage("Downloading {} from osu! servers...".format(self.beatmap.beatmapID))
+					log.debug("oppai ~> Downloading {} osu file".format(self.beatmap.beatmapID))
+					log.debug("oppai ~> Downloading {} from osu! servers...".format(self.beatmap.beatmapID))
 
 					# Get .osu file from osu servers
 					fileContent = osuapiHelper.getOsuFileFromID(self.beatmap.beatmapID)
@@ -122,75 +146,74 @@ class oppai:
 
 					# Save .osu file
 					with open(mapFile, "wb+") as f:
-						f.write(fileContent.encode("latin-1"))
+						f.write(fileContent.encode("utf-8"))
 				else:
+					log.debug("oppai ~> Map found in cache!")
 					# Map file is already in folder
-					if glob.debug:
-						consoleHelper.printRippoppaiMessage("Found beatmap file {}".format(mapFile))
+					log.debug("oppai ~> Found beatmap file {}".format(mapFile))
 			except exceptions.osuApiFailException:
+				log.error("oppai ~> osu!api error!")
 				pass
 
-			# Base command
-			command = fixPath("{path}/oppai {mapFile}".format(path=self.OPPAI_FOLDER, mapFile=mapFile))
+			# Parse beatmap
+			log.debug("oppai ~> About to parse beatmap")
+			pyoppai.parse(
+				mapFile,
+				self._oppai_beatmap,
+				self._oppai_buffer,
+				self.BUFSIZE,
+				False,
+				self.OPPAI_FOLDER # /oppai_cache
+			)
+			self.checkOppaiErrors()
+			log.debug("oppai ~> Beatmap parsed with no errors")
 
-			# Use only mods supported by oppai.
+			# Create diffcalc context and calculate difficulty
+			log.debug("oppai ~> About to calculate difficulty")
+
+			# Use only mods supported by oppai
 			modsFixed = self.mods & 5979
+			if modsFixed > 0:
+				pyoppai.apply_mods(self._oppai_beatmap, modsFixed)
+			self._oppai_diffcalc_ctx = pyoppai.new_d_calc_ctx(self._oppai_ctx)
+			diff_stars, diff_aim, diff_speed, _, _, _, _ = pyoppai.d_calc(self._oppai_diffcalc_ctx, self._oppai_beatmap)
+			self.checkOppaiErrors()
+			log.debug("oppai ~> Difficulty calculated with no errors. {}*, {} aim, {} speed".format(diff_stars, diff_aim, diff_speed))
 
-			# Add params if needed
-			if self.acc > 0:
-				command += " {acc:.2f}%".format(acc=self.acc)
-			if self.mods > 0:
-				command += " +{mods}".format(mods=scoreUtils.readableMods(modsFixed))
-			if self.combo > 0:
-				command += " {combo}x".format(combo=self.combo)
-			if self.misses > 0:
-				command += " {misses}xm".format(misses=self.misses)
-			if tillerino:
-				command += " tillerino"
-			if stars:
-				command += " stars"
-
-			# Debug output
-			if glob.debug:
-				consoleHelper.printRippoppaiMessage("Executing {}".format(command))
-
-			# oppai output
-			process = subprocess.run(command, shell=True, stdout=subprocess.PIPE)
-			output = process.stdout.decode("utf-8")
-
-			# Get standard or tillerino output
-			sep = "\n" if UNIX else "\r\n"
-			if output == ['']:
-				# This happens if mode not supported or something
-				self.pp = 0
-				self.stars = None
-				return self.pp
-
-			output = output.split(sep)
-
-			# Get rid of pesky warnings!!!
-			try:
-				float(output[0])
-			except ValueError:
-				del output[0]
-
-			if tillerino:
-				# Get tillerino output (multiple lines)
-				if stars:
-					self.pp = output[:-2]
-					self.stars = float(output[-2])
-				else:
-					self.pp = output.split(sep)[:-1]	# -1 because there's an empty line at the end
+			# Calculate pp
+			log.debug("oppai ~> About to calculate PP")
+			if not self.tillerino:
+				_, total_pp, aim_pp, speed_pp, acc_pp =  pyoppai.pp_calc_acc(self._oppai_ctx, diff_aim, diff_speed, self._oppai_beatmap,
+													                   self.acc if self.acc > 0 else 100,
+													                   modsFixed,
+													                   self.combo if self.combo > 0 else 0xFFFF,
+													                   self.misses)
+				self.checkOppaiErrors()
+				log.debug("oppai ~> PP Calculated with no errors. {}pp, {} aim pp, {} speed pp, {} acc pp".format(
+					total_pp, aim_pp, speed_pp, acc_pp
+				))
+				self.pp = total_pp
 			else:
-				# Get standard output (:l to remove (/r)/n at the end)
-				l = -1 if UNIX else -2
-				if stars:
-					self.pp = float(output[len(output)-2][:l-1])
-				else:
-					self.pp = float(output[len(output)-2][:l])
+				pp_list = []
+				for acc in [100, 99, 98, 95]:
+					log.debug("oppai ~> Calculating PP with acc {}%".format(acc))
+					_, total_pp, aim_pp, speed_pp, acc_pp = pyoppai.pp_calc_acc(self._oppai_ctx, diff_aim, diff_speed,
+					                                                      self._oppai_beatmap, acc, modsFixed)
+					self.checkOppaiErrors()
+					pp_list.append(total_pp)
+					log.debug("oppai ~> PP Calculated with no errors. {}pp, {} aim pp, {} speed pp, {} acc pp".format(
+						total_pp, aim_pp, speed_pp, acc_pp
+					))
+					self.pp = pp_list
+			self.stars = diff_stars
 
-			# Debug output
-			if glob.debug:
-				consoleHelper.printRippoppaiMessage("Calculated pp: {}".format(self.pp))
+			log.debug("oppai ~> Calculated PP: {}".format(self.pp))
+		except OppaiError:
+			log.error("oppai ~> pyoppai error!")
+			self.pp = 0
+		except Exception as e:
+			log.error("oppai ~> Unhandled exception: {}".format(str(e)))
+			raise e
 		finally:
+			log.debug("oppai ~> Shutting down and returning {}pp".format(self.pp))
 			return self.pp
