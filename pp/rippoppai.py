@@ -131,7 +131,6 @@ class oppai:
 				# Download .osu file if needed
 				if download:
 					log.debug("oppai ~> Downloading {} osu file".format(self.beatmap.beatmapID))
-					log.debug("oppai ~> Downloading {} from osu! servers...".format(self.beatmap.beatmapID))
 
 					# Get .osu file from osu servers
 					fileContent = osuapiHelper.getOsuFileFromID(self.beatmap.beatmapID)
@@ -148,9 +147,8 @@ class oppai:
 					with open(mapFile, "wb+") as f:
 						f.write(fileContent.encode("utf-8"))
 				else:
-					log.debug("oppai ~> Map found in cache!")
 					# Map file is already in folder
-					log.debug("oppai ~> Found beatmap file {}".format(mapFile))
+					log.debug("oppai ~> Beatmap found in cache!")
 			except exceptions.osuApiFailException:
 				log.error("oppai ~> osu!api error!")
 				pass
