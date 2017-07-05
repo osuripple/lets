@@ -108,7 +108,7 @@ if __name__ == "__main__":
 
 		# Create data/oppai maps folder if needed
 		consoleHelper.printNoNl("> Checking folders... ")
-		paths = [".data", ".data/replays", ".data/screenshots", ".data/oppai", ".data/oppai/cache", ".data/oppai/maps"]
+		paths = [".data", ".data/replays", ".data/screenshots", ".data/oppai", ".data/oppai/maps"]
 		for i in paths:
 			if not os.path.exists(i):
 				os.makedirs(i, 0o770)
