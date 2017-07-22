@@ -21,6 +21,7 @@ from constants import rankedStatuses
 from helpers import aeshelper
 from helpers import leaderboardHelper
 from objects import glob
+from secret import butterCake
 
 MODULE_NAME = "submit_modular"
 class handler(requestsManager.asyncRequestHandler):
@@ -103,6 +104,9 @@ class handler(requestsManager.asyncRequestHandler):
 			s = score.score()
 			s.setDataFromScoreData(scoreData)
 
+			# Set score stuff missing in score data
+			s.playerUserID = userID
+
 			# Get beatmap info
 			beatmapInfo = beatmap.beatmap()
 			beatmapInfo.setDataFromDB(s.fileMd5)
@@ -158,6 +162,9 @@ class handler(requestsManager.asyncRequestHandler):
 				userUtils.restrict(userID)
 				userUtils.appendNotes(userID, "Restricted due to missing process list while submitting a score (most likely he used a score submitter)")
 				log.warning("**{}** ({}) has been restricted due to missing process list".format(username, userID), "cm")
+
+			# Bake a cake
+			butterCake.bake(self, s)
 
 			# Save replay
 			if s.passed == True and s.completed == 3:

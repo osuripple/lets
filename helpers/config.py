@@ -77,6 +77,7 @@ class config:
 			self.config.get("discord","enable")
 			self.config.get("discord","boturl")
 			self.config.get("discord", "devgroup")
+			self.config.get("discord", "secretwebhook")
 			return True
 		except:
 			return False
@@ -133,6 +134,7 @@ class config:
 		self.config.set("discord", "enable", "False")
 		self.config.set("discord", "boturl", "")
 		self.config.set("discord", "devgroup", "")
+		self.config.set("discord", "secretwebhook", "")
 
 		# Write ini to file and close
 		self.config.write(f)
