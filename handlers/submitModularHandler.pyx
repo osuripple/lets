@@ -142,10 +142,6 @@ class handler(requestsManager.asyncRequestHandler):
 			# Save score in db
 			s.saveScoreInDB()
 
-			# Let the api know of this score
-			if s.scoreID:
-				glob.redis.publish("api:score_submission", s.scoreID)
-
 			# Client anti-cheat flags
 			'''ignoreFlags = 4
 			if glob.debug == True:
@@ -184,6 +180,10 @@ class handler(requestsManager.asyncRequestHandler):
 			# Make sure the replay has been saved (debug)
 			if not os.path.isfile(".data/replays/replay_{}.osr".format(s.scoreID)) and s.completed == 3:
 				log.error("Replay for score {} not saved!!".format(s.scoreID), "bunker")
+
+			# Let the api know of this score
+			if s.scoreID and not userUtils.isRestricted(userID):
+				glob.redis.publish("api:score_submission", s.scoreID)
 
 			# Update beatmap playcount (and passcount)
 			beatmap.incrementPlaycount(s.fileMd5, s.passed)
