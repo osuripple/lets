@@ -1,9 +1,6 @@
 [submodule "common"]
 	path = common
 	url = https://zxq.co/ripple/ripple-python-common.git
-[submodule "omppc"]
-	path = omppc
-	url = https://github.com/semyon422/omppc.git
 [submodule "secret"]
 	path = secret
 	url = git@zxq.co:ripple/lets-secret.git
