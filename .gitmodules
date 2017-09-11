@@ -4,3 +4,9 @@
 [submodule "secret"]
 	path = secret
 	url = git@zxq.co:ripple/lets-secret.git
+[submodule "pp/omppc"]
+	path = pp/omppc
+	url = git@github.com:osuripple/omppc.git
+[submodule "pp/maniastarreducer"]
+	path = pp/maniastarreducer
+	url = git@github.com:osuripple/ManiaStarReducer.git

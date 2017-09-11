@@ -10,7 +10,7 @@ from common import generalUtils
 from common.log import logUtils as log
 from common.constants import bcolors
 from constants import exceptions
-from helpers import consoleHelper
+from helpers import consoleHelper, mapsHelper
 from helpers import osuapiHelper
 from objects import glob
 
@@ -111,47 +111,7 @@ class oppai:
 			# Build .osu map file path
 			mapFile = "{path}/maps/{map}".format(path=self.OPPAI_FOLDER, map=self.map)
 			log.debug("oppai ~> Map file: {}".format(mapFile))
-
-			try:
-				# Check if we have to download the .osu file
-				download = False
-				if not os.path.isfile(mapFile):
-					# .osu file doesn't exist. We must download it
-					if glob.debug:
-						consoleHelper.printColored("[!] {} doesn't exist".format(mapFile), bcolors.YELLOW)
-					download = True
-				else:
-					# File exists, check md5
-					if generalUtils.fileMd5(mapFile) != self.beatmap.fileMD5:
-						# MD5 don't match, redownload .osu file
-						if glob.debug:
-							consoleHelper.printColored("[!] Beatmaps md5 don't match", bcolors.YELLOW)
-						download = True
-
-				# Download .osu file if needed
-				if download:
-					log.debug("oppai ~> Downloading {} osu file".format(self.beatmap.beatmapID))
-
-					# Get .osu file from osu servers
-					fileContent = osuapiHelper.getOsuFileFromID(self.beatmap.beatmapID)
-
-					# Make sure osu servers returned something
-					if fileContent is None:
-						raise exceptions.osuApiFailException(MODULE_NAME)
-
-					# Delete old .osu file if it exists
-					if os.path.isfile(mapFile):
-						os.remove(mapFile)
-
-					# Save .osu file
-					with open(mapFile, "wb+") as f:
-						f.write(fileContent.encode("utf-8"))
-				else:
-					# Map file is already in folder
-					log.debug("oppai ~> Beatmap found in cache!")
-			except exceptions.osuApiFailException:
-				log.error("oppai ~> osu!api error!")
-				pass
+			mapsHelper.cacheMap(mapFile, self.beatmap)
 
 			# Parse beatmap
 			log.debug("oppai ~> About to parse beatmap")
@@ -208,6 +168,9 @@ class oppai:
 			log.debug("oppai ~> Calculated PP: {}".format(self.pp))
 		except OppaiError:
 			log.error("oppai ~> pyoppai error!")
+			self.pp = 0
+		except exceptions.osuApiFailException:
+			log.error("oppai ~> osu!api error!")
 			self.pp = 0
 		except Exception as e:
 			log.error("oppai ~> Unhandled exception: {}".format(str(e)))
