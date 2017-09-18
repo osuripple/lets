@@ -5,8 +5,7 @@ import json
 import os
 import subprocess
 
-import pyoppai
-
+from common.constants import gameModes
 from common.log import logUtils as log
 from common.ripple import scoreUtils
 from constants import exceptions
@@ -69,32 +68,19 @@ class oppai:
 		# If passed, set everything from score object
 		if __score is not None:
 			self.score = __score
-			self.acc = self.score.accuracy*100
+			self.acc = self.score.accuracy * 100
 			self.mods = self.score.mods
 			self.combo = self.score.maxCombo
 			self.misses = self.score.cMiss
+			self.gameMode = self.score.gameMode
 		else:
 			# Otherwise, set acc and mods from params (tillerino)
 			self.acc = acc
 			self.mods = mods
 
-		# Oppai stuff
-		self._oppai_ctx = pyoppai.new_ctx()
-		self._oppai_beatmap = pyoppai.new_beatmap(self._oppai_ctx)
-		self._oppai_buffer = pyoppai.new_buffer(self.BUFSIZE)
-		self._oppai_diffcalc_ctx = None
-
 		# Calculate pp
 		log.debug("oppai ~> Initialized oppai diffcalc")
 		self.calculatePP()
-
-	def checkOppaiErrors(self):
-		log.debug("oppai ~> Checking oppai errors...")
-		err = pyoppai.err(self._oppai_ctx)
-		if err:
-			log.error(str(err))
-			raise OppaiError(err)
-		log.debug("oppai ~> No errors!")
 
 	@staticmethod
 	def _runOppaiProcess(command):
@@ -139,6 +125,8 @@ class oppai:
 				command += " {combo}x".format(combo=self.combo)
 			if self.misses > 0:
 				command += " {misses}xm".format(misses=self.misses)
+			if self.gameMode == gameModes.TAIKO:
+				command += " -taiko"
 			command += " -ojson"
 
 			# Calculate pp

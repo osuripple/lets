@@ -260,7 +260,7 @@ class score:
 
 			# Create an instance of the magic pp calculator and calculate pp
 			if b.rankedStatus >= rankedStatuses.RANKED and b.rankedStatus != rankedStatuses.UNKNOWN:
-				if self.gameMode == gameModes.STD:
+				if self.gameMode == gameModes.STD or self.gameMode == gameModes.TAIKO:
 					ppCalc = rippoppai.oppai(b, self)
 					self.pp = ppCalc.pp
 				elif self.gameMode == gameModes.MANIA:

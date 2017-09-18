@@ -118,7 +118,7 @@ class handler(requestsManager.asyncRequestHandler):
 
 			# Calculate PP
 			# NOTE: PP are std and mania only
-			if s.gameMode == gameModes.STD or s.gameMode == gameModes.MANIA:
+			if s.gameMode != gameModes.CTB:
 				s.calculatePP()
 
 			# Restrict obvious cheaters
@@ -216,7 +216,7 @@ class handler(requestsManager.asyncRequestHandler):
 				glob.userStatsCache.update(userID, s.gameMode, newUserData)
 
 				# Use pp/score as "total" based on game mode
-				if s.gameMode == gameModes.STD or s.gameMode == gameModes.MANIA:
+				if s.gameMode != gameModes.CTB:
 					criteria = "pp"
 				else:
 					criteria = "rankedScore"
