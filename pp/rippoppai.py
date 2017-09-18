@@ -1,18 +1,16 @@
 """
 oppai interface for ripple 2 / LETS
 """
-
+import json
 import os
+import subprocess
 
 import pyoppai
 
-from common import generalUtils
 from common.log import logUtils as log
-from common.constants import bcolors
+from common.ripple import scoreUtils
 from constants import exceptions
-from helpers import consoleHelper, mapsHelper
-from helpers import osuapiHelper
-from objects import glob
+from helpers import mapsHelper
 
 # constants
 MODULE_NAME = "rippoppai"
@@ -33,7 +31,6 @@ def fixPath(command):
 class OppaiError(Exception):
 	def __init__(self, error):
 		self.error = error
-
 
 class oppai:
 	"""
@@ -99,6 +96,21 @@ class oppai:
 			raise OppaiError(err)
 		log.debug("oppai ~> No errors!")
 
+	@staticmethod
+	def _runOppaiProcess(command):
+		log.debug("oppai ~> running {}".format(command))
+		process = subprocess.run(command, shell=True, stdout=subprocess.PIPE)
+		try:
+			output = json.loads(process.stdout.decode("utf-8", errors="ignore"))
+			pp = output["pp"]
+			stars = output["stars"]
+
+			log.debug("oppai ~> full output: {}".format(output))
+			log.debug("oppai ~> pp: {}, stars: {}".format(pp, stars))
+		except (json.JSONDecodeError, IndexError):
+			raise OppaiError("invalid json output")
+		return pp, stars
+
 	def calculatePP(self):
 		"""
 		Calculate total pp value with oppai and return it
@@ -113,61 +125,37 @@ class oppai:
 			log.debug("oppai ~> Map file: {}".format(mapFile))
 			mapsHelper.cacheMap(mapFile, self.beatmap)
 
-			# Parse beatmap
-			log.debug("oppai ~> About to parse beatmap")
-			pyoppai.parse(
-				mapFile,
-				self._oppai_beatmap,
-				self._oppai_buffer,
-				self.BUFSIZE,
-				False,
-				self.OPPAI_FOLDER # /oppai_cache
-			)
-			self.checkOppaiErrors()
-			log.debug("oppai ~> Beatmap parsed with no errors")
-
-			# Create diffcalc context and calculate difficulty
-			log.debug("oppai ~> About to calculate difficulty")
-
 			# Use only mods supported by oppai
 			modsFixed = self.mods & 5979
-			if modsFixed > 0:
-				pyoppai.apply_mods(self._oppai_beatmap, modsFixed)
-			self._oppai_diffcalc_ctx = pyoppai.new_d_calc_ctx(self._oppai_ctx)
-			diff_stars, diff_aim, diff_speed, _, _, _, _ = pyoppai.d_calc(self._oppai_diffcalc_ctx, self._oppai_beatmap)
-			self.checkOppaiErrors()
-			log.debug("oppai ~> Difficulty calculated with no errors. {}*, {} aim, {} speed".format(diff_stars, diff_aim, diff_speed))
+			command = "./pp/oppai-ng/oppai {}".format(mapFile)
+			if not self.tillerino:
+				# force acc only for non-tillerino calculation
+				# acc is set for each subprocess if calculating tillerino-like pp sets
+				if self.acc > 0:
+					command += " {acc:.2f}%".format(acc=self.acc)
+			if self.mods > 0:
+				command += " +{mods}".format(mods=scoreUtils.readableMods(modsFixed))
+			if self.combo > 0:
+				command += " {combo}x".format(combo=self.combo)
+			if self.misses > 0:
+				command += " {misses}xm".format(misses=self.misses)
+			command += " -ojson"
 
 			# Calculate pp
-			log.debug("oppai ~> About to calculate PP")
 			if not self.tillerino:
-				_, total_pp, aim_pp, speed_pp, acc_pp =  pyoppai.pp_calc_acc(self._oppai_ctx, diff_aim, diff_speed, self._oppai_beatmap,
-													                   self.acc if self.acc > 0 else 100,
-													                   modsFixed,
-													                   self.combo if self.combo > 0 else 0xFFFF,
-													                   self.misses)
-				self.checkOppaiErrors()
-				log.debug("oppai ~> PP Calculated with no errors. {}pp, {} aim pp, {} speed pp, {} acc pp".format(
-					total_pp, aim_pp, speed_pp, acc_pp
-				))
-				self.pp = total_pp
+				self.pp, self.stars = self._runOppaiProcess(command)
 			else:
 				pp_list = []
 				for acc in [100, 99, 98, 95]:
-					log.debug("oppai ~> Calculating PP with acc {}%".format(acc))
-					_, total_pp, aim_pp, speed_pp, acc_pp = pyoppai.pp_calc_acc(self._oppai_ctx, diff_aim, diff_speed,
-					                                                      self._oppai_beatmap, acc, modsFixed)
-					self.checkOppaiErrors()
-					pp_list.append(total_pp)
-					log.debug("oppai ~> PP Calculated with no errors. {}pp, {} aim pp, {} speed pp, {} acc pp".format(
-						total_pp, aim_pp, speed_pp, acc_pp
-					))
-					self.pp = pp_list
-			self.stars = diff_stars
+					temp_command = command
+					temp_command += " {acc:.2f}%".format(acc=acc)
+					pp, self.stars = self._runOppaiProcess(temp_command)
+					pp_list.append(pp)
+				self.pp = pp_list
 
-			log.debug("oppai ~> Calculated PP: {}".format(self.pp))
+			log.debug("oppai ~> Calculated PP: {}, stars: {}".format(self.pp, self.stars))
 		except OppaiError:
-			log.error("oppai ~> pyoppai error!")
+			log.error("oppai ~> oppai-ng error!")
 			self.pp = 0
 		except exceptions.osuApiFailException:
 			log.error("oppai ~> osu!api error!")
