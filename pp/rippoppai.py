@@ -131,13 +131,24 @@ class oppai:
 
 			# Calculate pp
 			if not self.tillerino:
-				self.pp, self.stars = self._runOppaiProcess(command)
+				# self.pp, self.stars = self._runOppaiProcess(command)
+				temp_pp, self.stars = self._runOppaiProcess(command)
+				if self.gameMode == gameModes.TAIKO and self.beatmap.starsStd > 0 and temp_pp > 800:
+					self.pp = 0
+				else:
+					self.pp = temp_pp
 			else:
 				pp_list = []
 				for acc in [100, 99, 98, 95]:
 					temp_command = command
 					temp_command += " {acc:.2f}%".format(acc=acc)
 					pp, self.stars = self._runOppaiProcess(temp_command)
+
+					# If this is a broken converted, set all pp to 0 and break the loop
+					if self.gameMode == gameModes.TAIKO and self.beatmap.starsStd > 0 and pp > 800:
+						pp_list = [0, 0, 0, 0]
+						break
+
 					pp_list.append(pp)
 				self.pp = pp_list
 
