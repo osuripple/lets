@@ -195,6 +195,7 @@ if __name__ == "__main__":
 	parser.add_argument('-m','--mods', help="calculate pp for scores with this mod (mod id)", required=False)
 	parser.add_argument('-g','--gamemode', help="calculate pp for scores with this gamemode (std:0, taiko: 1, mania:3)", required=False)
 	parser.add_argument('-u','--userid', help="calculate pp for scores played by a specific user (userID)", required=False)
+	parser.add_argument('-b', '--beatmapid', help="calculate pp for scores played by a specific beatmap (beatmapID)", required=False)
 	parser.add_argument('-n','--username', help="calculate pp for scores played by a specific user (username)", required=False)
 	parser.add_argument('-a','--apirefresh', help="always fetch beatmap data from osu!api", required=False, action='store_true')
 	parser.add_argument('-w','--workers', help="force number of workers", required=False)
@@ -274,6 +275,11 @@ if __name__ == "__main__":
 			scores = glob.db.fetchAll("SELECT * FROM scores LEFT JOIN beatmaps ON scores.beatmap_md5 = beatmaps.beatmap_md5 WHERE scores.play_mode != 2 AND scores.completed = 3 AND scores.userid = %s;", [uid])
 			massRecalc(scores, workers)
 		# TODO: error message xd
+	elif args.beatmapid is not None:
+		# beatmap id recalc
+		print("> Recalculating pp for beatmap id {}".format(args.beatmapid))
+		scores = glob.db.fetchAll("SELECT * FROM scores LEFT JOIN beatmaps ON scores.beatmap_md5 = beatmaps.beatmap_md5 WHERE scores.play_mode != 2 AND scores.completed = 3 AND beatmaps.beatmap_id = %s;", [args.beatmapid])
+		massRecalc(scores, workers)
 
 	# The endTM
 	consoleHelper.printColored("Done!", bcolors.GREEN)
