@@ -8,10 +8,10 @@ from helpers import osuapiHelper
 def isBeatmap(fileName=None, content=None):
     if fileName is not None:
         with open(fileName, "r") as f:
-            firstLine = f.readline().strip()
+            firstLine = f.readline().encode("ascii", errors="ignore").decode().strip()
     elif content is not None:
         try:
-            firstLine = content.split("\n")[0].strip()
+            firstLine = content.split("\n")[0].encode("ascii", errors="ignore").decode().strip()
         except IndexError:
             return False
     else:
