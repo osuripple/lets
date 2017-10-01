@@ -13,8 +13,17 @@ class handler(requestsManager.asyncRequestHandler):
 	@tornado.gen.engine
 	@sentry.captureTornado
 	def asyncGet(self, bid):
-		self.set_status(302, "Moved Temporarily")
-		url = "http://bm6.ppy.sh/{}.osz".format(bid)
-		self.add_header("Location", url)
-		self.add_header("Cache-Control", "no-cache")
-		self.add_header("Pragma", "no-cache")
+		try:
+			noVideo = bid.endswith("n")
+			if noVideo:
+				bid = bid[:-1]
+			bid = int(bid)
+
+			self.set_status(302, "Moved Temporarily")
+			url = "https://bm6.ppy.sh/d/{}{}".format(bid, "?novideo" if noVideo else "")
+			self.add_header("Location", url)
+			self.add_header("Cache-Control", "no-cache")
+			self.add_header("Pragma", "no-cache")
+		except ValueError:
+			self.set_status(400)
+			self.write("Invalid set id")
