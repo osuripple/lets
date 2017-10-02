@@ -118,8 +118,19 @@ class handler(requestsManager.asyncRequestHandler):
 
 			# Calculate PP
 			# NOTE: PP are std and mania only
+			ppCalcException = None
 			if s.gameMode != gameModes.CTB:
-				s.calculatePP()
+				try:
+					s.calculatePP()
+				except Exception as e:
+					# Intercept ALL exceptions and bypass them.
+					# We want to save scores even in case PP calc fails
+					# due to some rippoppai bugs.
+					# I know this is bad, but who cares since I'll rewrite
+					# the scores server again.
+					log.error("Caught an exception in pp calculation, re-raising after saving score in db")
+					s.pp = 0
+					ppCalcException = e
 
 			# Restrict obvious cheaters
 			if (s.pp >= 700 and s.gameMode == gameModes.STD) and restricted == False:
@@ -185,6 +196,13 @@ class handler(requestsManager.asyncRequestHandler):
 			if s.scoreID:
 				glob.redis.publish("api:score_submission", s.scoreID)
 
+			# Re-raise pp calc exception after saving score, cake, replay etc
+			# so Sentry can track it without breaking score submission
+			if ppCalcException is not None:
+				raise ppCalcException
+
+			# If there was no exception, update stats and build score submitted panel
+			# We don't have to do that since stats are recalculated with the cron
 			# Update beatmap playcount (and passcount)
 			beatmap.incrementPlaycount(s.fileMd5, s.passed)
 
