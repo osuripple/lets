@@ -162,7 +162,6 @@ class oppai:
 		except Exception as e:
 			log.error("oppai ~> Unhandled exception: {}".format(str(e)))
 			self.pp = 0
-			raise e
+			raise
 		finally:
-			log.debug("oppai ~> Shutting down and returning {}pp".format(self.pp))
-			return self.pp
+			log.debug("oppai ~> Shutting down, pp = {}".format(self.pp))
