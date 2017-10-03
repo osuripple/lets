@@ -88,13 +88,19 @@ class oppai:
 		process = subprocess.run(command, shell=True, stdout=subprocess.PIPE)
 		try:
 			output = json.loads(process.stdout.decode("utf-8", errors="ignore"))
+			if "code" not in output or "errstr" not in output:
+				raise OppaiError("No code in json output")
+			if output["code"] != 200:
+				raise OppaiError("oppai error {}: {}".format(output["code"], output["errstr"]))
+			if "pp" not in output or "stars" not in output:
+				raise OppaiError("No pp/stars entry in oppai json output")
 			pp = output["pp"]
 			stars = output["stars"]
 
 			log.debug("oppai ~> full output: {}".format(output))
 			log.debug("oppai ~> pp: {}, stars: {}".format(pp, stars))
-		except (json.JSONDecodeError, IndexError):
-			raise OppaiError("invalid json output")
+		except (json.JSONDecodeError, IndexError, OppaiError) as e:
+			raise OppaiError(e)
 		return pp, stars
 
 	def calculatePP(self):
