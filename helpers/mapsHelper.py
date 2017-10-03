@@ -7,11 +7,11 @@ from helpers import osuapiHelper
 
 def isBeatmap(fileName=None, content=None):
     if fileName is not None:
-        with open(fileName, "r") as f:
-            firstLine = f.readline().encode("ascii", errors="ignore").decode().strip()
+        with open(fileName, "rb") as f:
+            firstLine = f.readline().decode("utf-8-sig").strip()
     elif content is not None:
         try:
-            firstLine = content.split("\n")[0].encode("ascii", errors="ignore").decode().strip()
+            firstLine = content.decode("utf-8-sig").split("\n")[0].strip()
         except IndexError:
             return False
     else:
@@ -47,7 +47,7 @@ def cacheMap(mapFile, _beatmap):
 
         # Save .osu file
         with open(mapFile, "wb+") as f:
-            f.write(fileContent.encode("utf-8"))
+            f.write(fileContent)
     else:
         # Map file is already in folder
         log.debug("maps ~> Beatmap found in cache!")
