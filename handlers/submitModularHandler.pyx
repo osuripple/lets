@@ -164,8 +164,13 @@ class handler(requestsManager.asyncRequestHandler):
 				userHelper.appendNotes(userID, "-- Restricted due to clientside anti cheat flag ({}) (cheated score id: {})".format(haxFlags, s.scoreID))
 				log.warning("**{}** ({}) has been restricted due clientside anti cheat flag **({})**".format(username, userID, haxFlags), "cm")'''
 
+			# Make sure the score is not memed
+			if s.gameMode == gameModes.MANIA and s.score > 1000000 and not restricted:
+				userUtils.restrict(userID)
+				userUtils.appendNotes(userID, "Restricted due to mania score > 1000000 (score submitter)")
+
 			# Make sure process list has been passed
-			if s.completed == 3 and "pl" not in self.request.arguments and restricted == False:
+			if s.completed == 3 and "pl" not in self.request.arguments and not restricted:
 				userUtils.restrict(userID)
 				userUtils.appendNotes(userID, "Restricted due to missing process list while submitting a score (most likely he used a score submitter)")
 				log.warning("**{}** ({}) has been restricted due to missing process list".format(username, userID), "cm")
