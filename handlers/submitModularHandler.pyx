@@ -164,10 +164,41 @@ class handler(requestsManager.asyncRequestHandler):
 				userHelper.appendNotes(userID, "-- Restricted due to clientside anti cheat flag ({}) (cheated score id: {})".format(haxFlags, s.scoreID))
 				log.warning("**{}** ({}) has been restricted due clientside anti cheat flag **({})**".format(username, userID, haxFlags), "cm")'''
 
+			# Mi stavo preparando per scendere
+			# Mi stavo preparando per comprare i dolci
+			# Oggi e' il compleanno di mio nipote
+			# Dovevamo festeggiare staseraaaa
+			# ----
+			# Da un momento all'altro ho sentito una signora
+			# Correte, correte se ne e' sceso un muro
+			# Da un momento all'altro ho sentito una signora
+			# Correte, correte se ne e' sceso un muro
+			# --- (io sto angora in ganottier ecche qua) ---
+			# Sono scesa e ho visto ilpalazzochesenee'caduto
+			# Ho preso a mio cognato, che stava svenuto
+			# Mia figlia e' scesa, mia figlia ha urlato
+			# "C'e' qualcuno sotto, C'e' qualcuno sotto"
+			# "C'e' qualcuno sotto, C'e' qualcuno sottoooooooooo"
+			# --- (scusatm che sto angor emozzionat non parlo ancora moltobbene) ---
+			# Da un momento all'altro ho sentito una signora
+			# Correte, correte se ne e' sceso un muro
+			# Da un momento all'altro ho sentito una signora
+			# Correte, correte se ne e' sceso un muro
+			# -- THIS IS THE PART WITH THE GOOD SOLO (cit <3) --
+			# Vedete quel palazzo la' vicino
+			# Se ne sta scendendo un po' alla volta
+			# Piano piano, devono prendere provvedimenti
+			# Al centro qua hanno fatto una bella ristrututuitriazione
+			# Hanno mess le panghina le fondane iffiori
+			# LALALALALALALALALA
+			if s.score < 0 or s.score > (2 ** 63) - 1:
+				userUtils.ban(userID)
+				userUtils.appendNotes(userID, "Banned due to negative score (score submitter)")
+
 			# Make sure the score is not memed
-			if s.gameMode == gameModes.MANIA and s.score > 1000000 and not restricted:
-				userUtils.restrict(userID)
-				userUtils.appendNotes(userID, "Restricted due to mania score > 1000000 (score submitter)")
+			if s.gameMode == gameModes.MANIA and s.score > 1000000:
+				userUtils.ban(userID)
+				userUtils.appendNotes(userID, "Banned due to mania score > 1000000 (score submitter)")
 
 			# Make sure process list has been passed
 			if s.completed == 3 and "pl" not in self.request.arguments and not restricted:
