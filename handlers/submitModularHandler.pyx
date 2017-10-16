@@ -202,7 +202,7 @@ class handler(requestsManager.asyncRequestHandler):
 				userUtils.appendNotes(userID, "Banned due to mania score > 1000000 (score submitter)")
 
 			# Ci metto la faccia, ci metto la testa e ci metto il mio cuore
-			if ((s.mods & mods.DT) > 0 and (s.mods & mods.HALFTIME) > 0) \
+			if ((s.mods & mods.DOUBLETIME) > 0 and (s.mods & mods.HALFTIME) > 0) \
 					or ((s.mods & mods.HARDROCK) > 0 and (s.mods & mods.EASY) > 0)\
 					or ((s.mods & mods.SUDDENDEATH) > 0 and (s.mods & mods.NOFAIL) > 0):
 				userUtils.ban(userID)
