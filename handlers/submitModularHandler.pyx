@@ -22,6 +22,7 @@ from helpers import aeshelper
 from helpers import leaderboardHelper
 from objects import glob
 from secret import butterCake
+from common.constants import mods
 
 MODULE_NAME = "submit_modular"
 class handler(requestsManager.asyncRequestHandler):
@@ -199,6 +200,13 @@ class handler(requestsManager.asyncRequestHandler):
 			if s.gameMode == gameModes.MANIA and s.score > 1000000:
 				userUtils.ban(userID)
 				userUtils.appendNotes(userID, "Banned due to mania score > 1000000 (score submitter)")
+
+			# Ci metto la faccia, ci metto la testa e ci metto il mio cuore
+			if ((s.mods & mods.DT) > 0 and (s.mods & mods.HALFTIME) > 0) \
+					or ((s.mods & mods.HARDROCK) > 0 and (s.mods & mods.EASY) > 0)\
+					or ((s.mods & mods.SUDDENDEATH) > 0 and (s.mods & mods.NOFAIL) > 0):
+				userUtils.ban(userID)
+				userUtils.appendNotes(userID, "Impossible mod combination {} (score submitter)".format(s.mods))
 
 			# Make sure process list has been passed
 			if s.completed == 3 and "pl" not in self.request.arguments and not restricted:
