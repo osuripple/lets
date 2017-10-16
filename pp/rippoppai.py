@@ -139,7 +139,9 @@ class oppai:
 			if not self.tillerino:
 				# self.pp, self.stars = self._runOppaiProcess(command)
 				temp_pp, self.stars = self._runOppaiProcess(command)
-				if self.gameMode == gameModes.TAIKO and self.beatmap.starsStd > 0 and temp_pp > 800:
+				if (self.gameMode == gameModes.TAIKO and self.beatmap.starsStd > 0 and temp_pp > 800) or \
+					self.stars > 50:
+					# Invalidate pp for bugged taiko converteds and bugged inf pp std maps
 					self.pp = 0
 				else:
 					self.pp = temp_pp
