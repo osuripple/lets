@@ -77,6 +77,12 @@ class oppai:
 			# Otherwise, set acc and mods from params (tillerino)
 			self.acc = acc
 			self.mods = mods
+			if self.beatmap.starsStd > 0:
+				self.gameMode = gameModes.STD
+			elif self.beatmap.starsTaiko > 0:
+				self.gameMode = gameModes.TAIKO
+			else:
+				self.gameMode = None
 
 		# Calculate pp
 		log.debug("oppai ~> Initialized oppai diffcalc")
@@ -119,6 +125,11 @@ class oppai:
 
 			# Use only mods supported by oppai
 			modsFixed = self.mods & 5979
+
+			# Check gamemode
+			if self.gameMode != gameModes.STD and self.gameMode != gameModes.TAIKO:
+				raise exceptions.unsupportedGameModeException()
+
 			command = "./pp/oppai-ng/oppai {}".format(mapFile)
 			if not self.tillerino:
 				# force acc only for non-tillerino calculation
@@ -166,6 +177,9 @@ class oppai:
 			self.pp = 0
 		except exceptions.osuApiFailException:
 			log.error("oppai ~> osu!api error!")
+			self.pp = 0
+		except exceptions.unsupportedGameModeException:
+			log.error("oppai ~> Unsupported gamemode")
 			self.pp = 0
 		except Exception as e:
 			log.error("oppai ~> Unhandled exception: {}".format(str(e)))
