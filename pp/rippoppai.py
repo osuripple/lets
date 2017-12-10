@@ -124,7 +124,7 @@ class oppai:
 			mapsHelper.cacheMap(mapFile, self.beatmap)
 
 			# Use only mods supported by oppai
-			modsFixed = self.mods & 5979
+			modsFixed = self.mods & 5983
 
 			# Check gamemode
 			if self.gameMode != gameModes.STD and self.gameMode != gameModes.TAIKO:
