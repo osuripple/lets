@@ -1,29 +1,24 @@
 ## LETS [![Code Health](https://landscape.io/github/osuripple/lets/master/landscape.svg?style=flat)](https://landscape.io/github/osuripple/lets/master)
 
-- Origin: https://git.zxq.co/ripple/lets
+- Origin: https://zxq.co/ripple/lets
 - Mirror: https://github.com/osuripple/lets
 
 ## Latest Essential Tatoe Server
 This server handles every non real time client feature, so:
 - Ingame scoreboards
 - Score submission
-- PP calculation through `oppai` (std), `wifipiano2` (mania) and `catch-the-pp` (ctb)
 - Screenshots
 - Replays
-- osu!direct
-- Tillerino-like API
+- osu!direct, thanks to [cheesegull](https://github.com/osuripple/cheesegull)
+- Tillerino-like API (partially broken)
+- osu!standard and taiko pp calculation with [oppai-ng](https://github.com/francesco149/oppai-ng), made by Franc[e]sco
+- osu!mania pp calculation with `wifipiano2`, made by Nyo with reference code from [Tom94's osu-performance](https://github.com/ppy/osu-performance)
+- catch the beat pp calculation with [catch-the-pp](https://github.com/osuripple/catch-the-pp), made by Sunpy and cythonized by Nyo
 
 ## Requirements
-- Python 3.5
+- Python 3.5+
 - Cython
 - C compiler
-- MySQLdb (`mysqlclient`)
-- Tornado
-- Bcrypt
-- Progressbar2 (only for `tomejerry.py`  )
-- Raven
-- Datadog
-- oppai
 
 ## How to set up LETS
 First of all, initialize and update the submodules
@@ -35,6 +30,7 @@ afterwards, install the required dependencies with pip
 $ pip install -r requirements.txt
 ```
 compile all `*.pyx` files to `*.so` or `*.dll` files using `setup.py` (distutils file).
+This compiles `catch-the-pp` as well.
 ```
 $ python3 setup.py build_ext --inplace
 ```
@@ -43,25 +39,12 @@ then, run LETS once to create the default config file and edit it
 $ python3 lets.py
 $ nano config.ini
 ```
-finally, configure oppai as described below.
-
-## How to set up oppai with LETS
-LETS uses lolisamurai's oppai as pp calculator for std. We use a slightly modified version of oppai, you can find it [here](https://github.com/osuripple/oppai).  
-Go one directory above LETS (in the same directory where you have old-frontend, pep.py, lets and so on) and clone `oppai` inside the `oppai` folder, compile it with `make` and create the `maps` folder:
-```
-$ cd ..
-$ git clone https://github.com/osuripple/oppai.git
-$ cd oppai
-$ make
-$ chmod +x oppai
-$ mkdir maps
-```
-*Note: `wifipiano` (mania pp calculator) and `catch-the-pp` don't require any configuration to work with LETS.*
+finally, compile oppai-ng (inside pp/oppai-ng).
 
 ## tomejerry.py
 `tomejerry.py` is a tool that allows you to calculate pp for specific scores. It's extremely useful to do mass PP recalculations if you mess something up. It uses lets' config and packages, so make sure lets is installed and configured correctly before using it.  
 `tomejerry` supports a lot of parameters, the main ones are:  
-- `-r`, to recalculate PP for every score on every game mode (only std and mania are supported at the moment)    
+- `-r`, to recalculate PP for every score on every game mode
 - `-z` to calculate PP for scores with 0 pp  
 - `-g x` to recalculate PP for scores for `x` gamemode (0: std, 1: taiko, 2: ctb, 3: mania)
 - `-i x` to recalculate PP for score with `x` id  
