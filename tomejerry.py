@@ -193,7 +193,7 @@ if __name__ == "__main__":
 	parser.add_argument('-z','--zero', help="calculate pp for 0 pp scores", required=False, action='store_true')
 	parser.add_argument('-i','--id', help="calculate pp for score with this id", required=False)
 	parser.add_argument('-m','--mods', help="calculate pp for scores with this mod (mod id)", required=False)
-	parser.add_argument('-g','--gamemode', help="calculate pp for scores with this gamemode (std:0, taiko: 1, mania:3)", required=False)
+	parser.add_argument('-g','--gamemode', help="calculate pp for scores with this gamemode (std:0, taiko: 1, ctb:2, mania:3)", required=False)
 	parser.add_argument('-u','--userid', help="calculate pp for scores played by a specific user (userID)", required=False)
 	parser.add_argument('-b', '--beatmapid', help="calculate pp for scores played by a specific beatmap (beatmapID)", required=False)
 	parser.add_argument('-n','--username', help="calculate pp for scores played by a specific user (username)", required=False)

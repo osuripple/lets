@@ -120,18 +120,17 @@ class handler(requestsManager.asyncRequestHandler):
 			# Calculate PP
 			# NOTE: PP are std and mania only
 			ppCalcException = None
-			if s.gameMode != gameModes.CTB:
-				try:
-					s.calculatePP()
-				except Exception as e:
-					# Intercept ALL exceptions and bypass them.
-					# We want to save scores even in case PP calc fails
-					# due to some rippoppai bugs.
-					# I know this is bad, but who cares since I'll rewrite
-					# the scores server again.
-					log.error("Caught an exception in pp calculation, re-raising after saving score in db")
-					s.pp = 0
-					ppCalcException = e
+			try:
+				s.calculatePP()
+			except Exception as e:
+				# Intercept ALL exceptions and bypass them.
+				# We want to save scores even in case PP calc fails
+				# due to some rippoppai bugs.
+				# I know this is bad, but who cares since I'll rewrite
+				# the scores server again.
+				log.error("Caught an exception in pp calculation, re-raising after saving score in db")
+				s.pp = 0
+				ppCalcException = e
 
 			# Restrict obvious cheaters
 			if (s.pp >= 700 and s.gameMode == gameModes.STD) and restricted == False:
@@ -277,16 +276,10 @@ class handler(requestsManager.asyncRequestHandler):
 				newUserData = userUtils.getUserStats(userID, s.gameMode)
 				glob.userStatsCache.update(userID, s.gameMode, newUserData)
 
-				# Use pp/score as "total" based on game mode
-				if s.gameMode != gameModes.CTB:
-					criteria = "pp"
-				else:
-					criteria = "rankedScore"
-
 				# Update leaderboard (global and country) if score/pp has changed
-				if s.completed == 3 and newUserData[criteria] != oldUserData[criteria]:
-					leaderboardHelper.update(userID, newUserData[criteria], s.gameMode)
-					leaderboardHelper.updateCountry(userID, newUserData[criteria], s.gameMode)
+				if s.completed == 3 and newUserData["pp"] != oldUserData["pp"]:
+					leaderboardHelper.update(userID, newUserData["pp"], s.gameMode)
+					leaderboardHelper.updateCountry(userID, newUserData["pp"], s.gameMode)
 
 			# TODO: Update total hits and max combo
 			# Update latest activity

@@ -125,7 +125,7 @@ class handler(requestsManager.asyncRequestHandler):
 					else:
 						returnPP = oppai.pp
 			else:
-				raise exceptions.unsupportedGameModeException
+				raise exceptions.unsupportedGameModeException()
 
 			# Data to return
 			data = {

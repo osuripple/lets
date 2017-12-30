@@ -7,7 +7,7 @@
 This server handles every non real time client feature, so:
 - Ingame scoreboards
 - Score submission
-- PP calculation through `oppai` (std) and `wifipiano2` (mania)
+- PP calculation through `oppai` (std), `wifipiano2` (mania) and `catch-the-pp` (ctb)
 - Screenshots
 - Replays
 - osu!direct
@@ -34,7 +34,7 @@ afterwards, install the required dependencies with pip
 ```
 $ pip install -r requirements.txt
 ```
-compile all `*.pyx` files to `*.so` or `*.dll` files using `setup.py` (distutils file)
+compile all `*.pyx` files to `*.so` or `*.dll` files using `setup.py` (distutils file).
 ```
 $ python3 setup.py build_ext --inplace
 ```
@@ -56,14 +56,14 @@ $ make
 $ chmod +x oppai
 $ mkdir maps
 ```
-*Note: `wifipiano` (mania pp calculator) is tailor-made for LETS and doesn't require any configuration.*
+*Note: `wifipiano` (mania pp calculator) and `catch-the-pp` don't require any configuration to work with LETS.*
 
 ## tomejerry.py
 `tomejerry.py` is a tool that allows you to calculate pp for specific scores. It's extremely useful to do mass PP recalculations if you mess something up. It uses lets' config and packages, so make sure lets is installed and configured correctly before using it.  
 `tomejerry` supports a lot of parameters, the main ones are:  
 - `-r`, to recalculate PP for every score on every game mode (only std and mania are supported at the moment)    
 - `-z` to calculate PP for scores with 0 pp  
-- `-g x` to recalculate PP for scores for `x` gamemode (0: std, 3: mania)  
+- `-g x` to recalculate PP for scores for `x` gamemode (0: std, 1: taiko, 2: ctb, 3: mania)
 - `-i x` to recalculate PP for score with `x` id  
 - `-n x` to recalculate PP for scores submitted by user with `x` username  
 For a full list of all the arguments supported by `tomejerry`, run `python3 tomejerry.py --help`

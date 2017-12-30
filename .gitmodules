@@ -7,3 +7,6 @@
 [submodule "pp/oppai-ng"]
 	path = pp/oppai-ng
 	url = https://github.com/Francesco149/oppai-ng.git
+[submodule "pp/catch_the_pp"]
+	path = pp/catch_the_pp
+	url = https://github.com/osuripple/catch-the-pp.git
