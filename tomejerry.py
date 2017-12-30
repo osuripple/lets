@@ -97,22 +97,28 @@ if __name__ == "__main__":
 
 			# Make sure scores have been passed
 			if self.scores is not None:
-				for i in self.scores:
-					# Loop through all scores
-					# Recalculate pp
-					recalcFromScoreData(i)
+					for i in self.scores:
+						try:
+							# Loop through all scores
+							# Recalculate pp
+							recalcFromScoreData(i)
 
-					# Calculate percentage
-					self.perc = (100*self.current)/self.total
+							# Calculate percentage
+							self.perc = (100*self.current)/self.total
 
-					# Update recalculated count
-					self.current+=1
+							# Update recalculated count
+							self.current+=1
+						except Exception as e:
+							consoleHelper.printColored("LA SIGNORA ANNA È MORTA! ({})".format(e), bcolors.YELLOW)
 
-				# Recalculation finished, save new pp values in db
-				consoleHelper.printColored("[WORKER{}] PP calc for this worker finished. Saving results in db...".format(self.id), bcolors.PINK)
-				for i in self.scores:
-					# Loop through all scores and update pp in db
-					glob.db.execute("UPDATE scores SET pp = %s WHERE id = %s", [i["pp"], i["id"]])
+					# Recalculation finished, save new pp values in db
+					consoleHelper.printColored("[WORKER{}] PP calc for this worker finished. Saving results in db...".format(self.id), bcolors.PINK)
+					try:
+						for i in self.scores:
+							# Loop through all scores and update pp in db
+							glob.db.execute("UPDATE scores SET pp = %s WHERE id = %s", [i["pp"], i["id"]])
+					except:
+						consoleHelper.printColored("Errore query stampa piede intensifies", bcolors.RED)
 
 			# This worker has finished his work
 			self.done = True
