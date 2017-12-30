@@ -260,7 +260,7 @@ if __name__ == "__main__":
 	elif args.gamemode is not None:
 		# game mode recalc
 		print("> Recalculating pp for gamemode {}".format(args.gamemode))
-		scores = glob.db.fetchAll("SELECT * FROM scores LEFT JOIN beatmaps ON scores.beatmap_md5 = beatmaps.beatmap_md5 WHERE scores.completed = 3", [args.gamemode])
+		scores = glob.db.fetchAll("SELECT * FROM scores LEFT JOIN beatmaps ON scores.beatmap_md5 = beatmaps.beatmap_md5 WHERE scores.play_mode = %s AND scores.completed = 3", [args.gamemode])
 		massRecalc(scores, workers)
 	elif args.userid is not None:
 		# User ID recalc
