@@ -235,17 +235,17 @@ if __name__ == "__main__":
 	if args.zero:
 		# 0pp recalc
 		print("> Recalculating pp for zero-pp scores")
-		scores = glob.db.fetchAll("SELECT * FROM scores LEFT JOIN beatmaps ON scores.beatmap_md5 = beatmaps.beatmap_md5 WHERE scores.play_mode != 2 AND scores.completed = 3 AND scores.pp = 0 ORDER BY scores.id DESC;")
+		scores = glob.db.fetchAll("SELECT * FROM scores LEFT JOIN beatmaps ON scores.beatmap_md5 = beatmaps.beatmap_md5 WHERE scores.completed = 3 AND scores.pp = 0 ORDER BY scores.id DESC;")
 		massRecalc(scores, workers)
 	elif args.recalc:
 		# Full recalc
 		print("> Recalculating pp for every score")
-		scores = glob.db.fetchAll("SELECT * FROM scores LEFT JOIN beatmaps ON scores.beatmap_md5 = beatmaps.beatmap_md5 WHERE scores.play_mode != 2 AND scores.completed = 3 ORDER BY scores.id DESC;")
+		scores = glob.db.fetchAll("SELECT * FROM scores LEFT JOIN beatmaps ON scores.beatmap_md5 = beatmaps.beatmap_md5 WHERE scores.completed = 3 ORDER BY scores.id DESC;")
 		massRecalc(scores, workers)
 	elif args.mods is not None:
 		# Mods recalc
 		print("> Recalculating pp for scores with mods {}".format(args.mods))
-		allScores = glob.db.fetchAll("SELECT * FROM scores LEFT JOIN beatmaps ON scores.beatmap_md5 = beatmaps.beatmap_md5 WHERE scores.play_mode != 2 AND scores.completed = 3 ORDER BY scores.id DESC;")
+		allScores = glob.db.fetchAll("SELECT * FROM scores LEFT JOIN beatmaps ON scores.beatmap_md5 = beatmaps.beatmap_md5 WHERE AND scores.completed = 3 ORDER BY scores.id DESC;")
 		scores = []
 		for i in allScores:
 			if i["mods"] & int(args.mods) > 0:
@@ -255,30 +255,30 @@ if __name__ == "__main__":
 	elif args.id is not None:
 		# Score ID recalc
 		print("> Recalculating pp for score ID {}".format(args.id))
-		scores = glob.db.fetchAll("SELECT * FROM scores LEFT JOIN beatmaps ON scores.beatmap_md5 = beatmaps.beatmap_md5 WHERE scores.play_mode != 2 AND scores.id = %s;", [args.id])
+		scores = glob.db.fetchAll("SELECT * FROM scores LEFT JOIN beatmaps ON scores.beatmap_md5 = beatmaps.beatmap_md5 WHERE scores.id = %s;", [args.id])
 		massRecalc(scores, workers)
 	elif args.gamemode is not None:
 		# game mode recalc
 		print("> Recalculating pp for gamemode {}".format(args.gamemode))
-		scores = glob.db.fetchAll("SELECT * FROM scores LEFT JOIN beatmaps ON scores.beatmap_md5 = beatmaps.beatmap_md5 WHERE scores.play_mode = %s AND scores.completed = 3", [args.gamemode])
+		scores = glob.db.fetchAll("SELECT * FROM scores LEFT JOIN beatmaps ON scores.beatmap_md5 = beatmaps.beatmap_md5 WHERE scores.completed = 3", [args.gamemode])
 		massRecalc(scores, workers)
 	elif args.userid is not None:
 		# User ID recalc
 		print("> Recalculating pp for user {}".format(args.userid))
-		scores = glob.db.fetchAll("SELECT * FROM scores LEFT JOIN beatmaps ON scores.beatmap_md5 = beatmaps.beatmap_md5 WHERE scores.play_mode != 2 AND scores.completed = 3 AND scores.userid = %s;", [args.userid])
+		scores = glob.db.fetchAll("SELECT * FROM scores LEFT JOIN beatmaps ON scores.beatmap_md5 = beatmaps.beatmap_md5 WHERE scores.completed = 3 AND scores.userid = %s;", [args.userid])
 		massRecalc(scores, workers)
 	elif args.username is not None:
 		# Username recalc
 		print("> Recalculating pp for user {}".format(args.username))
 		uid = userUtils.getID(args.username)
 		if uid != 0:
-			scores = glob.db.fetchAll("SELECT * FROM scores LEFT JOIN beatmaps ON scores.beatmap_md5 = beatmaps.beatmap_md5 WHERE scores.play_mode != 2 AND scores.completed = 3 AND scores.userid = %s;", [uid])
+			scores = glob.db.fetchAll("SELECT * FROM scores LEFT JOIN beatmaps ON scores.beatmap_md5 = beatmaps.beatmap_md5 WHERE scores.completed = 3 AND scores.userid = %s;", [uid])
 			massRecalc(scores, workers)
 		# TODO: error message xd
 	elif args.beatmapid is not None:
 		# beatmap id recalc
 		print("> Recalculating pp for beatmap id {}".format(args.beatmapid))
-		scores = glob.db.fetchAll("SELECT * FROM scores LEFT JOIN beatmaps ON scores.beatmap_md5 = beatmaps.beatmap_md5 WHERE scores.play_mode != 2 AND scores.completed = 3 AND beatmaps.beatmap_id = %s;", [args.beatmapid])
+		scores = glob.db.fetchAll("SELECT * FROM scores LEFT JOIN beatmaps ON scores.beatmap_md5 = beatmaps.beatmap_md5 WHERE scores.completed = 3 AND beatmaps.beatmap_id = %s;", [args.beatmapid])
 		massRecalc(scores, workers)
 
 	# The endTM
