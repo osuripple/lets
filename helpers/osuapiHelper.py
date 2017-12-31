@@ -59,7 +59,7 @@ def getOsuFileFromName(fileName):
 		URL = "{}/web/maps/{}".format(glob.conf.config["osuapi"]["apiurl"], quote(fileName))
 		req = requests.get(URL, timeout=20)
 		req.encoding = "utf-8"
-		response = req.text
+		response = req.content
 	finally:
 		glob.dog.increment(glob.DATADOG_PREFIX+".osu_api.osu_file_requests")
 		return response
@@ -80,7 +80,7 @@ def getOsuFileFromID(beatmapID):
 	response = None
 	try:
 		URL = "{}/osu/{}".format(glob.conf.config["osuapi"]["apiurl"], beatmapID)
-		response = requests.get(URL, timeout=20).text
+		response = requests.get(URL, timeout=20).content
 	finally:
 		glob.dog.increment(glob.DATADOG_PREFIX+".osu_api.osu_file_requests")
 		return response

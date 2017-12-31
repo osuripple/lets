@@ -43,6 +43,12 @@ class handler(requestsManager.asyncRequestHandler):
 			if userUtils.check2FA(userID, ip):
 				raise exceptions.need2FAException(MODULE_NAME, username, ip)
 
+			# Rate limit
+			if glob.redis.get("lets:screenshot:{}".format(userID)) is not None:
+				self.write("no")
+				return
+			glob.redis.set("lets:screenshot:{}".format(userID), 1, 60)
+
 			# Get a random screenshot id
 			found = False
 			screenshotID = ""

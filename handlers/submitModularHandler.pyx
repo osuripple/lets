@@ -21,6 +21,8 @@ from constants import rankedStatuses
 from helpers import aeshelper
 from helpers import leaderboardHelper
 from objects import glob
+from secret import butterCake
+from common.constants import mods
 
 MODULE_NAME = "submit_modular"
 class handler(requestsManager.asyncRequestHandler):
@@ -103,6 +105,9 @@ class handler(requestsManager.asyncRequestHandler):
 			s = score.score()
 			s.setDataFromScoreData(scoreData)
 
+			# Set score stuff missing in score data
+			s.playerUserID = userID
+
 			# Get beatmap info
 			beatmapInfo = beatmap.beatmap()
 			beatmapInfo.setDataFromDB(s.fileMd5)
@@ -114,8 +119,18 @@ class handler(requestsManager.asyncRequestHandler):
 
 			# Calculate PP
 			# NOTE: PP are std and mania only
-			if s.gameMode == gameModes.STD or s.gameMode == gameModes.MANIA:
+			ppCalcException = None
+			try:
 				s.calculatePP()
+			except Exception as e:
+				# Intercept ALL exceptions and bypass them.
+				# We want to save scores even in case PP calc fails
+				# due to some rippoppai bugs.
+				# I know this is bad, but who cares since I'll rewrite
+				# the scores server again.
+				log.error("Caught an exception in pp calculation, re-raising after saving score in db")
+				s.pp = 0
+				ppCalcException = e
 
 			# Restrict obvious cheaters
 			if (s.pp >= 700 and s.gameMode == gameModes.STD) and restricted == False:
@@ -138,10 +153,6 @@ class handler(requestsManager.asyncRequestHandler):
 			# Save score in db
 			s.saveScoreInDB()
 
-			# Let the api know of this score
-			if s.scoreID:
-				glob.redis.publish("api:score_submission", s.scoreID)
-
 			# Client anti-cheat flags
 			'''ignoreFlags = 4
 			if glob.debug == True:
@@ -153,11 +164,57 @@ class handler(requestsManager.asyncRequestHandler):
 				userHelper.appendNotes(userID, "-- Restricted due to clientside anti cheat flag ({}) (cheated score id: {})".format(haxFlags, s.scoreID))
 				log.warning("**{}** ({}) has been restricted due clientside anti cheat flag **({})**".format(username, userID, haxFlags), "cm")'''
 
+			# Mi stavo preparando per scendere
+			# Mi stavo preparando per comprare i dolci
+			# Oggi e' il compleanno di mio nipote
+			# Dovevamo festeggiare staseraaaa
+			# ----
+			# Da un momento all'altro ho sentito una signora
+			# Correte, correte se ne e' sceso un muro
+			# Da un momento all'altro ho sentito una signora
+			# Correte, correte se ne e' sceso un muro
+			# --- (io sto angora in ganottier ecche qua) ---
+			# Sono scesa e ho visto ilpalazzochesenee'caduto
+			# Ho preso a mio cognato, che stava svenuto
+			# Mia figlia e' scesa, mia figlia ha urlato
+			# "C'e' qualcuno sotto, C'e' qualcuno sotto"
+			# "C'e' qualcuno sotto, C'e' qualcuno sottoooooooooo"
+			# --- (scusatm che sto angor emozzionat non parlo ancora moltobbene) ---
+			# Da un momento all'altro ho sentito una signora
+			# Correte, correte se ne e' sceso un muro
+			# Da un momento all'altro ho sentito una signora
+			# Correte, correte se ne e' sceso un muro
+			# -- THIS IS THE PART WITH THE GOOD SOLO (cit <3) --
+			# Vedete quel palazzo la' vicino
+			# Se ne sta scendendo un po' alla volta
+			# Piano piano, devono prendere provvedimenti
+			# Al centro qua hanno fatto una bella ristrututuitriazione
+			# Hanno mess le panghina le fondane iffiori
+			# LALALALALALALALALA
+			if s.score < 0 or s.score > (2 ** 63) - 1:
+				userUtils.ban(userID)
+				userUtils.appendNotes(userID, "Banned due to negative score (score submitter)")
+
+			# Make sure the score is not memed
+			if s.gameMode == gameModes.MANIA and s.score > 1000000:
+				userUtils.ban(userID)
+				userUtils.appendNotes(userID, "Banned due to mania score > 1000000 (score submitter)")
+
+			# Ci metto la faccia, ci metto la testa e ci metto il mio cuore
+			if ((s.mods & mods.DOUBLETIME) > 0 and (s.mods & mods.HALFTIME) > 0) \
+					or ((s.mods & mods.HARDROCK) > 0 and (s.mods & mods.EASY) > 0)\
+					or ((s.mods & mods.SUDDENDEATH) > 0 and (s.mods & mods.NOFAIL) > 0):
+				userUtils.ban(userID)
+				userUtils.appendNotes(userID, "Impossible mod combination {} (score submitter)".format(s.mods))
+
 			# Make sure process list has been passed
-			if s.completed == 3 and "pl" not in self.request.arguments and restricted == False:
+			if s.completed == 3 and "pl" not in self.request.arguments and not restricted:
 				userUtils.restrict(userID)
 				userUtils.appendNotes(userID, "Restricted due to missing process list while submitting a score (most likely he used a score submitter)")
 				log.warning("**{}** ({}) has been restricted due to missing process list".format(username, userID), "cm")
+
+			# Bake a cake
+			butterCake.bake(self, s)
 
 			# Save replay
 			if s.passed == True and s.completed == 3:
@@ -178,6 +235,17 @@ class handler(requestsManager.asyncRequestHandler):
 			if not os.path.isfile(".data/replays/replay_{}.osr".format(s.scoreID)) and s.completed == 3:
 				log.error("Replay for score {} not saved!!".format(s.scoreID), "bunker")
 
+			# Let the api know of this score
+			if s.scoreID:
+				glob.redis.publish("api:score_submission", s.scoreID)
+
+			# Re-raise pp calc exception after saving score, cake, replay etc
+			# so Sentry can track it without breaking score submission
+			if ppCalcException is not None:
+				raise ppCalcException
+
+			# If there was no exception, update stats and build score submitted panel
+			# We don't have to do that since stats are recalculated with the cron
 			# Update beatmap playcount (and passcount)
 			beatmap.incrementPlaycount(s.fileMd5, s.passed)
 
@@ -208,16 +276,10 @@ class handler(requestsManager.asyncRequestHandler):
 				newUserData = userUtils.getUserStats(userID, s.gameMode)
 				glob.userStatsCache.update(userID, s.gameMode, newUserData)
 
-				# Use pp/score as "total" based on game mode
-				if s.gameMode == gameModes.STD or s.gameMode == gameModes.MANIA:
-					criteria = "pp"
-				else:
-					criteria = "rankedScore"
-
 				# Update leaderboard (global and country) if score/pp has changed
-				if s.completed == 3 and newUserData[criteria] != oldUserData[criteria]:
-					leaderboardHelper.update(userID, newUserData[criteria], s.gameMode)
-					leaderboardHelper.updateCountry(userID, newUserData[criteria], s.gameMode)
+				if s.completed == 3 and newUserData["pp"] != oldUserData["pp"]:
+					leaderboardHelper.update(userID, newUserData["pp"], s.gameMode)
+					leaderboardHelper.updateCountry(userID, newUserData["pp"], s.gameMode)
 
 			# TODO: Update total hits and max combo
 			# Update latest activity
@@ -307,7 +369,13 @@ class handler(requestsManager.asyncRequestHandler):
 
 				# send message to #announce if we're rank #1
 				if newScoreboard.personalBestRank == 1 and s.completed == 3 and restricted == False:
-					annmsg = "[https://ripple.moe/?u={} {}] achieved rank #1 on [https://osu.ppy.sh/b/{} {}] ({})".format(userID, username, beatmapInfo.beatmapID, beatmapInfo.songName, gameModes.getGamemodeFull(s.gameMode))
+					annmsg = "[https://ripple.moe/?u={} {}] achieved rank #1 on [https://osu.ppy.sh/b/{} {}] ({})".format(
+						userID,
+						username.encode().decode("ASCII", "ignore"),
+						beatmapInfo.beatmapID,
+						beatmapInfo.songName.encode().decode("ASCII", "ignore"),
+						gameModes.getGamemodeFull(s.gameMode)
+					)
 					params = urlencode({"k": glob.conf.config["server"]["apikey"], "to": "#announce", "msg": annmsg})
 					requests.get("{}/api/v1/fokabotMessage?{}".format(glob.conf.config["server"]["banchourl"], params))
 

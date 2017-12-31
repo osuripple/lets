@@ -9,9 +9,16 @@ from common.ripple import scoreUtils
 from objects import glob
 from pp import rippoppai
 from pp import wifipiano2
+from pp import cicciobello
 
 
 class score:
+	PP_CALCULATORS = {
+		gameModes.STD: rippoppai.oppai,
+		gameModes.TAIKO: rippoppai.oppai,
+		gameModes.CTB: cicciobello.Cicciobello,
+		gameModes.MANIA: wifipiano2.piano
+	}
 	__slots__ = ["scoreID", "playerName", "score", "maxCombo", "c50", "c100", "c300", "cMiss", "cKatu", "cGeki",
 	             "fullCombo", "mods", "playerUserID","rank","date", "hasReplay", "fileMd5", "passed", "playDateTime",
 	             "gameMode", "completed", "accuracy", "pp", "oldPersonalBest", "rankedScoreIncrease"]
@@ -258,14 +265,10 @@ class score:
 			if b is None:
 				b = beatmap.beatmap(self.fileMd5, 0)
 
-			# Create an instance of the magic pp calculator and calculate pp
-			if b.rankedStatus >= rankedStatuses.RANKED and b.rankedStatus != rankedStatuses.UNKNOWN:
-				if self.gameMode == gameModes.STD:
-					fo = rippoppai.oppai(b, self)
-					self.pp = fo.pp
-				elif self.gameMode == gameModes.MANIA:
-					xeno = wifipiano2.piano(b, self)
-					self.pp = xeno.pp
+			# Calculate pp
+			if b.rankedStatus >= rankedStatuses.RANKED and b.rankedStatus != rankedStatuses.UNKNOWN and self.gameMode in score.PP_CALCULATORS:
+				calculator = score.PP_CALCULATORS[self.gameMode](b, self)
+				self.pp = calculator.pp
 			else:
 				self.pp = 0
 		else:

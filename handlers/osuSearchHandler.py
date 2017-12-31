@@ -39,7 +39,7 @@ class handler(requestsManager.asyncRequestHandler):
 
 			# Get data from cheesegull API
 			log.info("Requested osu!direct search: {}".format(query if query != "" else "index"))
-			searchData = cheesegull.getListing(rankedStatus=cheesegull.directToApiStatus(rankedStatus), page=page, gameMode=gameMode, query=query)
+			searchData = cheesegull.getListing(rankedStatus=cheesegull.directToApiStatus(rankedStatus), page=page * 100, gameMode=gameMode, query=query)
 			if searchData is None or searchData is None:
 				raise exceptions.noAPIDataError()
 

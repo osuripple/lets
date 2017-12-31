@@ -20,15 +20,15 @@ class handler(requestsManager.asyncRequestHandler):
 		try:
 			# Get data by beatmap id or beatmapset id
 			if "b" in self.request.arguments:
-				id = self.get_argument("b")
-				data = cheesegull.getBeatmap(id)
+				_id = self.get_argument("b")
+				data = cheesegull.getBeatmap(_id)
 			elif "s" in self.request.arguments:
-				id = self.get_argument("s")
-				data = cheesegull.getBeatmapSet(id)
+				_id = self.get_argument("s")
+				data = cheesegull.getBeatmapSet(_id)
 			else:
 				raise exceptions.invalidArgumentsException(MODULE_NAME)
 
-			log.info("Requested osu!direct np: {}/{}".format("b" if "b" in self.request.arguments else "s", id))
+			log.info("Requested osu!direct np: {}/{}".format("b" if "b" in self.request.arguments else "s", _id))
 
 			# Make sure cheesegull returned some valid data
 			if data is None or len(data) == 0:

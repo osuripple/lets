@@ -1,3 +1,12 @@
 [submodule "common"]
 	path = common
 	url = https://zxq.co/ripple/ripple-python-common.git
+[submodule "secret"]
+	path = secret
+	url = git@zxq.co:ripple/lets-secret.git
+[submodule "pp/oppai-ng"]
+	path = pp/oppai-ng
+	url = https://github.com/Francesco149/oppai-ng.git
+[submodule "pp/catch_the_pp"]
+	path = pp/catch_the_pp
+	url = https://github.com/osuripple/catch-the-pp.git

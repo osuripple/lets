@@ -1,17 +1,15 @@
 """
 oppai interface for ripple 2 / LETS
 """
-
+import json
 import os
 import subprocess
 
-from common import generalUtils
-from common.constants import bcolors
+from common.constants import gameModes
+from common.log import logUtils as log
 from common.ripple import scoreUtils
 from constants import exceptions
-from helpers import consoleHelper
-from helpers import osuapiHelper
-from objects import glob
+from helpers import mapsHelper
 
 # constants
 MODULE_NAME = "rippoppai"
@@ -28,16 +26,22 @@ def fixPath(command):
 		return command
 	return command.replace("/", "\\")
 
+
+class OppaiError(Exception):
+	def __init__(self, error):
+		self.error = error
+
 class oppai:
 	"""
-	Oppai calculator
+	Oppai cacalculator
 	"""
 
 	# Folder where oppai is placed
-	OPPAI_FOLDER = "../oppai"
-	__slots__ = ["pp", "score", "acc", "mods", "combo", "misses", "stars", "beatmap", "map"]
+	OPPAI_FOLDER = ".data/oppai"
+	BUFSIZE = 2000000
+	# __slots__ = ["pp", "score", "acc", "mods", "combo", "misses", "stars", "beatmap", "map"]
 
-	def __init__(self, __beatmap, __score = None, acc = 0, mods = 0, tillerino = False, stars = False):
+	def __init__(self, __beatmap, __score = None, acc = 0, mods = 0, tillerino = False):
 		"""
 		Set oppai params.
 
@@ -46,16 +50,16 @@ class oppai:
 		acc -- manual acc. Used in tillerino-like bot. You don't need this if you pass __score object
 		mods -- manual mods. Used in tillerino-like bot. You don't need this if you pass __score object
 		tillerino -- If True, self.pp will be a list with pp values for 100%, 99%, 98% and 95% acc. Optional.
-		stars -- If True, self.stars will be the star difficulty for the map (including mods)
 		"""
 		# Default values
-		self.pp = 0
+		self.pp = None
 		self.score = None
 		self.acc = 0
 		self.mods = 0
 		self.combo = 0
 		self.misses = 0
 		self.stars = 0
+		self.tillerino = tillerino
 
 		# Beatmap object
 		self.beatmap = __beatmap
@@ -64,133 +68,122 @@ class oppai:
 		# If passed, set everything from score object
 		if __score is not None:
 			self.score = __score
-			self.acc = self.score.accuracy*100
+			self.acc = self.score.accuracy * 100
 			self.mods = self.score.mods
 			self.combo = self.score.maxCombo
 			self.misses = self.score.cMiss
+			self.gameMode = self.score.gameMode
 		else:
 			# Otherwise, set acc and mods from params (tillerino)
 			self.acc = acc
 			self.mods = mods
+			if self.beatmap.starsStd > 0:
+				self.gameMode = gameModes.STD
+			elif self.beatmap.starsTaiko > 0:
+				self.gameMode = gameModes.TAIKO
+			else:
+				self.gameMode = None
 
 		# Calculate pp
-		self.getPP(tillerino, stars)
+		log.debug("oppai ~> Initialized oppai diffcalc")
+		self.calculatePP()
 
-	def getPP(self, tillerino = False, stars = False):
+	@staticmethod
+	def _runOppaiProcess(command):
+		log.debug("oppai ~> running {}".format(command))
+		process = subprocess.run(command, shell=True, stdout=subprocess.PIPE)
+		try:
+			output = json.loads(process.stdout.decode("utf-8", errors="ignore"))
+			if "code" not in output or "errstr" not in output:
+				raise OppaiError("No code in json output")
+			if output["code"] != 200:
+				raise OppaiError("oppai error {}: {}".format(output["code"], output["errstr"]))
+			if "pp" not in output or "stars" not in output:
+				raise OppaiError("No pp/stars entry in oppai json output")
+			pp = output["pp"]
+			stars = output["stars"]
+
+			log.debug("oppai ~> full output: {}".format(output))
+			log.debug("oppai ~> pp: {}, stars: {}".format(pp, stars))
+		except (json.JSONDecodeError, IndexError, OppaiError) as e:
+			raise OppaiError(e)
+		return pp, stars
+
+	def calculatePP(self):
 		"""
 		Calculate total pp value with oppai and return it
 
 		return -- total pp
 		"""
 		# Set variables
-		self.pp = 0
+		self.pp = None
 		try:
 			# Build .osu map file path
 			mapFile = "{path}/maps/{map}".format(path=self.OPPAI_FOLDER, map=self.map)
+			log.debug("oppai ~> Map file: {}".format(mapFile))
+			mapsHelper.cacheMap(mapFile, self.beatmap)
 
-			try:
-				# Check if we have to download the .osu file
-				download = False
-				if not os.path.isfile(mapFile):
-					# .osu file doesn't exist. We must download it
-					if glob.debug:
-						consoleHelper.printColored("[!] {} doesn't exist".format(mapFile), bcolors.YELLOW)
-					download = True
-				else:
-					# File exists, check md5
-					if generalUtils.fileMd5(mapFile) != self.beatmap.fileMD5:
-						# MD5 don't match, redownload .osu file
-						if glob.debug:
-							consoleHelper.printColored("[!] Beatmaps md5 don't match", bcolors.YELLOW)
-						download = True
+			# Use only mods supported by oppai
+			modsFixed = self.mods & 5983
 
-				# Download .osu file if needed
-				if download:
-					if glob.debug:
-						consoleHelper.printRippoppaiMessage("Downloading {} from osu! servers...".format(self.beatmap.beatmapID))
+			# Check gamemode
+			if self.gameMode != gameModes.STD and self.gameMode != gameModes.TAIKO:
+				raise exceptions.unsupportedGameModeException()
 
-					# Get .osu file from osu servers
-					fileContent = osuapiHelper.getOsuFileFromID(self.beatmap.beatmapID)
-
-					# Make sure osu servers returned something
-					if fileContent is None:
-						raise exceptions.osuApiFailException(MODULE_NAME)
-
-					# Delete old .osu file if it exists
-					if os.path.isfile(mapFile):
-						os.remove(mapFile)
-
-					# Save .osu file
-					with open(mapFile, "wb+") as f:
-						f.write(fileContent.encode("latin-1"))
-				else:
-					# Map file is already in folder
-					if glob.debug:
-						consoleHelper.printRippoppaiMessage("Found beatmap file {}".format(mapFile))
-			except exceptions.osuApiFailException:
-				pass
-
-			# Base command
-			command = fixPath("{path}/oppai {mapFile}".format(path=self.OPPAI_FOLDER, mapFile=mapFile))
-
-			# Use only mods supported by oppai.
-			modsFixed = self.mods & 5979
-
-			# Add params if needed
-			if self.acc > 0:
-				command += " {acc:.2f}%".format(acc=self.acc)
+			command = "./pp/oppai-ng/oppai {}".format(mapFile)
+			if not self.tillerino:
+				# force acc only for non-tillerino calculation
+				# acc is set for each subprocess if calculating tillerino-like pp sets
+				if self.acc > 0:
+					command += " {acc:.2f}%".format(acc=self.acc)
 			if self.mods > 0:
 				command += " +{mods}".format(mods=scoreUtils.readableMods(modsFixed))
 			if self.combo > 0:
 				command += " {combo}x".format(combo=self.combo)
 			if self.misses > 0:
 				command += " {misses}xm".format(misses=self.misses)
-			if tillerino:
-				command += " tillerino"
-			if stars:
-				command += " stars"
+			if self.gameMode == gameModes.TAIKO:
+				command += " -taiko"
+			command += " -ojson"
 
-			# Debug output
-			if glob.debug:
-				consoleHelper.printRippoppaiMessage("Executing {}".format(command))
-
-			# oppai output
-			process = subprocess.run(command, shell=True, stdout=subprocess.PIPE)
-			output = process.stdout.decode("utf-8")
-
-			# Get standard or tillerino output
-			sep = "\n" if UNIX else "\r\n"
-			if output == ['']:
-				# This happens if mode not supported or something
-				self.pp = 0
-				self.stars = None
-				return self.pp
-
-			output = output.split(sep)
-
-			# Get rid of pesky warnings!!!
-			try:
-				float(output[0])
-			except ValueError:
-				del output[0]
-
-			if tillerino:
-				# Get tillerino output (multiple lines)
-				if stars:
-					self.pp = output[:-2]
-					self.stars = float(output[-2])
+			# Calculate pp
+			if not self.tillerino:
+				# self.pp, self.stars = self._runOppaiProcess(command)
+				temp_pp, self.stars = self._runOppaiProcess(command)
+				if (self.gameMode == gameModes.TAIKO and self.beatmap.starsStd > 0 and temp_pp > 800) or \
+					self.stars > 50:
+					# Invalidate pp for bugged taiko converteds and bugged inf pp std maps
+					self.pp = 0
 				else:
-					self.pp = output.split(sep)[:-1]	# -1 because there's an empty line at the end
+					self.pp = temp_pp
 			else:
-				# Get standard output (:l to remove (/r)/n at the end)
-				l = -1 if UNIX else -2
-				if stars:
-					self.pp = float(output[len(output)-2][:l-1])
-				else:
-					self.pp = float(output[len(output)-2][:l])
+				pp_list = []
+				for acc in [100, 99, 98, 95]:
+					temp_command = command
+					temp_command += " {acc:.2f}%".format(acc=acc)
+					pp, self.stars = self._runOppaiProcess(temp_command)
 
-			# Debug output
-			if glob.debug:
-				consoleHelper.printRippoppaiMessage("Calculated pp: {}".format(self.pp))
+					# If this is a broken converted, set all pp to 0 and break the loop
+					if self.gameMode == gameModes.TAIKO and self.beatmap.starsStd > 0 and pp > 800:
+						pp_list = [0, 0, 0, 0]
+						break
+
+					pp_list.append(pp)
+				self.pp = pp_list
+
+			log.debug("oppai ~> Calculated PP: {}, stars: {}".format(self.pp, self.stars))
+		except OppaiError:
+			log.error("oppai ~> oppai-ng error!")
+			self.pp = 0
+		except exceptions.osuApiFailException:
+			log.error("oppai ~> osu!api error!")
+			self.pp = 0
+		except exceptions.unsupportedGameModeException:
+			log.error("oppai ~> Unsupported gamemode")
+			self.pp = 0
+		except Exception as e:
+			log.error("oppai ~> Unhandled exception: {}".format(str(e)))
+			self.pp = 0
+			raise
 		finally:
-			return self.pp
+			log.debug("oppai ~> Shutting down, pp = {}".format(self.pp))
