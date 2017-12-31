@@ -242,7 +242,7 @@ if __name__ == "__main__":
 	if args.zero:
 		# 0pp recalc
 		print("> Recalculating pp for zero-pp scores")
-		scores = glob.db.fetchAll("SELECT * FROM scores LEFT JOIN beatmaps ON scores.beatmap_md5 = beatmaps.beatmap_md5 WHERE scores.completed = 3 AND scores.pp = 0 ORDER BY scores.id DESC;")
+		scores = glob.db.fetchAll("SELECT * FROM scores LEFT JOIN beatmaps ON scores.beatmap_md5 = beatmaps.beatmap_md5 WHERE scores.completed = 3 AND scores.pp = 0 AND scores.completed = 3 ORDER BY scores.id DESC;")
 		massRecalc(scores, workers)
 	elif args.recalc:
 		# Full recalc
@@ -285,7 +285,7 @@ if __name__ == "__main__":
 	elif args.loved:
 		# Loved recalc
 		print("> Recalculating pp for un-frozen loved beatmaps")
-		scores = glob.db.fetchAll("SELECT * FROM scores LEFT JOIN beatmaps ON scores.beatmap_md5 = beatmaps.beatmap_md5 WHERE beatmaps.ranked = 5 ORDER BY scores.id DESC;")
+		scores = glob.db.fetchAll("SELECT * FROM scores LEFT JOIN beatmaps ON scores.beatmap_md5 = beatmaps.beatmap_md5 WHERE beatmaps.ranked = 5 AND scores.completed = 3 ORDER BY scores.id DESC;")
 		massRecalc(scores, workers)
 	elif args.beatmapid is not None:
 		# beatmap id recalc
