@@ -58,7 +58,7 @@ if __name__ == "__main__":
 			b.setDataFromDict(scoreData)
 
 		# Make sure the beatmap is ranked
-		if b.rankedStatus >= rankedStatuses.RANKED and b.rankedStatus != rankedStatuses.UNKNOWN:
+		if b.rankedStatus < rankedStatuses.RANKED:
 			if glob.debug:
 				consoleHelper.printColored("[!] Beatmap {} is not ranked ().".format(s.fileMd5), bcolors.RED)
 			# Don't calculate pp if the beatmap is not ranked
