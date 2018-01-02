@@ -58,7 +58,7 @@ if __name__ == "__main__":
 			b.setDataFromDict(scoreData)
 
 		# Make sure the beatmap is ranked
-		if b.rankedStatus != rankedStatuses.RANKED and b.rankedStatus != rankedStatuses.APPROVED and b.rankedStatus != rankedStatuses.QUALIFIED:
+		if b.rankedStatus < rankedStatuses.RANKED:
 			if glob.debug:
 				consoleHelper.printColored("[!] Beatmap {} is not ranked ().".format(s.fileMd5), bcolors.RED)
 			# Don't calculate pp if the beatmap is not ranked
@@ -203,6 +203,7 @@ if __name__ == "__main__":
 	parser.add_argument('-u','--userid', help="calculate pp for scores played by a specific user (userID)", required=False)
 	parser.add_argument('-b', '--beatmapid', help="calculate pp for scores played by a specific beatmap (beatmapID)", required=False)
 	parser.add_argument('-n','--username', help="calculate pp for scores played by a specific user (username)", required=False)
+	parser.add_argument('-l', '--loved', help="calculate pp for scores played on non-frozen loved beatmaps", required=False, action='store_true')
 	parser.add_argument('-a','--apirefresh', help="always fetch beatmap data from osu!api", required=False, action='store_true')
 	parser.add_argument('-w','--workers', help="force number of workers", required=False)
 	parser.add_argument('-v','--verbose', help="run ripp in verbose/debug mode", required=False, action='store_true')
@@ -241,7 +242,7 @@ if __name__ == "__main__":
 	if args.zero:
 		# 0pp recalc
 		print("> Recalculating pp for zero-pp scores")
-		scores = glob.db.fetchAll("SELECT * FROM scores LEFT JOIN beatmaps ON scores.beatmap_md5 = beatmaps.beatmap_md5 WHERE scores.completed = 3 AND scores.pp = 0 ORDER BY scores.id DESC;")
+		scores = glob.db.fetchAll("SELECT * FROM scores LEFT JOIN beatmaps ON scores.beatmap_md5 = beatmaps.beatmap_md5 WHERE scores.completed = 3 AND scores.pp = 0 AND scores.completed = 3 ORDER BY scores.id DESC;")
 		massRecalc(scores, workers)
 	elif args.recalc:
 		# Full recalc
@@ -281,6 +282,11 @@ if __name__ == "__main__":
 			scores = glob.db.fetchAll("SELECT * FROM scores LEFT JOIN beatmaps ON scores.beatmap_md5 = beatmaps.beatmap_md5 WHERE scores.completed = 3 AND scores.userid = %s;", [uid])
 			massRecalc(scores, workers)
 		# TODO: error message xd
+	elif args.loved:
+		# Loved recalc
+		print("> Recalculating pp for un-frozen loved beatmaps")
+		scores = glob.db.fetchAll("SELECT * FROM scores LEFT JOIN beatmaps ON scores.beatmap_md5 = beatmaps.beatmap_md5 WHERE beatmaps.ranked = 5 AND scores.completed = 3 ORDER BY scores.id DESC;")
+		massRecalc(scores, workers)
 	elif args.beatmapid is not None:
 		# beatmap id recalc
 		print("> Recalculating pp for beatmap id {}".format(args.beatmapid))
