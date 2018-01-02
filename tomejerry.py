@@ -218,22 +218,27 @@ if __name__ == "__main__":
 	glob.debug = generalUtils.stringToBool(glob.conf.config["server"]["debug"])
 	consoleHelper.printDone()
 
+	# Get workers from arguments if set
+	workers = 0
+	if args.workers is not None:
+		workers = int(args.workers)
+
 	# Connect to MySQL
 	try:
 		consoleHelper.printNoNl("> Connecting to MySQL db")
-		glob.db = dbConnector.db(glob.conf.config["db"]["host"], glob.conf.config["db"]["username"], glob.conf.config["db"]["password"], glob.conf.config["db"]["database"], int(
-			glob.conf.config["db"]["workers"]))
+		glob.db = dbConnector.db(
+			glob.conf.config["db"]["host"],
+			glob.conf.config["db"]["username"],
+			glob.conf.config["db"]["password"],
+			glob.conf.config["db"]["database"],
+			max(workers, MAX_WORKERS)
+		)
 		consoleHelper.printNoNl(" ")
 		consoleHelper.printDone()
 	except:
 		consoleHelper.printError()
 		consoleHelper.printColored("[!] Error while connection to database. Please check your config.ini and run the server again", bcolors.RED)
 		raise
-
-	# Get workers from arguments if set
-	workers = 0
-	if args.workers is not None:
-		workers = int(args.workers)
 
 	# Set verbose
 	glob.debug = args.verbose
