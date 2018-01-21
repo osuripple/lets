@@ -9,6 +9,7 @@ try:
 		VERSION = f.read().strip()
 except:
 	VERSION = "Unknown"
+ACHIEVEMENTS_VERSION = 0
 
 DATADOG_PREFIX = "lets"
 db = None
@@ -28,3 +29,4 @@ personalBestCache = personalBestCache.personalBestCache()
 fileBuffers = fileBuffer.buffersList()
 dog = datadogClient.datadogClient()
 schiavo = schiavo.schiavo()
+achievementClasses = {}

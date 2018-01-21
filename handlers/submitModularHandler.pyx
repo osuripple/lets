@@ -9,10 +9,9 @@ import requests
 import tornado.gen
 import tornado.web
 
-from objects import beatmap
-from objects import score
-from objects import scoreboard
+import secret.achievements.utils
 from common.constants import gameModes
+from common.constants import mods
 from common.log import logUtils as log
 from common.ripple import userUtils
 from common.web import requestsManager
@@ -20,9 +19,11 @@ from constants import exceptions
 from constants import rankedStatuses
 from helpers import aeshelper
 from helpers import leaderboardHelper
+from objects import beatmap
 from objects import glob
-from secret import butterCake
-from common.constants import mods
+from objects import score
+from objects import scoreboard
+from secret import butterCake, achievements
 
 MODULE_NAME = "submit_modular"
 class handler(requestsManager.asyncRequestHandler):
@@ -295,9 +296,13 @@ class handler(requestsManager.asyncRequestHandler):
 			# there are exceptions while building the ranking panel
 			keepSending = False
 
+			# At the end, check achievements
+			if s.passed:
+				new_achievements = secret.achievements.utils.unlock_achievements(s, beatmapInfo, newUserData)
+
 			# Output ranking panel only if we passed the song
 			# and we got valid beatmap info from db
-			if beatmapInfo is not None and beatmapInfo != False and s.passed == True:
+			if beatmapInfo is not None and beatmapInfo != False and s.passed:
 				log.debug("Started building ranking panel")
 
 				# Trigger bancho stats cache update
@@ -335,21 +340,7 @@ class handler(requestsManager.asyncRequestHandler):
 				output["toNextRank"] = rankInfo["difference"]
 				output["toNextRankUser"] = rankInfo["nextUsername"]
 				output["achievements"] = ""
-				try:
-					# std only
-					if s.gameMode != 0:
-						raise Exception
-
-					# Get best score if
-					bestID = int(glob.db.fetch("SELECT id FROM scores WHERE userid = %s AND play_mode = %s AND completed = 3 ORDER BY pp DESC LIMIT 1", [userID, s.gameMode])["id"])
-					if bestID == s.scoreID:
-						# Dat pp achievement
-						output["achievements-new"] = "all-secret-jackpot+Here come dat PP+Oh shit waddup"
-					else:
-						raise Exception
-				except:
-					# No achievement
-					output["achievements-new"] = ""
+				output["achievements-new"] = secret.achievements.utils.achievements_response(new_achievements)
 				output["onlineScoreId"] = s.scoreID
 
 				# Build final string

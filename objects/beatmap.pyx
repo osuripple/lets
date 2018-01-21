@@ -302,6 +302,10 @@ class beatmap:
 		"""
 		glob.db.execute("UPDATE beatmaps SET pp_100 = %s, pp_99 = %s, pp_98 = %s, pp_95 = %s WHERE beatmap_md5 = %s", [l[0], l[1], l[2], l[3], self.fileMD5])
 
+	@property
+	def is_rankable(self):
+		return self.rankedStatus >= rankedStatuses.RANKED and self.rankedStatus != rankedStatuses.UNKNOWN
+
 def convertRankedStatus(approvedStatus):
 	"""
 	Convert approved_status (from osu!api) to ranked status (for getscores)
