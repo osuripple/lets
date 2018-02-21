@@ -257,7 +257,7 @@ if __name__ == "__main__":
 	elif args.mods is not None:
 		# Mods recalc
 		print("> Recalculating pp for scores with mods {}".format(args.mods))
-		allScores = glob.db.fetchAll("SELECT * FROM scores LEFT JOIN beatmaps ON scores.beatmap_md5 = beatmaps.beatmap_md5 WHERE AND scores.completed = 3 ORDER BY scores.id DESC;")
+		allScores = glob.db.fetchAll("SELECT * FROM scores LEFT JOIN beatmaps ON scores.beatmap_md5 = beatmaps.beatmap_md5 WHERE scores.completed = 3 ORDER BY scores.id DESC;")
 		scores = []
 		for i in allScores:
 			if i["mods"] & int(args.mods) > 0:
