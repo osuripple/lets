@@ -17,6 +17,7 @@ redis = None
 conf = None
 application = None
 pool = None
+pascoa = {}
 
 busyThreads = 0
 debug = False
