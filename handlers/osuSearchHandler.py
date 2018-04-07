@@ -47,7 +47,11 @@ class handler(requestsManager.asyncRequestHandler):
 			output += "999" if len(searchData) == 100 else str(len(searchData))
 			output += "\n"
 			for beatmapSet in searchData:
-				output += cheesegull.toDirect(beatmapSet) + "\r\n"
+				try:
+					output += cheesegull.toDirect(beatmapSet) + "\r\n"
+				except ValueError:
+					# Invalid cheesegull beatmap (empty beatmapset, cheesegull bug? See Sentry #LETS-00-32)
+					pass
 		except (exceptions.noAPIDataError, exceptions.invalidArgumentsException):
 			output = "0\n"
 		finally:
