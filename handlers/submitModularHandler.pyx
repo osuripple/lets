@@ -231,16 +231,17 @@ class handler(requestsManager.asyncRequestHandler):
 
 					# We run this in a separate thread to avoid slowing down scores submission,
 					# as cono needs a full replay
-					threading.Thread(target=lambda: glob.redis.publish(
-						"cono:analyze", json.dumps({
-							"score_id": s.scoreID,
-							"beatmap_id": beatmapInfo.beatmapID,
-							"user_id": s.playerUserID,
-							"replay_data": base64.b64encode(
-								replayHelper.buildFullReplay(s.scoreID, rawReplay=replay)
-							).decode()
-						})
-					)).start()
+					if glob.conf.config["cono"]["enable"]:
+						threading.Thread(target=lambda: glob.redis.publish(
+							"cono:analyze", json.dumps({
+								"score_id": s.scoreID,
+								"beatmap_id": beatmapInfo.beatmapID,
+								"user_id": s.playerUserID,
+								"replay_data": base64.b64encode(
+									replayHelper.buildFullReplay(s.scoreID, rawReplay=replay)
+								).decode()
+							})
+						)).start()
 
 			# Make sure the replay has been saved (debug)
 			if not os.path.isfile(".data/replays/replay_{}.osr".format(s.scoreID)) and s.completed == 3:
