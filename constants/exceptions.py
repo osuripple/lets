@@ -45,3 +45,6 @@ class need2FAException(Exception):
 
 class noAPIDataError(Exception):
 	pass
+
+class scoreNotFoundError(Exception):
+	pass

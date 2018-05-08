@@ -9,8 +9,6 @@ from pp.catch_the_pp import ppCalc
 
 
 class Cicciobello:
-    CACHE_FOLDER = ".data/catch_the_pp"
-
     def __init__(self, _beatmap, _score=None, accuracy=0, mods=0, combo=-1, misses=0, tillerino=False):
         # Beatmap is always present
         self.beatmap = _beatmap
@@ -41,7 +39,7 @@ class Cicciobello:
     def calculate_pp(self):
         try:
             # Cache beatmap
-            mapFile = "{path}/maps/{bid}.osu".format(path=Cicciobello.CACHE_FOLDER, bid=self.beatmap.beatmapID)
+            mapFile = mapsHelper.cachedMapPath(self.beatmap.beatmapID)
             mapsHelper.cacheMap(mapFile, self.beatmap)
 
             # TODO: Sanizite mods

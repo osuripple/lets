@@ -51,3 +51,6 @@ def cacheMap(mapFile, _beatmap):
     else:
         # Map file is already in folder
         log.debug("maps ~> Beatmap found in cache!")
+
+def cachedMapPath(beatmap_id):
+    return ".data/beatmaps/{}.osu".format(beatmap_id)

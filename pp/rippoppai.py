@@ -63,7 +63,6 @@ class oppai:
 
 		# Beatmap object
 		self.beatmap = __beatmap
-		self.map = "{}.osu".format(self.beatmap.beatmapID)
 
 		# If passed, set everything from score object
 		if __score is not None:
@@ -119,7 +118,7 @@ class oppai:
 		self.pp = None
 		try:
 			# Build .osu map file path
-			mapFile = "{path}/maps/{map}".format(path=self.OPPAI_FOLDER, map=self.map)
+			mapFile = mapsHelper.cachedMapPath(self.beatmap.beatmapID)
 			log.debug("oppai ~> Map file: {}".format(mapFile))
 			mapsHelper.cacheMap(mapFile, self.beatmap)
 

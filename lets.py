@@ -83,6 +83,7 @@ def make_app():
 		(r"/loadTest", loadTestHandler.handler),
 	], default_handler_class=defaultHandler.handler)
 
+
 if __name__ == "__main__":
 	try:
 		consoleHelper.printServerStartHeader(True)
@@ -109,9 +110,14 @@ if __name__ == "__main__":
 
 		# Create data/oppai maps folder if needed
 		consoleHelper.printNoNl("> Checking folders... ")
-		paths = [".data", ".data/replays", ".data/screenshots",
-				 ".data/oppai", ".data/oppai/maps",
-				 ".data/catch_the_pp", ".data/catch_the_pp/maps"]
+		paths = [
+			".data",
+			".data/replays",
+			".data/screenshots",
+			".data/oppai",
+			".data/catch_the_pp",
+			".data/beatmaps"
+		]
 		for i in paths:
 			if not os.path.exists(i):
 				os.makedirs(i, 0o770)

@@ -8,6 +8,7 @@ by Tom94, licensed under the GNU AGPL 3 License.
 from common.constants import mods
 from common.log import logUtils as log
 from constants import exceptions
+from helpers import mapsHelper
 
 
 class piano:
@@ -25,6 +26,11 @@ class piano:
 			if stars == 0:
 				# This beatmap can't be converted to mania
 				raise exceptions.invalidBeatmapException()
+
+			# Cache beatmap for cono
+			mapFile = mapsHelper.cachedMapPath(self.beatmap.beatmapID)
+			mapsHelper.cacheMap(mapFile, self.beatmap)
+
 			od = self.beatmap.OD
 			objects = self.score.c50+self.score.c100+self.score.c300+self.score.cKatu+self.score.cGeki+self.score.cMiss
 
