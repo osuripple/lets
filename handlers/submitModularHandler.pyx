@@ -214,38 +214,41 @@ class handler(requestsManager.asyncRequestHandler):
 			if s.completed == 3 and "pl" in self.request.arguments:
 				butterCake.bake(self, s)
 
-			# Save replay
-			if s.passed == True and s.completed == 3:
-				if "score" not in self.request.files:
-					if not restricted:
-						# Ban if no replay passed
-						userUtils.restrict(userID)
-						userUtils.appendNotes(userID, "Restricted due to missing replay while submitting a score (most likely he used a score submitter)")
-						log.warning("**{}** ({}) has been restricted due to replay not found on map {}".format(username, userID, s.fileMd5), "cm")
-				else:
-					# Otherwise, save the replay
+			# Save replay for all passed scores
+			if s.passed:
+				if "score" in self.request.files:
+					# Save the replay if it was provided
 					log.debug("Saving replay ({})...".format(s.scoreID))
 					replay = self.request.files["score"][0]["body"]
 					with open(".data/replays/replay_{}.osr".format(s.scoreID), "wb") as f:
 						f.write(replay)
-
-					# We run this in a separate thread to avoid slowing down scores submission,
-					# as cono needs a full replay
-					if glob.conf.config["cono"]["enable"]:
-						threading.Thread(target=lambda: glob.redis.publish(
-							"cono:analyze", json.dumps({
-								"score_id": s.scoreID,
-								"beatmap_id": beatmapInfo.beatmapID,
-								"user_id": s.playerUserID,
-								"replay_data": base64.b64encode(
-									replayHelper.buildFullReplay(s.scoreID, rawReplay=replay)
-								).decode()
-							})
-						)).start()
+				else:
+					# Restrict if no replay was provided
+					if not restricted:
+						userUtils.restrict(userID)
+						userUtils.appendNotes(userID, "Restricted due to missing replay while submitting a score (most likely he used a score submitter)")
+						log.warning("**{}** ({}) has been restricted due to replay not found on map {}".format(username, userID, s.fileMd5), "cm")
 
 			# Make sure the replay has been saved (debug)
 			if not os.path.isfile(".data/replays/replay_{}.osr".format(s.scoreID)) and s.completed == 3:
 				log.error("Replay for score {} not saved!!".format(s.scoreID), "bunker")
+
+			# Send to cono ALL passed replays, even non high-scores
+			if glob.conf.config["cono"]["enable"] and s.passed and "score" in self.request.files:
+				# We run this in a separate thread to avoid slowing down scores submission,
+				# as cono needs a full replay
+				threading.Thread(target=lambda: glob.redis.publish(
+					"cono:analyze", json.dumps({
+						"score_id": s.scoreID,
+						"beatmap_id": beatmapInfo.beatmapID,
+						"user_id": s.playerUserID,
+						"game_mode": s.gameMode,
+						"pp": s.pp,
+						"replay_data": base64.b64encode(
+							replayHelper.buildFullReplay(s.scoreID, rawReplay=self.request.files["score"][0]["body"])
+						).decode(),
+					})
+				)).start()
 
 			# Let the api know of this score
 			if s.scoreID:

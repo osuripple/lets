@@ -260,16 +260,13 @@ class score:
 		"""
 		Calculate this score's pp value if completed == 3
 		"""
-		if self.completed == 3:
-			# Create beatmap object
-			if b is None:
-				b = beatmap.beatmap(self.fileMd5, 0)
+		# Create beatmap object
+		if b is None:
+			b = beatmap.beatmap(self.fileMd5, 0)
 
-			# Calculate pp
-			if b.rankedStatus >= rankedStatuses.RANKED and b.rankedStatus != rankedStatuses.UNKNOWN and self.gameMode in score.PP_CALCULATORS:
-				calculator = score.PP_CALCULATORS[self.gameMode](b, self)
-				self.pp = calculator.pp
-			else:
-				self.pp = 0
+		# Calculate pp
+		if b.rankedStatus >= rankedStatuses.RANKED and b.rankedStatus != rankedStatuses.UNKNOWN and self.gameMode in score.PP_CALCULATORS:
+			calculator = score.PP_CALCULATORS[self.gameMode](b, self)
+			self.pp = calculator.pp
 		else:
-			log.debug("Completed status is {}. PP calc for this score skipped.".format(self.completed))
+			self.pp = 0
