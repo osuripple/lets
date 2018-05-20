@@ -250,6 +250,9 @@ class handler(requestsManager.asyncRequestHandler):
 					})
 				)).start()
 
+			# Update beatmap playcount (and passcount)
+			beatmap.incrementPlaycount(s.fileMd5, s.passed)
+
 			# Let the api know of this score
 			if s.scoreID:
 				glob.redis.publish("api:score_submission", s.scoreID)
@@ -259,11 +262,7 @@ class handler(requestsManager.asyncRequestHandler):
 			if ppCalcException is not None:
 				raise ppCalcException()
 
-			# If there was no exception, update stats and build score submitted panel
-			# We don't have to do that since stats are recalculated with the cron
-			# Update beatmap playcount (and passcount)
-			beatmap.incrementPlaycount(s.fileMd5, s.passed)
-
+            # If there was no exception, update stats and build score submitted panel
 			# Get "before" stats for ranking panel (only if passed)
 			if s.passed:
 				# Get stats and rank
