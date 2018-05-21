@@ -230,18 +230,17 @@ if __name__ == "__main__":
 		except:
 			consoleHelper.printColored("[!] Error while starting Datadog client! Please check your config.ini and run the server again", bcolors.RED)
 
-
-		# Server start message and console output
-		consoleHelper.printColored("> L.E.T.S. is listening for clients on 127.0.0.1:{}...".format(serverPort), bcolors.GREEN)
-		log.logMessage("Server started!", discord="bunker", of="info.txt", stdout=False)
-
 		# Connect to pubsub channels
 		pubSub.listener(glob.redis, {
 			"lets:beatmap_updates": beatmapUpdateHandler.handler(),
 		}).start()
 
+		# Server start message and console output
+		consoleHelper.printColored("> L.E.T.S. is listening for clients on {}:{}...".format(glob.conf.config["server"]["host"], serverPort), bcolors.GREEN)
+		log.logMessage("Server started!", discord="bunker", of="info.txt", stdout=False)
+
 		# Start Tornado
-		glob.application.listen(serverPort)
+		glob.application.listen(serverPort, address=glob.conf.config["server"]["host"])
 		tornado.ioloop.IOLoop.instance().start()
 	finally:
 		# Perform some clean up

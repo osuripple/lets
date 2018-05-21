@@ -53,6 +53,7 @@ class config:
 			self.config.get("redis","database")
 			self.config.get("redis","password")
 
+			self.config.get("server","host")
 			self.config.get("server","port")
 			self.config.get("server", "debug")
 			self.config.get("server", "beatmapcacheexpire")
@@ -107,6 +108,7 @@ class config:
 		self.config.set("redis", "password", "")
 
 		self.config.add_section("server")
+		self.config.set("server", "host", "0.0.0.0")
 		self.config.set("server", "port", "5002")
 		self.config.set("server", "debug", "False")
 		self.config.set("server", "beatmapcacheexpire", "86400")
