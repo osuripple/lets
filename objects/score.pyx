@@ -265,7 +265,8 @@ class score:
 			b = beatmap.beatmap(self.fileMd5, 0)
 
 		# Calculate pp
-		if b.rankedStatus >= rankedStatuses.RANKED and b.rankedStatus != rankedStatuses.UNKNOWN and self.gameMode in score.PP_CALCULATORS:
+		if b.rankedStatus >= rankedStatuses.RANKED and b.rankedStatus != rankedStatuses.UNKNOWN \
+			and scoreUtils.isRankable(self.mods) and self.passed and self.gameMode in score.PP_CALCULATORS:
 			calculator = score.PP_CALCULATORS[self.gameMode](b, self)
 			self.pp = calculator.pp
 		else:
