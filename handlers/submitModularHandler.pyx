@@ -215,40 +215,43 @@ class handler(requestsManager.asyncRequestHandler):
 				butterCake.bake(self, s)
 
 			# Save replay for all passed scores
-			if s.passed:
+			# Make sure the score has an id as well (duplicated?, query error?)
+			if s.passed and s.scoreID > 0:
 				if "score" in self.request.files:
 					# Save the replay if it was provided
 					log.debug("Saving replay ({})...".format(s.scoreID))
 					replay = self.request.files["score"][0]["body"]
 					with open(".data/replays/replay_{}.osr".format(s.scoreID), "wb") as f:
 						f.write(replay)
+
+					# Send to cono ALL passed replays, even non high-scores
+					if glob.conf.config["cono"]["enable"]:
+						# We run this in a separate thread to avoid slowing down scores submission,
+						# as cono needs a full replay
+						threading.Thread(target=lambda: glob.redis.publish(
+							"cono:analyze", json.dumps({
+								"score_id": s.scoreID,
+								"beatmap_id": beatmapInfo.beatmapID,
+								"user_id": s.playerUserID,
+								"game_mode": s.gameMode,
+								"pp": s.pp,
+								"replay_data": base64.b64encode(
+									replayHelper.buildFullReplay(
+										s.scoreID,
+										rawReplay=self.request.files["score"][0]["body"]
+									)
+								).decode(),
+							})
+						)).start()
 				else:
 					# Restrict if no replay was provided
 					if not restricted:
 						userUtils.restrict(userID)
-						userUtils.appendNotes(userID, "Restricted due to missing replay while submitting a score (most likely he used a score submitter)")
-						log.warning("**{}** ({}) has been restricted due to replay not found on map {}".format(username, userID, s.fileMd5), "cm")
-
-			# Make sure the replay has been saved (debug)
-			if not os.path.isfile(".data/replays/replay_{}.osr".format(s.scoreID)) and s.completed == 3:
-				log.error("Replay for score {} not saved!!".format(s.scoreID), "bunker")
-
-			# Send to cono ALL passed replays, even non high-scores
-			if glob.conf.config["cono"]["enable"] and s.passed and "score" in self.request.files:
-				# We run this in a separate thread to avoid slowing down scores submission,
-				# as cono needs a full replay
-				threading.Thread(target=lambda: glob.redis.publish(
-					"cono:analyze", json.dumps({
-						"score_id": s.scoreID,
-						"beatmap_id": beatmapInfo.beatmapID,
-						"user_id": s.playerUserID,
-						"game_mode": s.gameMode,
-						"pp": s.pp,
-						"replay_data": base64.b64encode(
-							replayHelper.buildFullReplay(s.scoreID, rawReplay=self.request.files["score"][0]["body"])
-						).decode(),
-					})
-				)).start()
+						userUtils.appendNotes(userID, "Restricted due to missing replay while submitting a score "
+													  "(most likely he used a score submitter)")
+						log.warning("**{}** ({}) has been restricted due to replay not found on map {}".format(
+							username, userID, s.fileMd5
+						), "cm")
 
 			# Update beatmap playcount (and passcount)
 			beatmap.incrementPlaycount(s.fileMd5, s.passed)
