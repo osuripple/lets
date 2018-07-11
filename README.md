@@ -12,7 +12,7 @@ This server handles every non real time client feature, so:
 - osu!direct, thanks to [cheesegull](https://github.com/osuripple/cheesegull)
 - Tillerino-like API (partially broken)
 - osu!standard and taiko pp calculation with [oppai-ng](https://github.com/francesco149/oppai-ng), made by Franc[e]sco
-- osu!mania pp calculation with `wifipiano2`, made by Nyo with reference code from [Tom94's osu-performance](https://github.com/ppy/osu-performance)
+- osu!mania pp calculation with a slightly edited version of [osu-tools](https://github.com/ppy/osu-tools), made by the osu! team
 - catch the beat pp calculation with [catch-the-pp](https://github.com/osuripple/catch-the-pp), made by Sunpy and cythonized by Nyo
 
 ## Requirements
@@ -39,7 +39,7 @@ then, run LETS once to create the default config file and edit it
 $ python3 lets.py
 $ nano config.ini
 ```
-finally, compile oppai-ng (inside pp/oppai-ng).
+finally, compile oppai-ng (inside pp/oppai-ng) and osu-tools (inside pp/maniapp-osu-tools).
 
 ## tomejerry.py
 `tomejerry.py` is a tool that allows you to calculate pp for specific scores. It's extremely useful to do mass PP recalculations if you mess something up. It uses lets' config and packages, so make sure lets is installed and configured correctly before using it.  
