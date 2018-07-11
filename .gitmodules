@@ -10,3 +10,6 @@
 [submodule "pp/catch_the_pp"]
 	path = pp/catch_the_pp
 	url = https://github.com/osuripple/catch-the-pp.git
+[submodule "pp/maniapp-osu-tools"]
+	path = pp/maniapp-osu-tools
+	url = git@zxq.co:ripple/maniapp-osu-tools.git
