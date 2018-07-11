@@ -35,10 +35,6 @@ class oppai:
 	"""
 	Oppai cacalculator
 	"""
-
-	# Folder where oppai is placed
-	OPPAI_FOLDER = ".data/oppai"
-	BUFSIZE = 2000000
 	# __slots__ = ["pp", "score", "acc", "mods", "combo", "misses", "stars", "beatmap", "map"]
 
 	def __init__(self, __beatmap, __score = None, acc = 0, mods = 0, tillerino = False):
