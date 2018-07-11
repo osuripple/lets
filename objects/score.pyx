@@ -8,7 +8,7 @@ from constants import rankedStatuses
 from common.ripple import scoreUtils
 from objects import glob
 from pp import rippoppai
-from pp import wifipiano2
+from pp import wifipiano3
 from pp import cicciobello
 
 
@@ -17,7 +17,7 @@ class score:
 		gameModes.STD: rippoppai.oppai,
 		gameModes.TAIKO: rippoppai.oppai,
 		gameModes.CTB: cicciobello.Cicciobello,
-		gameModes.MANIA: wifipiano2.piano
+		gameModes.MANIA: wifipiano3.WiFiPiano
 	}
 	__slots__ = ["scoreID", "playerName", "score", "maxCombo", "c50", "c100", "c300", "cMiss", "cKatu", "cGeki",
 	             "fullCombo", "mods", "playerUserID","rank","date", "hasReplay", "fileMd5", "passed", "playDateTime",
