@@ -15,7 +15,6 @@ from common.db import dbConnector
 from common.ddog import datadogClient
 from common.log import logUtils as log
 from common.redis import pubSub
-from common.ripple import scoreUtils
 from common.web import schiavo
 from handlers import apiCacheBeatmapHandler
 from handlers import apiPPHandler
@@ -40,7 +39,7 @@ from handlers import uploadScreenshotHandler
 from helpers import config
 from helpers import consoleHelper
 from common import generalUtils
-from helpers import leaderboardHelper
+from common import agpl
 from objects import glob
 from pubSubHandlers import beatmapUpdateHandler
 import secret.achievements.utils
@@ -85,6 +84,13 @@ def make_app():
 
 
 if __name__ == "__main__":
+	# AGPL license agreement
+	try:
+		agpl.check_license("ripple", "LETS")
+	except agpl.LicenseError as e:
+		print(str(e))
+		sys.exit(1)
+
 	try:
 		consoleHelper.printServerStartHeader(True)
 
