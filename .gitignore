@@ -8,3 +8,4 @@ common_copied
 common_refractor
 *.c
 *.so
+*.log
