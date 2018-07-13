@@ -16,7 +16,7 @@ This server handles every non real time client feature, so:
 - catch the beat pp calculation with [catch-the-pp](https://github.com/osuripple/catch-the-pp), made by Sunpy and cythonized by Nyo
 
 ## Requirements
-- Python 3.5+
+- Python 3.6
 - Cython
 - C compiler
 
@@ -42,16 +42,38 @@ $ nano config.ini
 finally, compile oppai-ng (inside pp/oppai-ng) and osu-tools (inside pp/maniapp-osu-tools).
 
 ## tomejerry.py
-`tomejerry.py` is a tool that allows you to calculate pp for specific scores. It's extremely useful to do mass PP recalculations if you mess something up. It uses lets' config and packages, so make sure lets is installed and configured correctly before using it.  
-`tomejerry` supports a lot of parameters, the main ones are:  
-- `-r`, to recalculate PP for every score on every game mode
-- `-z` to calculate PP for scores with 0 pp  
-- `-g x` to recalculate PP for scores for `x` gamemode (0: std, 1: taiko, 2: ctb, 3: mania)
-- `-i x` to recalculate PP for score with `x` id  
-- `-n x` to recalculate PP for scores submitted by user with `x` username  
-For a full list of all the arguments supported by `tomejerry`, run `python3 tomejerry.py --help`
+`tomejerry.py` is a tool that allows you to calculate pp for specific scores. It's extremely useful to do mass PP recalculations if you mess something up. It uses lets' config and packages, so make sure lets is installed and configured correctly before using it.
+```
+usage: tomejerry.py [-h]
+                    [-r | -z | -i ID | -m MODS | -g GAMEMODE | -u USERID | -b BEATMAPID | -fhd]
+                    [-w WORKERS] [-cs CHUNKSIZE] [-v]
+
+pp recalc tool for ripple, new version.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -r, --recalc          calculates pp for all high scores
+  -z, --zero            calculates pp for 0 pp high scores
+  -i ID, --id ID        calculates pp for the score with this score_id
+  -m MODS, --mods MODS  calculates pp for high scores with these mods (flags)
+  -g GAMEMODE, --gamemode GAMEMODE
+                        calculates pp for scores played on this game mode
+                        (std:0, taiko:1, ctb:2, mania:3)
+  -u USERID, --userid USERID
+                        calculates pp for high scores set by a specific user
+                        (user_id)
+  -b BEATMAPID, --beatmapid BEATMAPID
+                        calculates pp for high scores played on a specific
+                        beatmap (beatmap_id)
+  -fhd, --fixstdhd      calculates pp for std hd high scores (14/05/2018 pp
+                        algorithm changes)
+  -w WORKERS, --workers WORKERS
+                        number of workers. 16 by default. Max 32
+  -cs CHUNKSIZE, --chunksize CHUNKSIZE
+                        score chunks size
+  -v, --verbose         verbose/debug mode
+```
 
 ## License
 This project is licensed under the GNU AGPL 3 License.  
 See the "LICENSE" file for more information.  
-This project contains code taken by reference from [osu-performance](https://github.com/ppy/osu-performance) by Tom94.
