@@ -127,19 +127,37 @@ class SimpleRecalculator(Recalculator):
 
 
 class ScoreIdsPool:
+    """
+    Pool of score ids that needs to be recalculated.
+    """
     logger = logging.getLogger("score_ids_pool")
 
     def __init__(self):
+        """
+        Initializes a new pool
+        """
         self._lock = threading.RLock()
         self.scores = []
 
     def load(self, recalculator: Recalculator):
+        """
+        Loads score ids in the pool from a Recalculator instance
+
+        :param recalculator: The recalculator instance that will be used to fetch the score ids
+        :return:
+        """
         with self._lock:
             query_result = glob.db.fetchAll(recalculator.ids_query.query, recalculator.ids_query.parameters)
             self.scores += [LwScore(x["id"], 0) for x in query_result]
         self.logger.debug("Loaded {} scores".format(len(self.scores)))
 
-    def chunk(self, chunk_size: int):
+    def chunk(self, chunk_size: int) -> List[int]:
+        """
+        Returns a chunk of score ids of the specified size, and removes the chunk from the pool.
+
+        :param chunk_size: size of the chunk
+        :return: score ids list
+        """
         with self._lock:
             chunked_scores = self.scores[:chunk_size]
             self.scores = self.scores[chunk_size:]
@@ -148,6 +166,11 @@ class ScoreIdsPool:
 
     @property
     def is_empty(self):
+        """
+        Whether the pool is empty or not
+
+        :return: `True` if the pool is empty else `False`
+        """
         return not bool(self.scores)
 
 
@@ -305,6 +328,11 @@ class Worker:
             self.logger.debug("PP Recalculated")
 
     def save_recalculations(self):
+        """
+        Saves the recalculated performance points in the database
+
+        :return:
+        """
         self.status = WorkerStatus.SAVING
         # self.saved_scores_count = 0
 
@@ -470,6 +498,7 @@ def mass_recalc(recalculator: Recalculator, workers_number: int=MAX_WORKERS, chu
             # Wait 0.5 s and update the progress bar again
             time.sleep(0.5)
 
+    # Recalc done. Print some stats
     end_time = time.time()
     failed_scores = sum([x.failed_scores for x in workers])
     logging.info(
