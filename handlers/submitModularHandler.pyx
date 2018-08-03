@@ -108,6 +108,11 @@ class handler(requestsManager.asyncRequestHandler):
 			s = score.score()
 			s.setDataFromScoreData(scoreData)
 
+			if s.completed == -1:
+				# Duplicated score
+				log.warning("Duplicated score detected, this is normal right after restarting the server")
+				return
+
 			# Set score stuff missing in score data
 			s.playerUserID = userID
 
