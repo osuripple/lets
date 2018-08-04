@@ -63,7 +63,7 @@ class config:
 			self.config.get("server", "apikey")
 
 			self.config.get("sentry","enable")
-			self.config.get("sentry","dns")
+			self.config.get("sentry","dsn")
 
 			self.config.get("datadog", "enable")
 			self.config.get("datadog", "apikey")
@@ -119,7 +119,7 @@ class config:
 
 		self.config.add_section("sentry")
 		self.config.set("sentry", "enable", "False")
-		self.config.set("sentry", "dns", "")
+		self.config.set("sentry", "dsn", "")
 
 		self.config.add_section("datadog")
 		self.config.set("datadog", "enable", "False")
