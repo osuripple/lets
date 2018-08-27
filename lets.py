@@ -36,6 +36,7 @@ from handlers import osuSearchSetHandler
 from handlers import redirectHandler
 from handlers import submitModularHandler
 from handlers import uploadScreenshotHandler
+from handlers import commentHandler
 from helpers import config
 from helpers import consoleHelper
 from common import generalUtils
@@ -56,6 +57,7 @@ def make_app():
 		(r"/web/osu-search-set.php", osuSearchSetHandler.handler),
 		(r"/web/check-updates.php", checkUpdatesHandler.handler),
 		(r"/web/osu-error.php", osuErrorHandler.handler),
+		(r"/web/osu-comment.php", commentHandler.handler),
 		(r"/ss/(.*)", getScreenshotHandler.handler),
 		(r"/web/maps/(.*)", mapsHandler.handler),
 		(r"/d/(.*)", downloadMapHandler.handler),
