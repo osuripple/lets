@@ -211,18 +211,18 @@ class beatmap:
 		self.OD = float(mainData["diff_overall"])
 
 		# Determine stars for every mode
-		self.starsStd = 0
-		self.starsTaiko = 0
-		self.starsCtb = 0
-		self.starsMania = 0
+		self.starsStd = 0.0
+		self.starsTaiko = 0.0
+		self.starsCtb = 0.0
+		self.starsMania = 0.0
 		if dataStd is not None:
-			self.starsStd = dataStd["difficultyrating"]
+			self.starsStd = float(dataStd["difficultyrating"])
 		if dataTaiko is not None:
-			self.starsTaiko = dataTaiko["difficultyrating"]
+			self.starsTaiko = float(dataTaiko["difficultyrating"])
 		if dataCtb is not None:
-			self.starsCtb = dataCtb["difficultyrating"]
+			self.starsCtb = float(dataCtb["difficultyrating"])
 		if dataMania is not None:
-			self.starsMania = dataMania["difficultyrating"]
+			self.starsMania = float(dataMania["difficultyrating"])
 
 		self.maxCombo = int(mainData["max_combo"]) if mainData["max_combo"] is not None else 0
 		self.hitLength = int(mainData["hit_length"])
