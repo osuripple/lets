@@ -17,34 +17,37 @@ class handler(requestsManager.asyncRequestHandler):
 	@tornado.gen.engine
 	@sentry.captureTornado
 	def asyncPost(self):
-		# Required arguments check
-		if not requestsManager.checkArguments(self.request.arguments, ("u", "p", "a")):
-			raise exceptions.invalidArgumentsException(MODULE_NAME)
+		try:
+			# Required arguments check
+			if not requestsManager.checkArguments(self.request.arguments, ("u", "p", "a")):
+				raise exceptions.invalidArgumentsException(MODULE_NAME)
 
-		# Get arguments
-		username = self.get_argument("u")
-		password = self.get_argument("p")
-		action = self.get_argument("a").strip().lower()
+			# Get arguments
+			username = self.get_argument("u")
+			password = self.get_argument("p")
+			action = self.get_argument("a").strip().lower()
 
-		# IP for session check
-		ip = self.getRequestIP()
+			# IP for session check
+			ip = self.getRequestIP()
 
-		# Login and ban check
-		userID = userUtils.getID(username)
-		if userID == 0:
-			raise exceptions.loginFailedException(MODULE_NAME, userID)
-		if not userUtils.checkLogin(userID, password, ip):
-			raise exceptions.loginFailedException(MODULE_NAME, username)
-		if userUtils.check2FA(userID, ip):
-			raise exceptions.need2FAException(MODULE_NAME, userID, ip)
-		if userUtils.isBanned(userID):
-			raise exceptions.userBannedException(MODULE_NAME, username)
+			# Login and ban check
+			userID = userUtils.getID(username)
+			if userID == 0:
+				raise exceptions.loginFailedException(MODULE_NAME, userID)
+			if not userUtils.checkLogin(userID, password, ip):
+				raise exceptions.loginFailedException(MODULE_NAME, username)
+			if userUtils.check2FA(userID, ip):
+				raise exceptions.need2FAException(MODULE_NAME, userID, ip)
+			if userUtils.isBanned(userID):
+				raise exceptions.userBannedException(MODULE_NAME, username)
 
-		# Action (depends on 'action' parameter, not on HTTP method)
-		if action == "get":
-			self.write(self._getComments())
-		elif action == "post":
-			self._addComment()
+			# Action (depends on 'action' parameter, not on HTTP method)
+			if action == "get":
+				self.write(self._getComments())
+			elif action == "post":
+				self._addComment()
+		except (exceptions.loginFailedException, exceptions.need2FAException, exceptions.userBannedException):
+			self.write("error: no")
 
 	@staticmethod
 	def clientWho(y):
