@@ -9,7 +9,7 @@ try:
 		VERSION = f.read().strip()
 except:
 	VERSION = "Unknown"
-ACHIEVEMENTS_VERSION = 0
+ACHIEVEMENTS_VERSION = 1
 
 DATADOG_PREFIX = "lets"
 db = None
