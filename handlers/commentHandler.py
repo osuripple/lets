@@ -124,7 +124,7 @@ class handler(requestsManager.asyncRequestHandler):
 		# Type of comment
 		who = "normal"
 		if target == "replay" and glob.db.fetch(
-				"SELECT COUNT(*) AS c FROM scores WHERE id = %s AND user_id = %s AND completed = 3",
+				"SELECT COUNT(*) AS c FROM scores WHERE id = %s AND userid = %s AND completed = 3",
 				(scoreID, userID)
 		)["c"] > 0:
 			# From player, on their score
