@@ -48,3 +48,7 @@ class noAPIDataError(Exception):
 
 class scoreNotFoundError(Exception):
 	pass
+
+class ppCalcException(Exception):
+	def __init__(self, exception):
+		self.exception = exception

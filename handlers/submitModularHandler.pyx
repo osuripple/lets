@@ -1,7 +1,6 @@
 import base64
 import collections
 import json
-import os
 import sys
 import threading
 import traceback
@@ -19,7 +18,9 @@ from common.ripple import userUtils
 from common.web import requestsManager
 from constants import exceptions
 from constants import rankedStatuses
-from helpers import aeshelper, replayHelper
+from constants.exceptions import ppCalcException
+from helpers import aeshelper
+from helpers import replayHelper
 from helpers import leaderboardHelper
 from objects import beatmap
 from objects import glob
@@ -126,8 +127,7 @@ class handler(requestsManager.asyncRequestHandler):
 				return
 
 			# Calculate PP
-			# NOTE: PP are std and mania only
-			ppCalcException = None
+			midPPCalcException = None
 			try:
 				s.calculatePP()
 			except Exception as e:
@@ -138,7 +138,7 @@ class handler(requestsManager.asyncRequestHandler):
 				# the scores server again.
 				log.error("Caught an exception in pp calculation, re-raising after saving score in db")
 				s.pp = 0
-				ppCalcException = e
+				midPPCalcException = e
 
 			# Restrict obvious cheaters
 			if (s.pp >= 700 and s.gameMode == gameModes.STD) and restricted == False:
@@ -267,8 +267,8 @@ class handler(requestsManager.asyncRequestHandler):
 
 			# Re-raise pp calc exception after saving score, cake, replay etc
 			# so Sentry can track it without breaking score submission
-			if ppCalcException is not None:
-				raise ppCalcException()
+			if midPPCalcException is not None:
+				raise ppCalcException(midPPCalcException)
 
             # If there was no exception, update stats and build score submitted panel
 			# Get "before" stats for ranking panel (only if passed)
