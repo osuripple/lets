@@ -594,7 +594,7 @@ def main():
         "id": lambda: SimpleRecalculator(("scores.id = %s",), (args.id,)),
         "gamemode": lambda: SimpleRecalculator(("scores.completed = 3", "scores.play_mode = %s",), (args.gamemode,)),
         "userid": lambda: SimpleRecalculator(("scores.completed = 3", "scores.userid = %s",), (args.userid,)),
-        "beatmapid": lambda: SimpleRecalculator(("scores.completed = 3", "scores.beatmap_id = %s",), (args.beatmapid,)),
+        "beatmapid": lambda: SimpleRecalculator(("scores.completed = 3", "beatmaps.beatmap_id = %s",), (args.beatmapid,)),
         "fixstdhd": lambda: SimpleRecalculator(("scores.completed = 3", "scores.play_mode = 0", "scores.mods & 8 > 0"))
     }
     recalculator = None
