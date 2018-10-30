@@ -245,7 +245,7 @@ class beatmap:
 		# Force refresh from osu api.
 		# We get data before to keep frozen maps ranked
 		# if they haven't been updated
-		if dbResult == True and self.refresh:
+		if dbResult and self.refresh:
 			dbResult = False
 
 		if not dbResult:
