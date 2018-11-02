@@ -23,7 +23,7 @@ class handler(requestsManager.asyncRequestHandler):
 	def asyncGet(self, screenshotID = None):
 		try:
 			# Make sure the screenshot exists
-			if screenshotID is None or os.path.isfile(".data/screenshots/{}".format(screenshotID)) == False:
+			if screenshotID is None or not os.path.isfile(".data/screenshots/{}".format(screenshotID)):
 				raise exceptions.fileNotFoundException(MODULE_NAME, screenshotID)
 
 			# Read screenshot
