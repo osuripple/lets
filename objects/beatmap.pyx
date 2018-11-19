@@ -63,6 +63,7 @@ class beatmap:
 			frozen = bdata["ranked_status_freezed"]
 			if frozen:
 				self.rankedStatus = bdata["ranked"]
+			self.disablePP = bdata["disable_pp"]
 			log.debug("Deleting old beatmap data ({})".format(bdata["id"]))
 			glob.db.execute("DELETE FROM beatmaps WHERE id = %s LIMIT 1", [bdata["id"]])
 		else:
@@ -70,13 +71,10 @@ class beatmap:
 			frozen = False
 
 		# Unrank broken approved/qualified/loved maps
-		if self.rankedStatus >= rankedStatuses.APPROVED:
+		if not self.disablePP and self.rankedStatus >= rankedStatuses.APPROVED:
 			from objects.score import PerfectScoreFactory
 			# Calculate PP for every game mode
 			log.debug("Caching A/Q/L map ({}). Checking if it's broken.".format(self.fileMD5))
-
-			# Calculate pp for every game mode
-			broken = False
 			for gameMode in (
 				range(gameModes.STD, gameModes.MANIA) if not self.is_mode_specific
 				else (self.specific_game_mode,)
@@ -89,17 +87,17 @@ class beatmap:
 
 				if s.pp >= glob.aqlThresholds[gameMode]:
 					# More pp than the threshold
-					broken = True
+					self.disablePP = True
 					break
 
 				# This game mode is fine, try the next one
 				s.pp = 0.
 
-			if broken:
-				# dont()
-				log.info("Disabling PP on broken A/Q/L map {} (pp={})".format(self.fileMD5, s.pp))
-				self.disablePP = True
-				glob.db.execute("UPDATE scores SET pp = 0 WHERE beatmap_md5 = %s", (self.fileMD5,))
+		if self.disablePP:
+			# dont()
+			log.info("Disabling PP on broken A/Q/L map {} (pp={})".format(self.fileMD5, s.pp))
+			self.disablePP = True
+			glob.db.execute("UPDATE scores SET pp = 0 WHERE beatmap_md5 = %s", (self.fileMD5,))
 
 		# Add new beatmap data
 		log.debug("Saving beatmap data in db...")
