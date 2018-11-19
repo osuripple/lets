@@ -200,7 +200,7 @@ if __name__ == "__main__":
 		consoleHelper.printColored("Achievements version is {}".format(glob.ACHIEVEMENTS_VERSION), bcolors.YELLOW)
 
 		# Load AQL thresholds
-		consoleHelper.printNoNl("Loading AQL thresholds... ")
+		print("Loading AQL thresholds... ")
 		try:
 			glob.aqlThresholds.reload()
 		except Exception as e:

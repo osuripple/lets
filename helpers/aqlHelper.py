@@ -1,5 +1,6 @@
 from common.constants import gameModes
 from objects import glob
+from common.log import logUtils as log
 
 
 class AqlThresholds:
@@ -19,6 +20,7 @@ class AqlThresholds:
 
         :return:
         """
+        log.info("Reloading AQL thresholds")
         self._thresholds = {}
         for x in glob.db.fetchAll(
             "SELECT `name`, value_string FROM system_settings WHERE `name` LIKE 'aql\_threshold\_%%'"
@@ -33,6 +35,7 @@ class AqlThresholds:
                 self._thresholds[m] = float(x["value_string"])
             except ValueError:
                 continue
+        log.debug([(gameModes.getGameModeForDB(x), self[x]) for x in self])
         if not all(x in self._thresholds for x in range(gameModes.STD, gameModes.MANIA)):
             raise RuntimeError("Invalid AQL thresholds. Please check your system_settings table.")
 
