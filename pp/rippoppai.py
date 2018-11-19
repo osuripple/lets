@@ -133,7 +133,7 @@ class oppai:
 					command += " {acc:.2f}%".format(acc=self.acc)
 			if self.mods > 0:
 				command += " +{mods}".format(mods=scoreUtils.readableMods(modsFixed))
-			if self.combo > 0:
+			if self.combo >= 0:
 				command += " {combo}x".format(combo=self.combo)
 			if self.misses > 0:
 				command += " {misses}xm".format(misses=self.misses)
