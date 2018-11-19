@@ -97,9 +97,9 @@ class beatmap:
 
 			if broken:
 				# dont()
-				# TODO: set pp = 0 to old scores
+				log.info("Disabling PP on broken A/Q/L map {} (pp={})".format(self.fileMD5, s.pp))
 				self.disablePP = True
-				log.warning("Disabling PP on broken A/Q/L map {} (pp={})".format(self.fileMD5, s.pp))
+				glob.db.execute("UPDATE scores SET pp = 0 WHERE beatmap_md5 = %s", (self.fileMD5,))
 
 		# Add new beatmap data
 		log.debug("Saving beatmap data in db...")
