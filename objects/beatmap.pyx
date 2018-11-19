@@ -1,5 +1,6 @@
 import time
 
+from common.constants import gameModes
 from common.log import logUtils as log
 from constants import rankedStatuses
 from helpers import osuapiHelper
@@ -7,9 +8,9 @@ from objects import glob
 
 
 class beatmap:
-	__slots__ = ["songName", "fileMD5", "rankedStatus", "rankedStatusFrozen", "beatmapID", "beatmapSetID", "offset",
+	__slots__ = ("songName", "fileMD5", "rankedStatus", "rankedStatusFrozen", "beatmapID", "beatmapSetID", "offset",
 	             "rating", "starsStd", "starsTaiko", "starsCtb", "starsMania", "AR", "OD", "maxCombo", "hitLength",
-	             "bpm", "playcount" ,"passcount", "refresh"]
+	             "bpm", "playcount" ,"passcount", "refresh", "disablePP")
 
 	def __init__(self, md5 = None, beatmapSetID = None, gameMode = 0, refresh=False):
 		"""
@@ -27,7 +28,7 @@ class beatmap:
 		self.offset = 0		# Won't implement
 		self.rating = 10.0 	# Won't implement
 
-		self.starsStd = 0.0	# stars for converted
+		self.starsStd = 0.0		# stars for converted
 		self.starsTaiko = 0.0	# stars for converted
 		self.starsCtb = 0.0		# stars for converted
 		self.starsMania = 0.0	# stars for converted
@@ -36,6 +37,7 @@ class beatmap:
 		self.maxCombo = 0
 		self.hitLength = 0
 		self.bpm = 0
+		self.disablePP = False
 
 		# Statistics for ranking panel
 		self.playcount = 0
@@ -51,22 +53,61 @@ class beatmap:
 		Add current beatmap data in db if not in yet
 		"""
 		# Make sure the beatmap is not already in db
-		bdata = glob.db.fetch("SELECT id, ranked_status_freezed, ranked FROM beatmaps WHERE beatmap_md5 = %s OR beatmap_id = %s LIMIT 1", [self.fileMD5, self.beatmapID])
+		bdata = glob.db.fetch(
+			"SELECT id, ranked_status_freezed, ranked FROM beatmaps WHERE beatmap_md5 = %s OR beatmap_id = %s LIMIT 1",
+			(self.fileMD5, self.beatmapID)
+		)
 		if bdata is not None:
 			# This beatmap is already in db, remove old record
 			# Get current frozen status
 			frozen = bdata["ranked_status_freezed"]
-			if frozen == 1:
+			if frozen:
 				self.rankedStatus = bdata["ranked"]
 			log.debug("Deleting old beatmap data ({})".format(bdata["id"]))
 			glob.db.execute("DELETE FROM beatmaps WHERE id = %s LIMIT 1", [bdata["id"]])
 		else:
 			# Unfreeze beatmap status
-			frozen = 0
+			frozen = False
+
+		# Unrank broken approved/qualified/loved maps
+		if self.rankedStatus >= rankedStatuses.APPROVED:
+			from objects.score import PerfectScoreFactory
+			# Calculate PP for every game mode
+			log.debug("Caching A/Q/L map ({}). Checking if it's broken.".format(self.fileMD5))
+
+			# Calculate pp for every game mode
+			broken = False
+			for gameMode in (
+				range(gameModes.STD, gameModes.MANIA) if not self.is_mode_specific
+				else (self.specific_game_mode,)
+			):
+				log.debug("Calculating A/Q/L pp for beatmap {}, mode {}".format(self.fileMD5, gameMode))
+				s = PerfectScoreFactory.create(self, game_mode=gameMode)
+				s.calculatePP(self)
+				if s.pp == 0:
+					log.warning("Got 0.0pp while checking A/Q/L pp for beatmap {}".format(self.fileMD5))
+
+				if s.pp >= glob.aqlThresholds[gameMode]:
+					# More pp than the threshold
+					broken = True
+					break
+
+				# This game mode is fine, try the next one
+				s.pp = 0.
+
+			if broken:
+				# dont()
+				# TODO: set pp = 0 to old scores
+				self.disablePP = True
+				log.warning("Disabling PP on broken A/Q/L map {} (pp={})".format(self.fileMD5, s.pp))
 
 		# Add new beatmap data
 		log.debug("Saving beatmap data in db...")
-		glob.db.execute("INSERT INTO `beatmaps` (`id`, `beatmap_id`, `beatmapset_id`, `beatmap_md5`, `song_name`, `ar`, `od`, `difficulty_std`, `difficulty_taiko`, `difficulty_ctb`, `difficulty_mania`, `max_combo`, `hit_length`, `bpm`, `ranked`, `latest_update`, `ranked_status_freezed`) VALUES (NULL, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);", [
+		glob.db.execute(
+			"INSERT INTO `beatmaps` (`id`, `beatmap_id`, `beatmapset_id`, `beatmap_md5`, `song_name`, "
+			"`ar`, `od`, `difficulty_std`, `difficulty_taiko`, `difficulty_ctb`, `difficulty_mania`, "
+			"`max_combo`, `hit_length`, `bpm`, `ranked`, `latest_update`, `ranked_status_freezed`, `disable_pp`) "
+			"VALUES (NULL, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", (
 			self.beatmapID,
 			self.beatmapSetID,
 			self.fileMD5,
@@ -80,10 +121,11 @@ class beatmap:
 			self.maxCombo,
 			self.hitLength,
 			self.bpm,
-			self.rankedStatus if frozen == 0 else 2,
+			self.rankedStatus if not frozen else 2,
 			int(time.time()),
-			frozen
-		])
+			frozen,
+			self.disablePP
+		))
 
 	def setDataFromDB(self, md5):
 		"""
@@ -144,6 +186,7 @@ class beatmap:
 		self.maxCombo = int(data["max_combo"])
 		self.hitLength = int(data["hit_length"])
 		self.bpm = int(data["bpm"])
+		self.disablePP = bool(data["disable_pp"])
 		# Ranking panel statistics
 		self.playcount = int(data["playcount"]) if "playcount" in data else 0
 		self.passcount = int(data["passcount"]) if "passcount" in data else 0
@@ -269,11 +312,16 @@ class beatmap:
 
 		return -- beatmap header for getscores
 		"""
+		rankedStatusOutput = self.rankedStatus
+
+		# Force approved for A/Q/L beatmaps that give PP, so we don't get the alert in game
+		if self.rankedStatus >= rankedStatuses.APPROVED and self.is_rankable:
+			rankedStatusOutput = rankedStatuses.APPROVED
+
 		# Fix loved maps for old clients
 		if version < 4 and self.rankedStatus == rankedStatuses.LOVED:
 			rankedStatusOutput = rankedStatuses.QUALIFIED
-		else:
-			rankedStatusOutput = self.rankedStatus
+
 		data = "{}|false".format(rankedStatusOutput)
 		if self.rankedStatus != rankedStatuses.NOT_SUBMITTED and self.rankedStatus != rankedStatuses.NEED_UPDATE and self.rankedStatus != rankedStatuses.UNKNOWN:
 			# If the beatmap is updated and exists, the client needs more data
@@ -304,7 +352,28 @@ class beatmap:
 
 	@property
 	def is_rankable(self):
-		return self.rankedStatus >= rankedStatuses.RANKED and self.rankedStatus != rankedStatuses.UNKNOWN
+		return self.rankedStatus >= rankedStatuses.RANKED \
+			   and self.rankedStatus != rankedStatuses.UNKNOWN \
+			   and not self.disablePP
+
+	@property
+	def is_mode_specific(self):
+		return sum(x > 0 for x in (self.starsStd, self.starsTaiko, self.starsCtb, self.starsMania)) == 1
+
+	@property
+	def specific_game_mode(self):
+		if not self.is_mode_specific:
+			return None
+		try:
+			return next(
+				mode for mode, pp in zip(
+					(gameModes.STD, gameModes.TAIKO, gameModes.CTB, gameModes.MANIA),
+					(self.starsStd, self.starsTaiko, self.starsCtb, self.starsMania)
+				) if pp > 0
+			)
+		except StopIteration:
+			# FUBAR beatmap 🤔
+			return None
 
 def convertRankedStatus(approvedStatus):
 	"""

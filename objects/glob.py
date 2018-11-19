@@ -3,6 +3,7 @@ import userStatsCache
 from common.ddog import datadogClient
 from common.files import fileBuffer, fileLocks
 from common.web import schiavo
+from helpers.aqlHelper import AqlThresholds
 
 try:
 	with open("version") as f:
@@ -31,3 +32,4 @@ fileBuffers = fileBuffer.buffersList()
 dog = datadogClient.datadogClient()
 schiavo = schiavo.schiavo()
 achievementClasses = {}
+aqlThresholds = AqlThresholds()

@@ -1,24 +1,15 @@
 import time
 
-from objects import beatmap
+import pp
 from common.constants import gameModes
+from objects import beatmap
 from common.log import logUtils as log
 from common.ripple import userUtils
-from constants import rankedStatuses
 from common.ripple import scoreUtils
 from objects import glob
-from pp import rippoppai
-from pp import wifipiano3
-from pp import cicciobello
 
 
 class score:
-	PP_CALCULATORS = {
-		gameModes.STD: rippoppai.oppai,
-		gameModes.TAIKO: rippoppai.oppai,
-		gameModes.CTB: cicciobello.Cicciobello,
-		gameModes.MANIA: wifipiano3.WiFiPiano
-	}
 	__slots__ = ["scoreID", "playerName", "score", "maxCombo", "c50", "c100", "c300", "cMiss", "cKatu", "cGeki",
 	             "fullCombo", "mods", "playerUserID","rank","date", "hasReplay", "fileMd5", "passed", "playDateTime",
 	             "gameMode", "completed", "accuracy", "pp", "oldPersonalBest", "rankedScoreIncrease"]
@@ -266,9 +257,31 @@ class score:
 			b = beatmap.beatmap(self.fileMd5, 0)
 
 		# Calculate pp
-		if b.rankedStatus >= rankedStatuses.RANKED and b.rankedStatus != rankedStatuses.UNKNOWN \
-			and scoreUtils.isRankable(self.mods) and self.passed and self.gameMode in score.PP_CALCULATORS:
-			calculator = score.PP_CALCULATORS[self.gameMode](b, self)
+		if b.is_rankable and scoreUtils.isRankable(self.mods) and self.passed and self.gameMode in pp.PP_CALCULATORS:
+			calculator = pp.PP_CALCULATORS[self.gameMode](b, self)
 			self.pp = calculator.pp
 		else:
 			self.pp = 0
+
+class PerfectScoreFactory:
+	@staticmethod
+	def create(beatmap, game_mode=gameModes.STD):
+		"""
+		Factory method that creates a perfect score.
+		Used to calculate max pp amount for a specific beatmap.
+
+		:param beatmap: beatmap object
+		:param game_mode: game mode number. Default: `gameModes.STD`
+		:return: `score` object
+		"""
+		s = score()
+		s.accuracy = 1.
+		# max combo cli param/arg gets omitted if it's < 0 and oppai/catch-the-pp set it to max combo.
+		# maniapp ignores max combo entirely.
+		s.maxCombo = -1
+		s.fullCombo = True
+		s.passed = True
+		s.gameMode = game_mode
+		if s.gameMode == gameModes.MANIA:
+			s.score = 1000000
+		return s

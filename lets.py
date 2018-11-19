@@ -199,6 +199,16 @@ if __name__ == "__main__":
 		glob.redis.set("lets:achievements_version", glob.ACHIEVEMENTS_VERSION)
 		consoleHelper.printColored("Achievements version is {}".format(glob.ACHIEVEMENTS_VERSION), bcolors.YELLOW)
 
+		# Load AQL thresholds
+		consoleHelper.printNoNl("Loading AQL thresholds... ")
+		try:
+			glob.aqlThresholds.reload()
+		except Exception as e:
+			consoleHelper.printError()
+			consoleHelper.printColored("[!] {}".format(e), bcolors.RED,)
+			sys.exit()
+		consoleHelper.printDone()
+
 		# Discord
 		if generalUtils.stringToBool(glob.conf.config["discord"]["enable"]):
 			glob.schiavo = schiavo.schiavo(glob.conf.config["discord"]["boturl"], "**lets**")
@@ -241,6 +251,7 @@ if __name__ == "__main__":
 		# Connect to pubsub channels
 		pubSub.listener(glob.redis, {
 			"lets:beatmap_updates": beatmapUpdateHandler.handler(),
+			"lets:reload_aql": lambda x: x == b"reload" and glob.aqlThresholds.reload(),
 		}).start()
 
 		# Server start message and console output
