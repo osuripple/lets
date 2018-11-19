@@ -26,16 +26,9 @@ class WiFiPiano:
 			"dotnet pp/maniapp-osu-tools/PerformanceCalculator/bin/Release/netcoreapp2.0/PerformanceCalculator.dll " \
 			"performance {map} " \
 			"-mode 3 " \
-			"-300 {score_.c300} " \
-			"-100 {score_.c100} " \
-			"-50 {score_.c50} " \
-			"-200 {score_.cKatu} " \
-			"-max300 {score_.cGeki} " \
-			"-miss {score_.cMiss} " \
 			"-score {score_.score} " \
 			"-acc {acc} " \
-			"-mods {score_.mods} " \
-			"-maxcombo {score_.maxCombo}".format(
+			"-mods {score_.mods} ".format(
 				map=self.mapPath,
 				score_=self.score,
 				acc=self.score.accuracy * 100
