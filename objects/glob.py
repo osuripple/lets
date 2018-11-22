@@ -32,3 +32,4 @@ dog = datadogClient.datadogClient()
 schiavo = schiavo.schiavo()
 achievementClasses = {}
 aqlThresholds = AqlThresholds()
+serverPort = None

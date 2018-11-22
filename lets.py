@@ -236,9 +236,9 @@ if __name__ == "__main__":
 		try:
 			if cli_args.port:
 				consoleHelper.printColored("[!] Running on port {}, bypassing config.ini", bcolors.YELLOW)
-				serverPort = int(cli_args.port)
+				glob.serverPort = int(cli_args.port)
 			else:
-				serverPort = int(glob.conf.config["server"]["port"])
+				glob.serverPort = int(glob.conf.config["server"]["port"])
 		except:
 			consoleHelper.printColored("[!] Invalid server port! Please check your config.ini and run the server again", bcolors.RED)
 
@@ -258,7 +258,11 @@ if __name__ == "__main__":
 		# Set up Datadog
 		try:
 			if generalUtils.stringToBool(glob.conf.config["datadog"]["enable"]):
-				glob.dog = datadogClient.datadogClient(glob.conf.config["datadog"]["apikey"], glob.conf.config["datadog"]["appkey"])
+				glob.dog = datadogClient.datadogClient(
+					glob.conf.config["datadog"]["apikey"],
+					glob.conf.config["datadog"]["appkey"],
+					constant_tags=["worker:{}".format(glob.serverPort)]
+				)
 			else:
 				consoleHelper.printColored("[!] Warning! Datadog stats tracking is disabled!", bcolors.YELLOW)
 		except:
@@ -271,11 +275,14 @@ if __name__ == "__main__":
 		}).start()
 
 		# Server start message and console output
-		consoleHelper.printColored("> L.E.T.S. is listening for clients on {}:{}...".format(glob.conf.config["server"]["host"], serverPort), bcolors.GREEN)
+		consoleHelper.printColored("> L.E.T.S. is listening for clients on {}:{}...".format(
+			glob.conf.config["server"]["host"],
+			glob.serverPort
+		), bcolors.GREEN)
 		log.logMessage("Server started!", discord="bunker", stdout=False)
 
 		# Start Tornado
-		glob.application.listen(serverPort, address=glob.conf.config["server"]["host"])
+		glob.application.listen(glob.serverPort, address=glob.conf.config["server"]["host"])
 		tornado.ioloop.IOLoop.instance().start()
 	finally:
 		# Perform some clean up
