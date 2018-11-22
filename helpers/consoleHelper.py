@@ -3,6 +3,14 @@
 from common.constants import bcolors
 from objects import glob
 
+ASCII = """ (                 (     
+ )\\ )        *   ) )\\ )  
+(()/(  (   ` )  /((()/(  
+ /(_)) )\\   ( )(_))/(_)) 
+(_))  ((_) (_(_())(_))   
+| |   | __||_   _|/ __|  
+| |__ | _|   | |  \\__ \\  
+|____||___|  |_|  |___/  \n"""
 
 def printServerStartHeader(asciiArt):
 	"""
@@ -12,14 +20,9 @@ def printServerStartHeader(asciiArt):
 	"""
 
 	if asciiArt:
-		printColored(" (                 (     ", bcolors.YELLOW)
-		printColored(" )\\ )        *   ) )\\ )  ", bcolors.YELLOW)
-		printColored("(()/(  (   ` )  /((()/(  ", bcolors.YELLOW)
-		printColored(" /(_)) )\\   ( )(_))/(_)) ", bcolors.YELLOW)
-		printColored("(_))  ((_) (_(_())(_))   ", bcolors.YELLOW)
-		printColored("| |   | __||_   _|/ __|  ", bcolors.GREEN)
-		printColored("| |__ | _|   | |  \\__ \\  ", bcolors.GREEN)
-		printColored("|____||___|  |_|  |___/  \n", bcolors.GREEN)
+		ascii_list = ASCII.split("\n")
+		for i, x in enumerate(ascii_list):
+			printColored(x, bcolors.YELLOW if i < len(ascii_list) - 4 else bcolors.GREEN)
 
 	printColored("> Welcome to the Latest Essential Tatoe Server v{}".format(glob.VERSION), bcolors.GREEN)
 	printColored("> Made by the Ripple team", bcolors.GREEN)

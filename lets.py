@@ -1,4 +1,6 @@
 # General imports
+import argparse
+
 import os
 import sys
 from multiprocessing.pool import ThreadPool
@@ -7,6 +9,7 @@ import tornado.gen
 import tornado.httpserver
 import tornado.ioloop
 import tornado.web
+import tornado.netutil
 from raven.contrib.tornado import AsyncSentryClient
 import redis
 
@@ -86,6 +89,15 @@ def make_app():
 
 
 if __name__ == "__main__":
+	parser = argparse.ArgumentParser(
+		description=consoleHelper.ASCII + "\n\nLatest Essential Tatoe Server v{}\nBy The Ripple Team".format(
+			glob.VERSION
+		),
+		formatter_class=argparse.RawTextHelpFormatter
+	)
+	parser.add_argument("-p", "--port", help="Run on a specific port (bypasses config.ini)", required=False)
+	cli_args = parser.parse_args()
+
 	# AGPL license agreement
 	try:
 		agpl.check_license("ripple", "LETS")
@@ -222,7 +234,11 @@ if __name__ == "__main__":
 
 		# Server port
 		try:
-			serverPort = int(glob.conf.config["server"]["port"])
+			if cli_args.port:
+				consoleHelper.printColored("[!] Running on port {}, bypassing config.ini", bcolors.YELLOW)
+				serverPort = int(cli_args.port)
+			else:
+				serverPort = int(glob.conf.config["server"]["port"])
 		except:
 			consoleHelper.printColored("[!] Invalid server port! Please check your config.ini and run the server again", bcolors.RED)
 
