@@ -163,10 +163,10 @@ class score:
 			self.cMiss = int(scoreData[8])
 			self.score = int(scoreData[9])
 			self.maxCombo = int(scoreData[10])
-			self.fullCombo = True if scoreData[11] == 'True' else False
+			self.fullCombo = scoreData[11] == 'True'
 			#self.rank = scoreData[12]
 			self.mods = int(scoreData[13])
-			self.passed = True if scoreData[14] == 'True' else False
+			self.passed = scoreData[14] == 'True'
 			self.gameMode = int(scoreData[15])
 			#self.playDateTime = int(scoreData[16])
 			self.playDateTime = int(time.time())

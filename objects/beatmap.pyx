@@ -54,7 +54,8 @@ class beatmap:
 		"""
 		# Make sure the beatmap is not already in db
 		bdata = glob.db.fetch(
-			"SELECT id, ranked_status_freezed, ranked FROM beatmaps WHERE beatmap_md5 = %s OR beatmap_id = %s LIMIT 1",
+			"SELECT id, ranked_status_freezed, ranked, disable_pp FROM beatmaps "
+			"WHERE beatmap_md5 = %s OR beatmap_id = %s LIMIT 1",
 			(self.fileMD5, self.beatmapID)
 		)
 		if bdata is not None:
