@@ -90,9 +90,6 @@ class beatmap:
 					self.disablePP = True
 					break
 
-				# This game mode is fine, try the next one
-				s.pp = 0.
-
 		if self.disablePP:
 			# dont()
 			log.info("Disabling PP on broken A/Q/L map {} (pp={})".format(self.fileMD5, s.pp))
@@ -152,9 +149,7 @@ class beatmap:
 			expire *= 3
 
 		# Make sure the beatmap data in db is not too old
-		if int(expire) > 0 and time.time() > data["latest_update"]+int(expire):
-			if data["ranked_status_freezed"] == 1:
-				self.setDataFromDict(data)
+		if int(expire) > 0 and time.time() > data["latest_update"]+int(expire) and not data["ranked_status_freezed":
 			return False
 
 		# Data in DB, set beatmap data
