@@ -94,7 +94,7 @@ class handler(requestsManager.asyncRequestHandler):
 					gameMode = gameModes.MANIA
 
 			# Calculate pp
-			if gameMode == gameModes.STD or gameMode == gameModes.TAIKO:
+			if gameMode in (gameModes.STD, gameModes.TAIKO):
 				# Std pp
 				if accuracy < 0 and modsEnum == 0:
 					# Generic acc

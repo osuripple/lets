@@ -52,7 +52,7 @@ class oppai:
 		self.score = None
 		self.acc = 0
 		self.mods = 0
-		self.combo = 0
+		self.combo = -1		# FC
 		self.misses = 0
 		self.stars = 0
 		self.tillerino = tillerino
