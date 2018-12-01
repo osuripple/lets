@@ -259,7 +259,6 @@ class handler(requestsManager.asyncRequestHandler):
 								"score_id": s.scoreID,
 								"beatmap_id": beatmapInfo.beatmapID,
 								"user_id": s.playerUserID,
-								"username": s.playerName,
 								"game_mode": s.gameMode,
 								"pp": s.pp,
 								"replay_data": base64.b64encode(
