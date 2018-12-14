@@ -93,7 +93,7 @@ class beatmap:
 
 		if self.disablePP:
 			# dont()
-			log.info("Disabling PP on broken A/Q/L map {} (pp={})".format(self.fileMD5, s.pp))
+			log.info("Disabling PP on broken A/Q/L map {}".format(self.fileMD5))
 			self.disablePP = True
 			glob.db.execute("UPDATE scores SET pp = 0 WHERE beatmap_md5 = %s", (self.fileMD5,))
 
