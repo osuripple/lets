@@ -26,7 +26,7 @@ class beatmap:
 		self.beatmapID = 0
 		self.beatmapSetID = 0
 		self.offset = 0		# Won't implement
-		self.rating = 10.0 	# Won't implement
+		self.rating = 0.
 
 		self.starsStd = 0.0		# stars for converted
 		self.starsTaiko = 0.0	# stars for converted
@@ -156,6 +156,7 @@ class beatmap:
 		# Data in DB, set beatmap data
 		log.debug("Got beatmap data from db")
 		self.setDataFromDict(data)
+		self.rating = data["rating"]	# db only, we don't want the rating from osu! api.
 		return True
 
 	def setDataFromDict(self, data):
