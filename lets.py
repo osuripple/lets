@@ -19,7 +19,7 @@ from common.ddog import datadogClient
 from common.log import logUtils as log
 from common.redis import pubSub
 from common.web import schiavo
-from handlers import apiCacheBeatmapHandler, rateHandler
+from handlers import apiCacheBeatmapHandler, rateHandler, changelogHandler
 from handlers import apiPPHandler
 from handlers import apiStatusHandler
 from handlers import banchoConnectHandler
@@ -63,6 +63,7 @@ def make_app():
 		(r"/web/osu-error.php", osuErrorHandler.handler),
 		(r"/web/osu-comment.php", commentHandler.handler),
 		(r"/web/osu-rate.php", rateHandler.handler),
+        (r"/p/changelog", changelogHandler.handler),
 		(r"/ss/(.*)", getScreenshotHandler.handler),
 		(r"/web/maps/(.*)", mapsHandler.handler),
 		(r"/d/(.*)", downloadMapHandler.handler),
