@@ -22,10 +22,12 @@ from constants.exceptions import ppCalcException
 from helpers import aeshelper
 from helpers import replayHelper
 from helpers import leaderboardHelper
+from helpers.generalHelper import zingonify
 from objects import beatmap
 from objects import glob
 from objects import score
 from objects import scoreboard
+from objects.charts import BeatmapChart, OverallChart
 from secret import butterCake
 
 MODULE_NAME = "submit_modular"
@@ -37,6 +39,7 @@ class handler(requestsManager.asyncRequestHandler):
 	@tornado.gen.engine
 	#@sentry.captureTornado
 	def asyncPost(self):
+		newCharts = self.request.uri == "/web/osu-submit-modular-selector.php"
 		try:
 			# Resend the score in case of unhandled exceptions
 			keepSending = True
@@ -174,10 +177,24 @@ class handler(requestsManager.asyncRequestHandler):
 				log.warning("**{}** ({}) has been restricted due to notepad hack".format(username, userID), "cm")
 				return
 
+			# Right before submitting the score, get the personal best score object (we need it for charts)
+			if s.passed and s.oldPersonalBest > 0:
+				# We have an older personal best. Get its rank (try to get it from cache first)
+				oldPersonalBestRank = glob.personalBestCache.get(userID, s.fileMd5)
+				if oldPersonalBestRank == 0:
+					# oldPersonalBestRank not found in cache, get it from db through a scoreboard object
+					oldScoreboard = scoreboard.scoreboard(username, s.gameMode, beatmapInfo, False)
+					oldScoreboard.setPersonalBestRank()
+					oldPersonalBestRank = max(oldScoreboard.personalBestRank, 0)
+				oldPersonalBest = score.score(s.oldPersonalBest, oldPersonalBestRank)
+			else:
+				oldPersonalBestRank = 0
+				oldPersonalBest = None
+
 			# Save score in db
 			s.saveScoreInDB()
 
-			# Remove lock as we have the sore in the database at this point
+			# Remove lock as we have the score in the database at this point
 			# and we can perform duplicates check through MySQL
 			log.debug("Resetting score lock key {}".format(lock_key))
 			glob.redis.delete(lock_key)
@@ -294,17 +311,9 @@ class handler(requestsManager.asyncRequestHandler):
             # If there was no exception, update stats and build score submitted panel
 			# Get "before" stats for ranking panel (only if passed)
 			if s.passed:
-				# Get stats and rank
-				oldUserData = glob.userStatsCache.get(userID, s.gameMode)
+				# Get old stats and rank
+				oldUserStats = glob.userStatsCache.get(userID, s.gameMode)
 				oldRank = userUtils.getGameRank(userID, s.gameMode)
-
-				# Try to get oldPersonalBestRank from cache
-				oldPersonalBestRank = glob.personalBestCache.get(userID, s.fileMd5)
-				if oldPersonalBestRank == 0:
-					# oldPersonalBestRank not found in cache, get it from db
-					oldScoreboard = scoreboard.scoreboard(username, s.gameMode, beatmapInfo, False)
-					oldScoreboard.setPersonalBest()
-					oldPersonalBestRank = oldScoreboard.personalBestRank if oldScoreboard.personalBestRank > 0 else 0
 
 			# Always update users stats (total/ranked score, playcount, level, acc and pp)
 			# even if not passed
@@ -316,13 +325,13 @@ class handler(requestsManager.asyncRequestHandler):
 			# (only if we passed that song)
 			if s.passed:
 				# Get new stats
-				newUserData = userUtils.getUserStats(userID, s.gameMode)
-				glob.userStatsCache.update(userID, s.gameMode, newUserData)
+				newUserStats = userUtils.getUserStats(userID, s.gameMode)
+				glob.userStatsCache.update(userID, s.gameMode, newUserStats)
 
 				# Update leaderboard (global and country) if score/pp has changed
-				if s.completed == 3 and newUserData["pp"] != oldUserData["pp"]:
-					leaderboardHelper.update(userID, newUserData["pp"], s.gameMode)
-					leaderboardHelper.updateCountry(userID, newUserData["pp"], s.gameMode)
+				if s.completed == 3 and newUserStats["pp"] != oldUserStats["pp"]:
+					leaderboardHelper.update(userID, newUserStats["pp"], s.gameMode)
+					leaderboardHelper.updateCountry(userID, newUserStats["pp"], s.gameMode)
 
 			# TODO: Update total hits and max combo
 			# Update latest activity
@@ -340,7 +349,7 @@ class handler(requestsManager.asyncRequestHandler):
 
 			# At the end, check achievements
 			if s.passed:
-				new_achievements = secret.achievements.utils.unlock_achievements(s, beatmapInfo, newUserData)
+				new_achievements = secret.achievements.utils.unlock_achievements(s, beatmapInfo, newUserStats)
 
 			# Output ranking panel only if we passed the song
 			# and we got valid beatmap info from db
@@ -352,53 +361,71 @@ class handler(requestsManager.asyncRequestHandler):
 
 				# Get personal best after submitting the score
 				newScoreboard = scoreboard.scoreboard(username, s.gameMode, beatmapInfo, False)
-				newScoreboard.setPersonalBest()
+				newScoreboard.setPersonalBestRank()
+				personalBestID = newScoreboard.getPersonalBestID()
+				assert personalBestID is not None
+				currentPersonalBest = score.score(personalBestID, newScoreboard.personalBestRank)
 
 				# Get rank info (current rank, pp/score to next rank, user who is 1 rank above us)
 				rankInfo = leaderboardHelper.getRankInfo(userID, s.gameMode)
 
 				# Output dictionary
-				output = collections.OrderedDict()
-				output["beatmapId"] = beatmapInfo.beatmapID
-				output["beatmapSetId"] = beatmapInfo.beatmapSetID
-				output["beatmapPlaycount"] = beatmapInfo.playcount
-				output["beatmapPasscount"] = beatmapInfo.passcount
-				#output["approvedDate"] = "2015-07-09 23:20:14\n"
-				output["approvedDate"] = "\n"
-				output["chartId"] = "overall"
-				output["chartName"] = "Overall Ranking"
-				output["chartEndDate"] = ""
-				output["beatmapRankingBefore"] = oldPersonalBestRank
-				output["beatmapRankingAfter"] = newScoreboard.personalBestRank
-				output["rankedScoreBefore"] = oldUserData["rankedScore"]
-				output["rankedScoreAfter"] = newUserData["rankedScore"]
-				output["totalScoreBefore"] = oldUserData["totalScore"]
-				output["totalScoreAfter"] = newUserData["totalScore"]
-				output["playCountBefore"] = newUserData["playcount"]
-				output["accuracyBefore"] = float(oldUserData["accuracy"])/100
-				output["accuracyAfter"] = float(newUserData["accuracy"])/100
-				output["rankBefore"] = oldRank
-				output["rankAfter"] = rankInfo["currentRank"]
-				output["toNextRank"] = rankInfo["difference"]
-				output["toNextRankUser"] = rankInfo["nextUsername"]
-				output["achievements"] = ""
-				output["achievements-new"] = secret.achievements.utils.achievements_response(new_achievements)
-				output["onlineScoreId"] = s.scoreID
-
-				# Build final string
-				msg = ""
-				for line, val in output.items():
-					msg += "{}:{}".format(line, val)
-					if val != "\n":
-						if (len(output) - 1) != list(output.keys()).index(line):
-							msg += "|"
-						else:
-							msg += "\n"
+				if newCharts:
+					log.debug("Using new charts")
+					dicts = [
+						collections.OrderedDict([
+							("beatmapId", beatmapInfo.beatmapID),
+							("beatmapSetId", beatmapInfo.beatmapSetID),
+							("beatmapPlaycount", beatmapInfo.playcount + 1),
+							("beatmapPasscount", beatmapInfo.passcount + (s.completed == 3)),
+							("approvedDate", "")
+						]),
+						BeatmapChart(
+							oldPersonalBest if s.completed == 3 else currentPersonalBest,
+							currentPersonalBest if s.completed == 3 else s,
+							beatmapInfo.beatmapID,
+						),
+						OverallChart(
+							userID, oldUserStats, newUserStats, s, new_achievements, oldRank, rankInfo["currentRank"]
+						)
+					]
+				else:
+					log.debug("Using old charts")
+					dicts = [
+						collections.OrderedDict([
+							("beatmapId", beatmapInfo.beatmapID),
+							("beatmapSetId", beatmapInfo.beatmapSetID),
+							("beatmapPlaycount", beatmapInfo.playcount),
+							("beatmapPasscount", beatmapInfo.passcount),
+							("approvedDate", "")
+						]),
+						collections.OrderedDict([
+							("chartId", "overall"),
+							("chartName", "Overall Ranking"),
+							("chartEndDate", ""),
+							("beatmapRankingBefore", oldPersonalBestRank),
+							("beatmapRankingAfter", newScoreboard.personalBestRank),
+							("rankedScoreBefore", oldUserStats["rankedScore"]),
+							("rankedScoreAfter", newUserStats["rankedScore"]),
+							("totalScoreBefore", oldUserStats["totalScore"]),
+							("totalScoreAfter", newUserStats["totalScore"]),
+							("playCountBefore", newUserStats["playcount"]),
+							("accuracyBefore", float(oldUserStats["accuracy"])/100),
+							("accuracyAfter", float(newUserStats["accuracy"])/100),
+							("rankBefore", oldRank),
+							("rankAfter", rankInfo["currentRank"]),
+							("toNextRank", rankInfo["difference"]),
+							("toNextRankUser", rankInfo["nextUsername"]),
+							("achievements", ""),
+							("achievements-new", secret.achievements.utils.achievements_response(new_achievements)),
+							("onlineScoreId", s.scoreID)
+						])
+					]
+				output = "\n".join(zingonify(x) for x in dicts)
 
 				# Some debug messages
 				log.debug("Generated output for online ranking screen!")
-				log.debug(msg)
-
+				log.debug(output)
 
 				# send message to #announce if we're rank #1
 				if newScoreboard.personalBestRank == 1 and s.completed == 3 and not restricted:
@@ -413,7 +440,7 @@ class handler(requestsManager.asyncRequestHandler):
 					requests.get("{}/api/v1/fokabotMessage?{}".format(glob.conf.config["server"]["banchourl"], params))
 
 				# Write message to client
-				self.write(msg)
+				self.write(output)
 			else:
 				# No ranking panel, send just "ok"
 				self.write("ok")

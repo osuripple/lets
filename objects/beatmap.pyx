@@ -398,6 +398,9 @@ def incrementPlaycount(md5, passed):
 	md5 -- beatmap md5
 	passed -- if True, increment passcount too
 	"""
-	glob.db.execute("UPDATE beatmaps SET playcount = playcount+1 WHERE beatmap_md5 = %s LIMIT 1", [md5])
-	if passed:
-		glob.db.execute("UPDATE beatmaps SET passcount = passcount+1 WHERE beatmap_md5 = %s LIMIT 1", [md5])
+	glob.db.execute(
+		f"UPDATE beatmaps "
+		f"SET playcount = playcount+1{', passcount = passcount+1' if passed else ''} "
+		f"WHERE beatmap_md5 = %s LIMIT 1",
+		[md5]
+	)
