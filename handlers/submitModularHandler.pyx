@@ -264,8 +264,11 @@ class handler(requestsManager.asyncRequestHandler):
 					# Save the replay if it was provided
 					log.debug("Saving replay ({})...".format(s.scoreID))
 					replay = self.request.files["score"][0]["body"]
-					with open("{}/replay_{}.osr".format(glob.conf.config["server"]["replayspath"], s.scoreID), "wb") as f:
-						f.write(replay)
+
+					# Save replay locally and both on s3 (via s3fs for now, testing performance)
+					for x in ("replayspath", "s3replayspath"):
+						with open("{}/replay_{}.osr".format(glob.conf.config["server"][x], s.scoreID), "wb") as f:
+							f.write(replay)
 
 					# Send to cono ALL passed replays, even non high-scores
 					if glob.conf.config["cono"]["enable"]:

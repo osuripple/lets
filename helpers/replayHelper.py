@@ -22,8 +22,10 @@ def buildFullReplay(scoreID=None, scoreData=None, rawReplay=None):
 
     if rawReplay is None:
         # Make sure raw replay exists
-        fileName = "{}/replay_{}.osr".format(glob.conf.config["server"]["replayspath"], scoreID)
-        if not os.path.isfile(fileName):
+        local_fileName = "{}/replay_{}.osr".format(glob.conf.config["server"]["replayspath"], scoreID)
+        s3_fileName = "{}/replay_{}.osr".format(glob.conf.config["server"]["s3replayspath"], scoreID)
+        fileName = next((x for x in (s3_fileName, local_fileName) if os.path.isfile(x)), default=None)
+        if fileName is None:
             raise FileNotFoundError()
 
         # Read raw replay

@@ -62,6 +62,7 @@ class config:
 			self.config.get("server", "threads")
 			self.config.get("server", "apikey")
 			self.config.get("server", "replayspath")
+			self.config.get("server", "s3replayspath")
 			self.config.get("server", "beatmapspath")
 			self.config.get("server", "screenshotspath")
 
@@ -120,6 +121,7 @@ class config:
 		self.config.set("server", "threads", "16")
 		self.config.set("server", "apikey", "changeme")
 		self.config.set("server", "replayspath", ".data/replays")
+		self.config.set("server", "s3replayspath", "/mnt/s3-ripple-vault/replays")
 		self.config.set("server", "beatmapspath", ".data/beatmaps")
 		self.config.set("server", "screenshotspath", ".data/screenshots")
 
