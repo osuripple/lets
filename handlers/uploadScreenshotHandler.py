@@ -54,11 +54,11 @@ class handler(requestsManager.asyncRequestHandler):
 			screenshotID = ""
 			while not found:
 				screenshotID = generalUtils.randomString(8)
-				if not os.path.isfile(".data/screenshots/{}.jpg".format(screenshotID)):
+				if not os.path.isfile("{}/{}.jpg".format(glob.conf.config["server"]["screenshotspath"], screenshotID)):
 					found = True
 
 			# Write screenshot file to .data folder
-			with open(".data/screenshots/{}.jpg".format(screenshotID), "wb") as f:
+			with open("{}/{}.jpg".format(glob.conf.config["server"]["beatmapspath"], screenshotID), "wb") as f:
 				f.write(self.request.files["ss"][0]["body"])
 
 			# Output

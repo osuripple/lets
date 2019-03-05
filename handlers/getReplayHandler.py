@@ -51,7 +51,7 @@ class handler(requestsManager.asyncRequestHandler):
 
 			# Serve replay
 			log.info("Serving replay_{}.osr".format(replayID))
-			fileName = ".data/replays/replay_{}.osr".format(replayID)
+			fileName = "{}/replay_{}.osr".format(glob.conf.config["server"]["replayspath"], replayID)
 			if os.path.isfile(fileName):
 				with open(fileName, "rb") as f:
 					fileContent = f.read()

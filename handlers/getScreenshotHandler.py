@@ -23,11 +23,11 @@ class handler(requestsManager.asyncRequestHandler):
 	def asyncGet(self, screenshotID = None):
 		try:
 			# Make sure the screenshot exists
-			if screenshotID is None or not os.path.isfile(".data/screenshots/{}".format(screenshotID)):
+			if screenshotID is None or not os.path.isfile("{}/{}".format(glob.conf.config["server"]["screenshotspath"], screenshotID)):
 				raise exceptions.fileNotFoundException(MODULE_NAME, screenshotID)
 
 			# Read screenshot
-			with open(".data/screenshots/{}".format(screenshotID), "rb") as f:
+			with open("{}/{}".format(glob.conf.config["server"]["screenshotspath"], screenshotID), "rb") as f:
 				data = f.read()
 
 			# Output

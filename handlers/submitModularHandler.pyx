@@ -264,7 +264,7 @@ class handler(requestsManager.asyncRequestHandler):
 					# Save the replay if it was provided
 					log.debug("Saving replay ({})...".format(s.scoreID))
 					replay = self.request.files["score"][0]["body"]
-					with open(".data/replays/replay_{}.osr".format(s.scoreID), "wb") as f:
+					with open("{}/replay_{}.osr".format(glob.conf.config["server"]["replayspath"], s.scoreID), "wb") as f:
 						f.write(replay)
 
 					# Send to cono ALL passed replays, even non high-scores

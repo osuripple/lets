@@ -61,22 +61,25 @@ class config:
 			self.config.get("server", "banchourl")
 			self.config.get("server", "threads")
 			self.config.get("server", "apikey")
+			self.config.get("server", "replayspath")
+			self.config.get("server", "beatmapspath")
+			self.config.get("server", "screenshotspath")
 
-			self.config.get("sentry","enable")
-			self.config.get("sentry","dsn")
+			self.config.get("sentry", "enable")
+			self.config.get("sentry", "dsn")
 
 			self.config.get("datadog", "enable")
 			self.config.get("datadog", "apikey")
 			self.config.get("datadog", "appkey")
 
-			self.config.get("osuapi","enable")
-			self.config.get("osuapi","apiurl")
-			self.config.get("osuapi","apikey")
+			self.config.get("osuapi", "enable")
+			self.config.get("osuapi", "apiurl")
+			self.config.get("osuapi", "apikey")
 
 			self.config.get("cheesegull", "apiurl")
 
-			self.config.get("discord","enable")
-			self.config.get("discord","boturl")
+			self.config.get("discord", "enable")
+			self.config.get("discord", "boturl")
 			self.config.get("discord", "devgroup")
 			self.config.get("discord", "secretwebhook")
 
@@ -116,6 +119,9 @@ class config:
 		self.config.set("server", "banchourl", "http://127.0.0.1:5001")
 		self.config.set("server", "threads", "16")
 		self.config.set("server", "apikey", "changeme")
+		self.config.set("server", "replayspath", ".data/replays")
+		self.config.set("server", "beatmapspath", ".data/beatmaps")
+		self.config.set("server", "screenshotspath", ".data/screenshots")
 
 		self.config.add_section("sentry")
 		self.config.set("sentry", "enable", "False")

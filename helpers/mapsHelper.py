@@ -4,6 +4,8 @@ from common import generalUtils
 from common.log import logUtils as log
 from constants import exceptions
 from helpers import osuapiHelper
+from objects import glob
+
 
 def isBeatmap(fileName=None, content=None):
     if fileName is not None:
@@ -53,4 +55,4 @@ def cacheMap(mapFile, _beatmap):
         log.debug("maps ~> Beatmap found in cache!")
 
 def cachedMapPath(beatmap_id):
-    return ".data/beatmaps/{}.osu".format(beatmap_id)
+    return "{}/{}.osu".format(glob.conf.config["server"]["beatmapspath"], beatmap_id)
