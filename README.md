@@ -4,7 +4,7 @@
 - Mirror: https://github.com/osuripple/lets
 
 ## ☁️S3 Double replays branch
-**This branch saves every replay both locally and on S3 (using s3fs), and server replays prioritizing S3 over local files.
+**This branch saves every replay both locally and on S3 (using s3fs), and serves replays prioritizing S3 over local files.
 This branch is experimental and should be used only to test performance.** 
 
 ## Latest Essential Tatoe Server
