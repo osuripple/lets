@@ -135,6 +135,7 @@ if __name__ == "__main__":
 		paths = [
 			".data",
 			glob.conf.config["server"]["replayspath"],
+			glob.conf.config["server"]["s3replayspath"],
 			glob.conf.config["server"]["screenshotspath"],
 			".data/oppai",
 			".data/catch_the_pp",

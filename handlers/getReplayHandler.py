@@ -7,6 +7,7 @@ from common.log import logUtils as log
 from common.ripple import userUtils
 from common.web import requestsManager
 from constants import exceptions
+from helpers import replayHelper
 from objects import glob
 from common.sentry import sentry
 
@@ -50,9 +51,9 @@ class handler(requestsManager.asyncRequestHandler):
 					userUtils.incrementReplaysWatched(replayData["userid"], replayData["play_mode"])
 
 			# Serve replay
-			log.info("Serving replay_{}.osr".format(replayID))
-			fileName = "{}/replay_{}.osr".format(glob.conf.config["server"]["replayspath"], replayID)
-			if os.path.isfile(fileName):
+			fileName, usingS3 = replayHelper.getReplayPathPrioritizeS3(replayID)
+			log.info("Serving replay_{}.osr ({})".format(replayID, "using S3" if usingS3 else "locally"))
+			if fileName is not None:
 				with open(fileName, "rb") as f:
 					fileContent = f.read()
 				self.write(fileContent)

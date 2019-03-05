@@ -5,6 +5,16 @@ from constants import exceptions, dataTypes
 from helpers import binaryHelper
 from objects import glob
 
+
+def getReplayPathPrioritizeS3(scoreID):
+    localfileName = "{}/replay_{}.osr".format(glob.conf.config["server"]["replayspath"], scoreID)
+    s3fileName = "{}/replay_{}.osr".format(glob.conf.config["server"]["s3replayspath"], scoreID)
+    fileName, usingS3 = next(
+        ((x, i == 0) for i, x in enumerate((s3fileName, localfileName)) if os.path.isfile(x)), None
+    )
+    return fileName, usingS3
+
+
 def buildFullReplay(scoreID=None, scoreData=None, rawReplay=None):
     if all(v is None for v in (scoreID, scoreData)) or all(v is not None for v in (scoreID, scoreData)):
         raise AttributeError("Either scoreID or scoreData must be provided, not neither or both")
@@ -22,9 +32,7 @@ def buildFullReplay(scoreID=None, scoreData=None, rawReplay=None):
 
     if rawReplay is None:
         # Make sure raw replay exists
-        local_fileName = "{}/replay_{}.osr".format(glob.conf.config["server"]["replayspath"], scoreID)
-        s3_fileName = "{}/replay_{}.osr".format(glob.conf.config["server"]["s3replayspath"], scoreID)
-        fileName = next((x for x in (s3_fileName, local_fileName) if os.path.isfile(x)), default=None)
+        fileName, _ = getReplayPathPrioritizeS3(scoreID)
         if fileName is None:
             raise FileNotFoundError()
 
