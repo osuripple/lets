@@ -267,7 +267,7 @@ class handler(requestsManager.asyncRequestHandler):
 
 					# Save replay locally and both on s3 (via s3fs for now, testing performance)
 					for i, x in enumerate(("replayspath", "s3replayspath")):
-						log.debug("Saving {}...", "locally" if x == 0 else "on S3")
+						log.debug("Saving {}...".format("locally" if x == 0 else "on S3"))
 						with open("{}/replay_{}.osr".format(glob.conf.config["server"][x], s.scoreID), "wb") as f:
 							f.write(replay)
 
