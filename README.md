@@ -3,10 +3,6 @@
 - Origin: https://zxq.co/ripple/lets
 - Mirror: https://github.com/osuripple/lets
 
-## ☁️S3 Double replays branch
-**This branch saves every replay both locally and on S3 (using s3fs), and server replays prioritizing S3 over local files.
-This branch is experimental and should be used only to test performance.** 
-
 ## Latest Essential Tatoe Server
 This server handles every non real time client feature, so:
 - Ingame scoreboards
