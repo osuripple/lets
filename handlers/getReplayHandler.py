@@ -54,6 +54,7 @@ class handler(requestsManager.asyncRequestHandler):
 			# Serve replay
 			fileName = "{}/replay_{}.osr".format(glob.conf.config["server"]["s3replayspath"], replayID)
 			if os.path.isfile(fileName):
+				log.info("Requested replay {}".format(fileName))
 				with open(fileName, "rb") as f:
 					fileContent = f.read()
 				self.write(fileContent)
