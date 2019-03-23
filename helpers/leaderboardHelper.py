@@ -65,3 +65,38 @@ def updateCountry(userID, newScore, gameMode):
 			glob.redis.zadd(k, str(userID), str(newScore))
 	else:
 		log.debug("Country leaderboard update for user {} skipped (not allowed)".format(userID))
+
+def updateGlobalTopPPScoreID(gameMode):
+	topPPLockKey = "ripple:top_pp_score_id_lock:{}".format(gameMode)
+	log.debug("Updating global top pp for game mode {}".format(gameMode))
+	if glob.redis.exists(topPPLockKey):
+		log.warning("Top PP query is already executing")
+		raise RuntimeError("Top PP query is already executing")
+	try:
+		glob.redis.set(topPPLockKey, 1, 120)		# lock for max 120 seconds
+		# NOTE: We don't check if the map is ranked because it takes way too much time...
+		topScore = glob.db.fetch(
+			"SELECT scores.id FROM scores INNER JOIN users ON scores.userid = users.id "
+			# "INNER JOIN beatmaps USING(beatmap_md5) "
+			"WHERE play_mode = %s AND completed = 3 "
+			# "AND ranked >= 2 "
+			"AND users.privileges & 3 = 3 "
+			"ORDER BY pp DESC LIMIT 1",
+			(gameMode,)
+		)
+	finally:
+		glob.redis.delete(topPPLockKey.format(gameMode))
+	v = topScore["id"] if topScore is not None else 0
+	setGlobalTopPPScoreID(gameMode, v)
+	log.debug("Global top pp score id for game mode {} cached: {}".format(gameMode, v))
+
+def setGlobalTopPPScoreID(gameMode, scoreID):
+	glob.redis.set("ripple:top_pp_score_id:{}".format(gameMode), scoreID)
+	glob.redis.delete("ripple:top_pp_score_id_lock:{}".format(gameMode))
+
+def getGlobalTopPPScoreID(gameMode):
+	r = glob.redis.get("ripple:top_pp_score_id:{}".format(gameMode))
+	try:
+		return int(r.decode())
+	except (ValueError, AttributeError):
+		return None

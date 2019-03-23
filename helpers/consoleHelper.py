@@ -40,7 +40,7 @@ def printNoNl(string):
 	print(string, end="")
 
 
-def printColored(string, color):
+def printColored(string, color, end="\n"):
 	"""
 	Print colored string
 
@@ -48,25 +48,31 @@ def printColored(string, color):
 	color -- see bcolors.py
 	"""
 
-	print("{}{}{}".format(color, string, bcolors.ENDC))
+	print("{}{}{}".format(color, string, bcolors.ENDC), end=end)
 
 
-def printError():
+def printError(end="\n"):
 	"""Print error text FOR LOADING"""
 
-	printColored("Error", bcolors.RED)
+	printColored("Error", bcolors.RED, end=end)
 
 
-def printDone():
+def printDone(end="\n"):
 	"""Print error text FOR LOADING"""
 
-	printColored("Done", bcolors.GREEN)
+	printColored("Done", bcolors.GREEN, end=end)
 
 
-def printWarning():
+def printWarning(end="\n"):
 	"""Print error text FOR LOADING"""
 
-	printColored("Warning", bcolors.YELLOW)
+	printColored("Warning", bcolors.YELLOW, end=end)
+
+
+def printWait(end="\n"):
+	"""Print error text FOR LOADING"""
+
+	printColored("Please wait...", bcolors.BLUE, end=end)
 
 def printGetScoresMessage(message):
 	printColored("[get_scores] {}".format(message), bcolors.PINK)

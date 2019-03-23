@@ -1,5 +1,6 @@
 # General imports
 import argparse
+import time
 
 import os
 import sys
@@ -13,7 +14,7 @@ import tornado.netutil
 from raven.contrib.tornado import AsyncSentryClient
 import redis
 
-from common.constants import bcolors
+from common.constants import bcolors, gameModes
 from common.db import dbConnector
 from common.ddog import datadogClient
 from common.log import logUtils as log
@@ -40,7 +41,7 @@ from handlers import redirectHandler
 from handlers import submitModularHandler
 from handlers import uploadScreenshotHandler
 from handlers import commentHandler
-from helpers import config
+from helpers import config, leaderboardHelper
 from helpers import consoleHelper
 from common import generalUtils
 from common import agpl
@@ -180,6 +181,28 @@ if __name__ == "__main__":
 
 		# Save lets version in redis
 		glob.redis.set("lets:version", glob.VERSION)
+
+		# Check/calculate top pp score ids
+		consoleHelper.printNoNl("> Checking global top pp score ids... ")
+		for g in range(gameModes.MANIA + 1):
+			consoleHelper.printNoNl(" {}:".format(gameModes.getGameModeForPrinting(g)))
+			sys.stdout.flush()
+			if leaderboardHelper.getGlobalTopPPScoreID(g) is None:
+				consoleHelper.printWait(end="")
+				log.debug(
+					"Finding top pp score id for {}. This can take a while".format(g)
+				)
+				while True:
+					try:
+						leaderboardHelper.updateGlobalTopPPScoreID(g)
+						break
+					except RuntimeError:
+						log.debug(
+							"Another worker is already finding the global top pp score for mode {}. Waiting.".format(g)
+						)
+						time.sleep(1)
+			consoleHelper.printDone(end="")
+		print()
 
 		# Create threads pool
 		try:

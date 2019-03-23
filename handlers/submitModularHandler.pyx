@@ -1,3 +1,5 @@
+import time
+
 import base64
 import collections
 import json
@@ -15,6 +17,7 @@ from common.constants import gameModes
 from common.constants import mods
 from common.log import logUtils as log
 from common.ripple import userUtils
+from common.sentry import sentry
 from common.web import requestsManager
 from constants import exceptions
 from constants import rankedStatuses
@@ -427,17 +430,72 @@ class handler(requestsManager.asyncRequestHandler):
 				log.debug("Generated output for online ranking screen!")
 				log.debug(output)
 
-				# send message to #announce if we're rank #1
-				if newScoreboard.personalBestRank == 1 and s.completed == 3 and not restricted:
-					annmsg = "[https://ripple.moe/?u={} {}] achieved rank #1 on [https://osu.ppy.sh/b/{} {}] ({})".format(
-						userID,
-						username.encode().decode("ASCII", "ignore"),
-						beatmapInfo.beatmapID,
-						beatmapInfo.songName.encode().decode("ASCII", "ignore"),
-						gameModes.getGamemodeFull(s.gameMode)
-					)
-					params = urlencode({"k": glob.conf.config["server"]["apikey"], "to": "#announce", "msg": annmsg})
-					requests.get("{}/api/v1/fokabotMessage?{}".format(glob.conf.config["server"]["banchourl"], params))
+				def topScoreAnnounce():
+					log.debug("Top score announce thread started for score id {}".format(s.scoreID))
+					fetchTopPP = True
+					tries = 0
+					while fetchTopPP:
+						globalTopPPScoreID = None
+						while globalTopPPScoreID is None:
+							if tries >= 240:
+								log.error("Too many retries while waiting for a valid top pp score")
+								sentry.captureMessage(
+									"topScoreAnnounce thread killed due to too many retries "
+									"while waiting for a valid top score.",
+									extra={"game_mode": s.gameMode}
+								)
+								return
+
+							# Get the global top pp score id. Returns None if we don't have anything cached.
+							globalTopPPScoreID = leaderboardHelper.getGlobalTopPPScoreID(s.gameMode)
+							if globalTopPPScoreID is None:
+								# We don't have a valid global top pp score id. Find it.
+								try:
+									leaderboardHelper.updateGlobalTopPPScoreID(s.gameMode)
+									tries += 1
+								except RuntimeError:
+									# Another worker is already finding the global top score. Wait a bit and try again.
+									time.sleep(0.5)
+
+						# At this point we have either the score id or 0 if we don't have scores
+						if globalTopPPScoreID == 0:
+							# We don't have a global top pp score in our db. Use a dummy row
+							topPP = {"pp": 0}
+						else:
+							# Get pp from db
+							topPP = glob.db.fetch("SELECT pp FROM scores WHERE id = %s LIMIT 1", (globalTopPPScoreID,))
+
+						# Break from the loop if we have a valid top pp score
+						fetchTopPP = topPP is None
+
+					# Check wether we should send an announcement
+					newTopPP = topPP["pp"] < s.pp
+					log.debug("New personal best: {}, topPP: {}".format(newScoreboard.personalBestRank, newTopPP))
+					if newTopPP:
+						leaderboardHelper.setGlobalTopPPScoreID(s.gameMode, s.scoreID)
+					if newScoreboard.personalBestRank == 1 or newTopPP:
+						annmsg = "[https://ripple.moe/?u={userID} {username}] achieved {what} " \
+								 "on [https://osu.ppy.sh/b/{beatmapID} {beatmapName}] ({gameMode})".format(
+							userID=userID,
+							username=username.encode().decode("ASCII", "ignore"),
+							what="new top PP score (worth {:.2f} pp)".format(s.pp) if newTopPP else "rank #1",
+							beatmapID=beatmapInfo.beatmapID,
+							beatmapName=beatmapInfo.songName.encode().decode("ASCII", "ignore"),
+							gameMode=gameModes.getGamemodeFull(s.gameMode)
+						)
+						log.debug(annmsg)
+						params = urlencode({"k": glob.conf.config["server"]["apikey"], "to": "#announce", "msg": annmsg})
+						q = "{}/api/v1/fokabotMessage?{}".format(glob.conf.config["server"]["banchourl"], params)
+						log.debug(q)
+						requests.get(q)
+					log.debug("Top score thread for score id {} has finished its work :)".format(s.scoreID))
+
+				# Send message to #announce if we're rank #1 or if we achieved a new top pp play
+				# Run this crap in a separate thread because the query is super slow and we don't want to block
+				# scores submission in case we run out of workers. We want to run this only for top scores
+				# and for non restricted users.
+				if s.completed == 3 and not restricted:
+					threading.Thread(target=topScoreAnnounce, daemon=False).start()
 
 				# Write message to client
 				self.write(output)
