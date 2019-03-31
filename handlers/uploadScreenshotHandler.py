@@ -24,7 +24,7 @@ class handler(requestsManager.asyncRequestHandler):
 	@sentry.captureTornado
 	def asyncPost(self):
 		try:
-			if glob.debug:
+			if glob.conf["DEBUG"]:
 				requestsManager.printArguments(self)
 
 			# Make sure screenshot file was passed
@@ -54,18 +54,18 @@ class handler(requestsManager.asyncRequestHandler):
 			screenshotID = ""
 			while not found:
 				screenshotID = generalUtils.randomString(8)
-				if not os.path.isfile("{}/{}.jpg".format(glob.conf.config["server"]["screenshotspath"], screenshotID)):
+				if not os.path.isfile("{}/{}.jpg".format(glob.conf["SCREENSHOTS_FOLDER"], screenshotID)):
 					found = True
 
 			# Write screenshot file to .data folder
-			with open("{}/{}.jpg".format(glob.conf.config["server"]["screenshotspath"], screenshotID), "wb") as f:
+			with open("{}/{}.jpg".format(glob.conf["SCREENSHOTS_FOLDER"], screenshotID), "wb") as f:
 				f.write(self.request.files["ss"][0]["body"])
 
 			# Output
 			log.info("New screenshot ({})".format(screenshotID))
 
 			# Return screenshot link
-			self.write("{}/ss/{}.jpg".format(glob.conf.config["server"]["serverurl"], screenshotID))
+			self.write("{}/ss/{}.jpg".format(glob.conf["SERVER_URL"], screenshotID))
 		except exceptions.need2FAException:
 			pass
 		except exceptions.invalidArgumentsException:

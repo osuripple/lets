@@ -48,7 +48,7 @@ class handler(requestsManager.asyncRequestHandler):
 			ip = self.getRequestIP()
 
 			# Print arguments
-			if glob.debug:
+			if glob.conf["DEBUG"]:
 				requestsManager.printArguments(self)
 
 			# Check arguments
@@ -264,11 +264,14 @@ class handler(requestsManager.asyncRequestHandler):
 					# Save the replay if it was provided
 					log.debug("Saving replay ({})...".format(s.scoreID))
 					replay = self.request.files["score"][0]["body"]
-					with open("{}/replay_{}.osr".format(glob.conf.config["server"]["replayspath"], s.scoreID), "wb") as f:
-						f.write(replay)
+
+					# Save raw osr in all folders
+					for replay_folder in glob.conf["REPLAYS_FOLDERS"]:
+						with open("{}/replay_{}.osr".format(replay_folder, s.scoreID), "wb") as f:
+							f.write(replay)
 
 					# Send to cono ALL passed replays, even non high-scores
-					if glob.conf.config["cono"]["enable"]:
+					if glob.conf["CONO_ENABLE"]:
 						# We run this in a separate thread to avoid slowing down scores submission,
 						# as cono needs a full replay
 						threading.Thread(target=lambda: glob.redis.publish(
@@ -436,8 +439,8 @@ class handler(requestsManager.asyncRequestHandler):
 						beatmapInfo.songName.encode().decode("ASCII", "ignore"),
 						gameModes.getGamemodeFull(s.gameMode)
 					)
-					params = urlencode({"k": glob.conf.config["server"]["apikey"], "to": "#announce", "msg": annmsg})
-					requests.get("{}/api/v1/fokabotMessage?{}".format(glob.conf.config["server"]["banchourl"], params))
+					params = urlencode({"k": glob.conf["BANCHO_API_KEY"], "to": "#announce", "msg": annmsg})
+					requests.get("{}/api/v1/fokabotMessage?{}".format(glob.conf["BANCHO_URL"], params))
 
 				# Write message to client
 				self.write(output)
@@ -482,7 +485,7 @@ class handler(requestsManager.asyncRequestHandler):
 			# Try except block to avoid more errors
 			try:
 				log.error("Unknown error in {}!\n```{}\n{}```".format(MODULE_NAME, sys.exc_info(), traceback.format_exc()))
-				if glob.sentry:
+				if glob.conf.sentry_enabled:
 					yield tornado.gen.Task(self.captureException, exc_info=True)
 			except:
 				pass

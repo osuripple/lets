@@ -9,7 +9,7 @@ class handler(requestsManager.asyncRequestHandler):
 	@tornado.web.asynchronous
 	@tornado.gen.engine
 	def asyncGet(self):
-		if not glob.debug:
+		if not glob.conf["DEBUG"]:
 			self.write("Nope")
 			return
 		glob.db.fetchAll("SELECT SQL_NO_CACHE * FROM beatmaps")

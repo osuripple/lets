@@ -17,6 +17,7 @@ from abc import abstractmethod, ABC
 from enum import Enum, IntEnum
 from progressbar import DynamicMessage, FormatLabel
 
+from helpers.config import Config
 from objects import beatmap
 from objects import score
 from common.db import dbConnector
@@ -557,7 +558,7 @@ def main():
 
     # Load config
     logging.info("Reading config file")
-    glob.conf = config.config("config.ini")
+    glob.conf = Config()
 
     # Get workers from arguments if set
     workers_number = MAX_WORKERS // 2
@@ -576,15 +577,16 @@ def main():
     # Connect to MySQL
     logging.info("Connecting to MySQL db")
     glob.db = dbConnector.db(
-        glob.conf.config["db"]["host"],
-        glob.conf.config["db"]["username"],
-        glob.conf.config["db"]["password"],
-        glob.conf.config["db"]["database"],
+        glob.conf["DB_HOST"],
+        glob.conf["DB_PORT"],
+        glob.conf["DB_USERNAME"],
+        glob.conf["DB_PASSWORD"],
+        glob.conf["DB_NAME"],
         max(workers_number, MAX_WORKERS)
     )
 
     # Set verbose
-    glob.debug = args.verbose
+    glob.conf["DEBUG"] = args.verbose
 
     # Get recalculator
     recalculators_gen = {

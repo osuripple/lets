@@ -18,14 +18,14 @@ def osuApiRequest(request, params, getFirst=True):
 	return -- dictionary with json response if success, None if failed or empty response.
 	"""
 	# Make sure osuapi is enabled
-	if not generalUtils.stringToBool(glob.conf.config["osuapi"]["enable"]):
+	if not glob.conf["OSU_API_ENABLE"]:
 		log.warning("osu!api is disabled")
 		return None
 
 	# Api request
 	resp = None
 	try:
-		finalURL = "{}/api/{}?k={}&{}".format(glob.conf.config["osuapi"]["apiurl"], request, glob.conf.config["osuapi"]["apikey"], params)
+		finalURL = "{}/api/{}?k={}&{}".format(glob.conf["OSU_API_URL"], request, glob.conf["OSU_API_KEY"], params)
 		log.debug(finalURL)
 		resp = requests.get(finalURL, timeout=5).text
 		data = json.loads(resp)
@@ -50,13 +50,13 @@ def getOsuFileFromName(fileName):
 	return -- .osu file content if success, None if failed
 	"""
 	# Make sure osuapi is enabled
-	if not generalUtils.stringToBool(glob.conf.config["osuapi"]["enable"]):
+	if not glob.conf["OSU_API_ENABLE"]:
 		log.warning("osuapi is disabled")
 		return None
 
 	response = None
 	try:
-		URL = "{}/web/maps/{}".format(glob.conf.config["osuapi"]["apiurl"], quote(fileName))
+		URL = "{}/web/maps/{}".format(glob.conf["OSU_API_URL"], quote(fileName))
 		req = requests.get(URL, timeout=20)
 		req.encoding = "utf-8"
 		response = req.content
@@ -73,13 +73,13 @@ def getOsuFileFromID(beatmapID):
 	return -- .osu file content if success, None if failed
 	"""
 	# Make sure osuapi is enabled
-	if not generalUtils.stringToBool(glob.conf.config["osuapi"]["enable"]):
+	if not glob.conf["OSU_API_ENABLE"]:
 		log.warning("osuapi is disabled")
 		return None
 
 	response = None
 	try:
-		URL = "{}/osu/{}".format(glob.conf.config["osuapi"]["apiurl"], beatmapID)
+		URL = "{}/osu/{}".format(glob.conf["OSU_API_URL"], beatmapID)
 		response = requests.get(URL, timeout=20).content
 	finally:
 		glob.dog.increment(glob.DATADOG_PREFIX+".osu_api.osu_file_requests")

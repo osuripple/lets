@@ -1,154 +1,71 @@
 import os
 import configparser
 
-class config:
-	"""
-	config.ini object
-
-	config -- list with ini data
-	default -- if true, we have generated a default config.ini
-	"""
-
-	config = configparser.ConfigParser()
-	fileName = ""		# config filename
-	default = True
-
-	# Check if config.ini exists and load/generate it
-	def __init__(self, __file):
-		"""
-		Initialize a config object
-
-		__file -- filename
-		"""
-
-		self.fileName = __file
-		if os.path.isfile(self.fileName):
-			# config.ini found, load it
-			self.config.read(self.fileName)
-			self.default = False
-		else:
-			# config.ini not found, generate a default one
-			self.generateDefaultConfig()
-			self.default = True
+from decouple import config, Csv
 
 
-	# Check if config.ini has all needed the keys
-	def checkConfig(self):
-		"""
-		Check if this config has the required keys
+class Config:
+	def __init__(self):
+		self._config = {
+			"DEBUG": config("DEBUG", default="0", cast=bool),
 
-		return -- True if valid, False if not
-		"""
+			"DB_HOST": config("DB_HOST", default="localhost"),
+			"DB_PORT": config("DB_PORT", default="3306", cast=int),
+			"DB_USERNAME": config("DB_USERNAME", default="ripple"),
+			"DB_PASSWORD": config("DB_PASSWORD"),
+			"DB_NAME": config("DB_NAME", default="ripple"),
+			"DB_WORKERS": config("DB_WORKERS", default="8", cast=int),
 
-		try:
-			# Try to get all the required keys
-			self.config.get("db","host")
-			self.config.get("db","username")
-			self.config.get("db","password")
-			self.config.get("db","database")
-			self.config.get("db","workers")
+			"REDIS_HOST": config("REDIS_HOST", default="127.0.0.1"),
+			"REDIS_PORT": config("REDIS_PORT", default="6379", cast=int),
+			"REDIS_DATABASE": config("REDIS_DATABASE", default="0", cast=int),
+			"REDIS_PASSWORD": config("REDIS_PASSWORD", default=None),
 
-			self.config.get("redis","host")
-			self.config.get("redis","port")
-			self.config.get("redis","database")
-			self.config.get("redis","password")
+			"HTTP_HOST": config("HTTP_HOST", default="0.0.0.0"),
+			"HTTP_PORT": config("HTTP_PORT", default="5002", cast=int),
 
-			self.config.get("server","host")
-			self.config.get("server","port")
-			self.config.get("server", "debug")
-			self.config.get("server", "beatmapcacheexpire")
-			self.config.get("server", "serverurl")
-			self.config.get("server", "banchourl")
-			self.config.get("server", "threads")
-			self.config.get("server", "apikey")
-			self.config.get("server", "replayspath")
-			self.config.get("server", "beatmapspath")
-			self.config.get("server", "screenshotspath")
+			"BEATMAP_CACHE_EXPIRE": config("BEATMAP_CACHE_EXPIRE", default="86400", cast=int),
 
-			self.config.get("sentry", "enable")
-			self.config.get("sentry", "dsn")
+			"SERVER_URL": config("SERVER_URL", default="http://127.0.0.1:5002"),
+			"BANCHO_URL": config("BANCHO_URL", default="http://127.0.0.1:5001"),
+			"BANCHO_API_KEY": config("BANCHO_API_KEY", default="changeme"),
 
-			self.config.get("datadog", "enable")
-			self.config.get("datadog", "apikey")
-			self.config.get("datadog", "appkey")
+			"THREADS": config("THREADS", default="16", cast=int),
+			"REPLAYS_FOLDERS": config("REPLAYS_FOLDERS", default=".data/replays", cast=Csv(str)),
+			"BEATMAPS_FOLDER": config("BEATMAPS_FOLDER", default=".data/beatmaps", cast=str),
+			"SCREENSHOTS_FOLDER": config("SCREENSHOTS_FOLDER", default=".data/screenshots", cast=str),
 
-			self.config.get("osuapi", "enable")
-			self.config.get("osuapi", "apiurl")
-			self.config.get("osuapi", "apikey")
+			"SENTRY_DSN": config("SENTRY_DSN", default=""),
 
-			self.config.get("cheesegull", "apiurl")
+			"DATADOG_API_KEY": config("DATADOG_API_KEY", default=""),
+			"DATADOG_APP_KEY": config("DATADOG_APP_KEY", default=""),
 
-			self.config.get("discord", "enable")
-			self.config.get("discord", "boturl")
-			self.config.get("discord", "devgroup")
-			self.config.get("discord", "secretwebhook")
+			"OSU_API_ENABLE": config("OSU_API_ENABLE", default="1", cast=bool),
+			"OSU_API_URL": config("OSU_API_URL", default="https://osu.ppy.sh"),
+			"OSU_API_KEY": config("OSU_API_KEY", default=""),
 
-			self.config.get("cono", "enable")
-			return True
-		except:
-			return False
+			"CHEESEGULL_API_URL": config("CHEESEGULL_API_URL", default="http://cheesegu.ll/api"),
 
+			"SCHIAVO_URL": config("SCHIAVO_URL", default=""),
+			"DISCORD_SECRET_WEB_HOOK": config("DISCORD_SECRET_WEB_HOOK", default=""),
 
-	# Generate a default config.ini
-	def generateDefaultConfig(self):
-		"""Open and set default keys for that config file"""
+			"CONO_ENABLE": config("CONO_ENABLE", default="0", cast=bool),
+		}
 
-		# Open config.ini in write mode
-		f = open(self.fileName, "w")
+	@property
+	def sentry_enabled(self):
+		return bool(self["SENTRY_DSN"])
 
-		# Set keys to config object
-		self.config.add_section("db")
-		self.config.set("db", "host", "localhost")
-		self.config.set("db", "username", "root")
-		self.config.set("db", "password", "")
-		self.config.set("db", "database", "ripple")
-		self.config.set("db", "workers", "16")
+	@property
+	def datadog_enabled(self):
+		return bool(self["DATADOG_API_KEY"]) and bool(self["DATADOG_APP_KEY"])
 
-		self.config.add_section("redis")
-		self.config.set("redis", "host", "localhost")
-		self.config.set("redis", "port", "6379")
-		self.config.set("redis", "database", "0")
-		self.config.set("redis", "password", "")
+	@property
+	def schiavo_enabled(self):
+		return bool(self["SCHIAVO_URL"])
 
-		self.config.add_section("server")
-		self.config.set("server", "host", "0.0.0.0")
-		self.config.set("server", "port", "5002")
-		self.config.set("server", "debug", "False")
-		self.config.set("server", "beatmapcacheexpire", "86400")
-		self.config.set("server", "serverurl", "http://127.0.0.1:5002")
-		self.config.set("server", "banchourl", "http://127.0.0.1:5001")
-		self.config.set("server", "threads", "16")
-		self.config.set("server", "apikey", "changeme")
-		self.config.set("server", "replayspath", ".data/replays")
-		self.config.set("server", "beatmapspath", ".data/beatmaps")
-		self.config.set("server", "screenshotspath", ".data/screenshots")
+	def __getitem__(self, item):
+		return self._config[item]
 
-		self.config.add_section("sentry")
-		self.config.set("sentry", "enable", "False")
-		self.config.set("sentry", "dsn", "")
-
-		self.config.add_section("datadog")
-		self.config.set("datadog", "enable", "False")
-		self.config.set("datadog", "apikey", "")
-		self.config.set("datadog", "appkey", "")
-
-		self.config.add_section("osuapi")
-		self.config.set("osuapi", "enable", "True")
-		self.config.set("osuapi", "apiurl", "https://osu.ppy.sh")
-		self.config.set("osuapi", "apikey", "YOUR_OSU_API_KEY_HERE")
-
-		self.config.add_section("cheesegull")
-		self.config.set("cheesegull", "apiurl", "http://cheesegu.ll/api")
-
-		self.config.add_section("discord")
-		self.config.set("discord", "enable", "False")
-		self.config.set("discord", "boturl", "")
-		self.config.set("discord", "devgroup", "")
-		self.config.set("discord", "secretwebhook", "")
-
-		self.config.add_section("cono")
-		self.config.set("cono", "enable", "False")
-
-		# Write ini to file and close
-		self.config.write(f)
-		f.close()
+	def __setitem__(self, key, value):
+		self._config[key] = value

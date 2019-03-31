@@ -1,6 +1,7 @@
 **/__pycache__
 **/build
 config.ini
+settings.ini
 .data
 runserver.bat
 .idea

@@ -20,8 +20,6 @@ application = None
 pool = None
 pascoa = {}
 
-debug = False
-sentry = False
 
 # Cache and objects
 fLocks = fileLocks.fileLocks()

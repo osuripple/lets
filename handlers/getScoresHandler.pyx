@@ -27,7 +27,7 @@ class handler(requestsManager.asyncRequestHandler):
 			ip = self.getRequestIP()
 
 			# Print arguments
-			if glob.debug:
+			if glob.conf["DEBUG"]:
 				requestsManager.printArguments(self)
 
 			# TODO: Maintenance check

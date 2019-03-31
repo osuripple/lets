@@ -11,6 +11,22 @@ def toDotTicks(unixTime):
 	"""
 	return (10000000*unixTime) + 621355968000000000
 
+def getFirstReplayFileName(scoreID):
+	"""
+	Iterates over all REPLAYS_FOLDERS in config, and returns the
+	path of the replay. It starts from the first folder, if the replay
+	is not there, it tries with the second folder and so on.
+	Returns None if there's no such file in any of the folders.
+
+	:param scoreID:
+	:return: path or None
+	"""
+	for folder in glob.conf["REPLAYS_FOLDERS"]:
+		fileName = "{}/replay_{}.osr".format(folder, scoreID)
+		if os.path.isfile(fileName):
+			return fileName
+	return None
+
 def buildFullReplay(scoreID=None, scoreData=None, rawReplay=None):
 	if all(v is None for v in (scoreID, scoreData)) or all(v is not None for v in (scoreID, scoreData)):
 		raise AttributeError("Either scoreID or scoreData must be provided, not neither or both")
@@ -28,8 +44,8 @@ def buildFullReplay(scoreID=None, scoreData=None, rawReplay=None):
 
 	if rawReplay is None:
 		# Make sure raw replay exists
-		fileName = "{}/replay_{}.osr".format(glob.conf.config["server"]["replayspath"], scoreID)
-		if not os.path.isfile(fileName):
+		fileName = getFirstReplayFileName(scoreID)
+		if fileName is None:
 			raise FileNotFoundError()
 
 		# Read raw replay
