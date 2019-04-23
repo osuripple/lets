@@ -286,7 +286,7 @@ class handler(requestsManager.asyncRequestHandler):
 
 					# Could not save the replay at all. Re-raise exception and abort score submission
 					if saved_replays == 0:
-						log.error("Could not save replay at all! Re-raising exception and aborting score submission.")
+						log.debug("Could not save replay! Re-raising exception and aborting score submission.")
 						raise replay_save_exception
 
 					# Send to cono ALL passed replays, even non high-scores
