@@ -336,7 +336,10 @@ class handler(requestsManager.asyncRequestHandler):
 					leaderboardHelper.update(userID, newUserStats["pp"], s.gameMode)
 					leaderboardHelper.updateCountry(userID, newUserStats["pp"], s.gameMode)
 
-			# TODO: Update total hits and max combo
+			# Update total hits
+			userUtils.updateTotalHits(score=s)
+			# TODO: max combo
+
 			# Update latest activity
 			userUtils.updateLatestActivity(userID)
 
