@@ -15,6 +15,7 @@ from common.constants import gameModes
 from common.constants import mods
 from common.log import logUtils as log
 from common.ripple import userUtils
+from common.sentry import sentry
 from common.web import requestsManager
 from constants import exceptions
 from constants import rankedStatuses
@@ -266,9 +267,27 @@ class handler(requestsManager.asyncRequestHandler):
 					replay = self.request.files["score"][0]["body"]
 
 					# Save raw osr in all folders
-					for replay_folder in glob.conf["REPLAYS_FOLDERS"]:
-						with open("{}/replay_{}.osr".format(replay_folder, s.scoreID), "wb") as f:
-							f.write(replay)
+					saved_replays = 0
+					replay_save_exception = None
+					for i, replay_folder in enumerate(glob.conf["REPLAYS_FOLDERS"]):
+						# We don't want everything to fail if s3 is offline,
+						# oiseau will take care or re-uploading failed replays to s3 anyways
+						try:
+							with open("{}/replay_{}.osr".format(replay_folder, s.scoreID), "wb") as f:
+								f.write(replay)
+							saved_replays += 1
+						except Exception as e:
+							replay_save_exception = e
+							sentry.captureMessage(
+								"Replay saving error ({}), path index {} ({}). S3 may be offline".format(
+									e, i, replay_folder
+								)
+							)
+
+					# Could not save the replay at all. Re-raise exception and abort score submission
+					if saved_replays == 0:
+						log.error("Could not save replay at all! Re-raising exception and aborting score submission.")
+						raise replay_save_exception
 
 					# Send to cono ALL passed replays, even non high-scores
 					if glob.conf["CONO_ENABLE"]:
