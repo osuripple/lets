@@ -243,7 +243,10 @@ if __name__ == "__main__":
 		# Server port
 		try:
 			if cli_args.port:
-				consoleHelper.printColored("[!] Running on port {}, bypassing config.ini", bcolors.YELLOW)
+				consoleHelper.printColored(
+					"[!] Running on port {}, bypassing config.ini".format(cli_args.port),
+					bcolors.YELLOW
+				)
 				glob.serverPort = int(cli_args.port)
 			else:
 				glob.serverPort = glob.conf["HTTP_PORT"]
