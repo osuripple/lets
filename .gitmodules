@@ -14,6 +14,3 @@
 	path = pp/maniapp-osu-tools
 	url = git@zxq.co:ripple/maniapp-osu-tools.git
 	branch = calc-no-replay
-[submodule "pp/catch_the_pp_pure"]
-	path = pp/catch_the_pp_pure
-	url = git@zxq.co:Nyo/emergency-catch-the-pp.git

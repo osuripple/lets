@@ -3,9 +3,9 @@ from common.constants import gameModes
 from constants import exceptions
 from helpers import mapsHelper
 
-from pp.catch_the_pp_pure.osu_parser.beatmap import Beatmap as CalcBeatmap
-from pp.catch_the_pp_pure.osu.ctb.difficulty import Difficulty
-from pp.catch_the_pp_pure import ppCalc
+from pp.catch_the_pp.osu_parser.beatmap import Beatmap as CalcBeatmap
+from pp.catch_the_pp.osu.ctb.difficulty import Difficulty
+from pp.catch_the_pp import ppCalc
 
 
 class Cicciobello:
