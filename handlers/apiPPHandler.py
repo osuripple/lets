@@ -118,19 +118,16 @@ class handler(requestsManager.asyncRequestHandler):
 					# Specific accuracy, calculate
 					# Create oppai instance
 					log.debug("Specific request ({}%/{}). Calculating pp with oppai...".format(accuracy, modsEnum))
-					oppai = rippoppai.oppai(bmap, mods=modsEnum, tillerino=True)
+					oppai = rippoppai.oppai(bmap, mods=modsEnum, tillerino=False)
 					bmap.starsStd = oppai.stars
-					if accuracy > 0:
-						returnPP.append(calculatePPFromAcc(oppai, accuracy))
-					else:
-						returnPP = oppai.pp
+					returnPP = calculatePPFromAcc(oppai, accuracy)
 			else:
 				raise exceptions.unsupportedGameModeException()
 
 			# Data to return
 			data = {
 				"song_name": bmap.songName,
-				"pp": [round(x, 2) for x in returnPP] if type(returnPP) == list else returnPP,
+				"pp": [x for x in returnPP] if type(returnPP) is list else returnPP,
 				"length": bmap.hitLength,
 				"stars": bmap.starsStd,
 				"ar": bmap.AR,
