@@ -127,7 +127,7 @@ class score:
 		self.cMiss = data["misses_count"]
 		self.cKatu = data["katus_count"]
 		self.cGeki = data["gekis_count"]
-		self.fullCombo = True if data["full_combo"] == 1 else False
+		self.fullCombo = data["full_combo"] == 1
 		self.mods = data["mods"]
 		self.rank = rank if rank is not None else ""
 		self.date = data["time"]
@@ -186,7 +186,8 @@ class score:
 			self.mods,
 			self.playerUserID,
 			self.rank,
-			self.date)
+			self.date
+		)
 
 	def setCompletedStatus(self):
 		"""

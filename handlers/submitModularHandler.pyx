@@ -340,7 +340,7 @@ class handler(requestsManager.asyncRequestHandler):
 			# Always update users stats (total/ranked score, playcount, level, acc and pp)
 			# even if not passed
 			log.debug("Updating {}'s stats...".format(username))
-			userUtils.updateStats(userID, s)
+			userUtils.updateStats(userID, s, beatmapInfo)
 
 			# Get "after" stats for ranking panel
 			# and to determine if we should update the leaderboard

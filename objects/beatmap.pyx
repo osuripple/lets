@@ -4,7 +4,7 @@ from common.constants import gameModes
 from common.log import logUtils as log
 from constants import rankedStatuses
 from helpers import osuapiHelper
-from objects import glob
+import objects.glob
 
 
 class beatmap:
@@ -53,7 +53,7 @@ class beatmap:
 		Add current beatmap data in db if not in yet
 		"""
 		# Make sure the beatmap is not already in db
-		bdata = glob.db.fetch(
+		bdata = objects.glob.db.fetch(
 			"SELECT id, ranked_status_freezed, ranked, disable_pp FROM beatmaps "
 			"WHERE beatmap_md5 = %s OR beatmap_id = %s LIMIT 1",
 			(self.fileMD5, self.beatmapID)
@@ -66,7 +66,7 @@ class beatmap:
 				self.rankedStatus = bdata["ranked"]
 			self.disablePP = bdata["disable_pp"]
 			log.debug("Deleting old beatmap data ({})".format(bdata["id"]))
-			glob.db.execute("DELETE FROM beatmaps WHERE id = %s LIMIT 1", [bdata["id"]])
+			objects.glob.db.execute("DELETE FROM beatmaps WHERE id = %s LIMIT 1", [bdata["id"]])
 		else:
 			# Unfreeze beatmap status
 			frozen = False
@@ -86,7 +86,7 @@ class beatmap:
 				if s.pp == 0:
 					log.warning("Got 0.0pp while checking A/Q/L pp for beatmap {}".format(self.fileMD5))
 
-				if s.pp >= glob.aqlThresholds[gameMode]:
+				if s.pp >= objects.glob.aqlThresholds[gameMode]:
 					# More pp than the threshold
 					self.disablePP = True
 					break
@@ -95,11 +95,11 @@ class beatmap:
 			# dont()
 			log.info("Disabling PP on broken A/Q/L map {}".format(self.fileMD5))
 			self.disablePP = True
-			glob.db.execute("UPDATE scores SET pp = 0 WHERE beatmap_md5 = %s", (self.fileMD5,))
+			objects.glob.db.execute("UPDATE scores SET pp = 0 WHERE beatmap_md5 = %s", (self.fileMD5,))
 
 		# Add new beatmap data
 		log.debug("Saving beatmap data in db...")
-		glob.db.execute(
+		objects.glob.db.execute(
 			"INSERT INTO `beatmaps` (`id`, `beatmap_id`, `beatmapset_id`, `beatmap_md5`, `song_name`, "
 			"`ar`, `od`, `difficulty_std`, `difficulty_taiko`, `difficulty_ctb`, `difficulty_mania`, "
 			"`max_combo`, `hit_length`, `bpm`, `ranked`, `latest_update`, `ranked_status_freezed`, `disable_pp`) "
@@ -131,7 +131,7 @@ class beatmap:
 		return -- True if set, False if not set
 		"""
 		# Get data from DB
-		data = glob.db.fetch("SELECT * FROM beatmaps WHERE beatmap_md5 = %s LIMIT 1", [md5])
+		data = objects.glob.db.fetch("SELECT * FROM beatmaps WHERE beatmap_md5 = %s LIMIT 1", [md5])
 
 		# Make sure the query returned something
 		if data is None:
@@ -143,7 +143,7 @@ class beatmap:
 			return False
 
 		# Set cached data period
-		expire = glob.conf["BEATMAP_CACHE_EXPIRE"]
+		expire = objects.glob.conf["BEATMAP_CACHE_EXPIRE"]
 
 		# If the beatmap is ranked, we don't need to refresh data from osu!api that often
 		if data["ranked"] >= rankedStatuses.RANKED and data["ranked_status_freezed"] == 0:
@@ -334,7 +334,7 @@ class beatmap:
 
 		return -- list with pp values. [0,0,0,0] if not cached.
 		"""
-		data = glob.db.fetch("SELECT pp_100, pp_99, pp_98, pp_95 FROM beatmaps WHERE beatmap_md5 = %s LIMIT 1", [self.fileMD5])
+		data = objects.glob.db.fetch("SELECT pp_100, pp_99, pp_98, pp_95 FROM beatmaps WHERE beatmap_md5 = %s LIMIT 1", [self.fileMD5])
 		if data is None:
 			return [0,0,0,0]
 		return [data["pp_100"], data["pp_99"], data["pp_98"], data["pp_95"]]
@@ -345,7 +345,7 @@ class beatmap:
 
 		l -- list with 4 default pp values ([100,99,98,95])
 		"""
-		glob.db.execute("UPDATE beatmaps SET pp_100 = %s, pp_99 = %s, pp_98 = %s, pp_95 = %s WHERE beatmap_md5 = %s", [l[0], l[1], l[2], l[3], self.fileMD5])
+		objects.glob.db.execute("UPDATE beatmaps SET pp_100 = %s, pp_99 = %s, pp_98 = %s, pp_95 = %s WHERE beatmap_md5 = %s", [l[0], l[1], l[2], l[3], self.fileMD5])
 
 	@property
 	def is_rankable(self):
@@ -401,7 +401,7 @@ def incrementPlaycount(md5, passed):
 	md5 -- beatmap md5
 	passed -- if True, increment passcount too
 	"""
-	glob.db.execute(
+	objects.glob.db.execute(
 		f"UPDATE beatmaps "
 		f"SET playcount = playcount+1{', passcount = passcount+1' if passed else ''} "
 		f"WHERE beatmap_md5 = %s LIMIT 1",
