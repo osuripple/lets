@@ -254,13 +254,15 @@ class beatmap:
 		self.starsCtb = 0.0
 		self.starsMania = 0.0
 		if dataStd is not None:
-			self.starsStd = float(dataStd["difficultyrating"])
+			self.starsStd = float(dataStd.get("difficultyrating", 0))
 		if dataTaiko is not None:
-			self.starsTaiko = float(dataTaiko["difficultyrating"])
+			self.starsTaiko = float(dataTaiko.get("difficultyrating", 0))
 		if dataCtb is not None:
-			self.starsCtb = float(dataCtb["difficultyrating"])
+			self.starsCtb = float(
+				next((x for x in (dataCtb.get("difficultyrating"), dataCtb.get("diff_aim")) if x is not None), 0)
+			)
 		if dataMania is not None:
-			self.starsMania = float(dataMania["difficultyrating"])
+			self.starsMania = float(dataMania.get("difficultyrating", 0))
 
 		self.maxCombo = int(mainData["max_combo"]) if mainData["max_combo"] is not None else 0
 		self.hitLength = int(mainData["hit_length"])
