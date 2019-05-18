@@ -65,6 +65,7 @@ class score:
 			return x // 1.5
 		elif (self.mods & mods.HALFTIME) > 0:
 			return x // 0.75
+		return x
 
 	@property
 	def fullPlayTime(self):
