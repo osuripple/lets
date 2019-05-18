@@ -53,7 +53,7 @@ class handler(requestsManager.asyncRequestHandler):
 				requestsManager.printArguments(self)
 
 			# Check arguments
-			if not requestsManager.checkArguments(self.request.arguments, ["score", "iv", "pass"]):
+			if not requestsManager.checkArguments(self.request.arguments, ["score", "iv", "pass", "x"]):
 				raise exceptions.invalidArgumentsException(MODULE_NAME)
 
 			# TODO: Maintenance check
@@ -63,6 +63,12 @@ class handler(requestsManager.asyncRequestHandler):
 			iv = self.get_argument("iv")
 			password = self.get_argument("pass")
 			ip = self.getRequestIP()
+			quit_ = self.get_argument("x") == "1"
+			try:
+				failTime = max(0, int(self.get_argument("ft", 0)))
+			except ValueError:
+				raise exceptions.invalidArgumentsException(MODULE_NAME)
+			failed = not quit_ and failTime > 0
 
 			# Get bmk and bml (notepad hack check)
 			if "bmk" in self.request.arguments and "bml" in self.request.arguments:
@@ -125,7 +131,7 @@ class handler(requestsManager.asyncRequestHandler):
 			# Create score object and set its data
 			log.info("{} has submitted a score on {}...".format(username, scoreData[0]))
 			s = score.score()
-			s.setDataFromScoreData(scoreData)
+			s.setDataFromScoreData(scoreData, quit_=quit_, failed=failed)
 
 			if s.completed == -1:
 				# Duplicated score
@@ -145,6 +151,11 @@ class handler(requestsManager.asyncRequestHandler):
 			):
 				log.debug("Beatmap is not submitted/outdated/unknown. Score submission aborted.")
 				return
+
+			# Set play time and full play time
+			s.fullPlayTime = beatmapInfo.hitLength
+			if quit_ or failed:
+				s.playTime = failTime // 1000
 
 			# Calculate PP
 			midPPCalcException = None
@@ -340,7 +351,7 @@ class handler(requestsManager.asyncRequestHandler):
 			# Always update users stats (total/ranked score, playcount, level, acc and pp)
 			# even if not passed
 			log.debug("Updating {}'s stats...".format(username))
-			userUtils.updateStats(userID, s, beatmapInfo)
+			userUtils.updateStats(userID, s)
 
 			# Get "after" stats for ranking panel
 			# and to determine if we should update the leaderboard
