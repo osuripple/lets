@@ -311,6 +311,7 @@ class handler(requestsManager.asyncRequestHandler):
 								"user_id": s.playerUserID,
 								"game_mode": s.gameMode,
 								"pp": s.pp,
+								"completed": s.completed,
 								"replay_data": base64.b64encode(
 									replayHelper.buildFullReplay(
 										s.scoreID,
