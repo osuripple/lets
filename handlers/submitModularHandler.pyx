@@ -53,7 +53,7 @@ class handler(requestsManager.asyncRequestHandler):
 				requestsManager.printArguments(self)
 
 			# Check arguments
-			if not requestsManager.checkArguments(self.request.arguments, ["score", "iv", "pass", "x"]):
+			if not requestsManager.checkArguments(self.request.arguments, ["score", "iv", "pass"]):
 				raise exceptions.invalidArgumentsException(MODULE_NAME)
 
 			# TODO: Maintenance check
@@ -63,7 +63,7 @@ class handler(requestsManager.asyncRequestHandler):
 			iv = self.get_argument("iv")
 			password = self.get_argument("pass")
 			ip = self.getRequestIP()
-			quit_ = self.get_argument("x") == "1"
+			quit_ = self.get_argument("x", "0") == "1"
 			try:
 				failTime = max(0, int(self.get_argument("ft", 0)))
 			except ValueError:
