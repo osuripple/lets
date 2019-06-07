@@ -7,9 +7,6 @@
 [submodule "pp/oppai-ng"]
 	path = pp/oppai-ng
 	url = https://github.com/Francesco149/oppai-ng.git
-[submodule "pp/catch_the_pp"]
-	path = pp/catch_the_pp
-	url = https://github.com/osuripple/catch-the-pp.git
 [submodule "pp/maniapp-osu-tools"]
 	path = pp/maniapp-osu-tools
 	url = git@zxq.co:ripple/maniapp-osu-tools.git
