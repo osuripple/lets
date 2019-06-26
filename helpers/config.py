@@ -50,6 +50,9 @@ class Config:
 			"DISCORD_SECRET_WEB_HOOK": config("DISCORD_SECRET_WEB_HOOK", default=""),
 
 			"CONO_ENABLE": config("CONO_ENABLE", default="0", cast=bool),
+
+			"FOKABOT_API_BASE": config("FOKABOT_API_BASE", default="http://127.0.0.1:4334"),
+			"FOKABOT_API_SECRET": config("FOKABOT_API_SECRET", default="")
 		}
 
 	@property

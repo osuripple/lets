@@ -476,8 +476,11 @@ class handler(requestsManager.asyncRequestHandler):
 						beatmapInfo.songName.encode().decode("ASCII", "ignore"),
 						gameModes.getGamemodeFull(s.gameMode)
 					)
-					params = urlencode({"k": glob.conf["BANCHO_API_KEY"], "to": "#announce", "msg": annmsg})
-					requests.get("{}/api/v1/fokabotMessage?{}".format(glob.conf["BANCHO_URL"], params))
+					requests.post(
+						"{}/api/v0/send_message".format(glob.conf["FOKABOT_API_BASE"].rstrip("/")),
+						headers={"Secret": glob.conf["FOKABOT_API_SECRET"]},
+						json={"message": annmsg, "target": "#announce"}
+					)
 
 				# Write message to client
 				self.write(output)
