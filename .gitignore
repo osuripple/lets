@@ -7,8 +7,8 @@ runserver.bat
 .idea
 common_copied
 common_refractor
-!pp/oppai-ng/*.c
 *.c
+!pp/oppai-ng/*.c
 *.so
 *.log
 .pyenv
