@@ -7,6 +7,7 @@ runserver.bat
 .idea
 common_copied
 common_refractor
+!pp/oppai-ng/*.c
 *.c
 *.so
 *.log
