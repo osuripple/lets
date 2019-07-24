@@ -85,6 +85,8 @@ class beatmap:
 				s.calculatePP(self)
 				if s.pp == 0:
 					log.warning("Got 0.0pp while checking A/Q/L pp for beatmap {}".format(self.fileMD5))
+					self.disablePP = True
+					break
 
 				if s.pp >= objects.glob.aqlThresholds[gameMode]:
 					# More pp than the threshold
