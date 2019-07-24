@@ -118,7 +118,7 @@ class beatmap:
 			self.starsMania,
 			self.maxCombo,
 			self.hitLength,
-			self.bpm,
+			min(self.bpm, 2147483647),
 			self.rankedStatus if not frozen else 2,
 			int(time.time()),
 			frozen,
