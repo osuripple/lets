@@ -5,6 +5,7 @@ from common.log import logUtils as log
 from constants import rankedStatuses
 from helpers import osuapiHelper
 import objects.glob
+from helpers.generalHelper import clamp
 
 
 class beatmap:
@@ -118,7 +119,7 @@ class beatmap:
 			self.starsMania,
 			self.maxCombo,
 			self.hitLength,
-			min(self.bpm, 2147483647),
+			clamp(self.bpm, -2147483648, 2147483647),
 			self.rankedStatus if not frozen else 2,
 			int(time.time()),
 			frozen,
