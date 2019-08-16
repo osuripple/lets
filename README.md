@@ -3,6 +3,11 @@
 - Origin: https://zxq.co/ripple/lets
 - Mirror: https://github.com/osuripple/lets
 
+## ☁️ Single Bucket Boto3 Experimental Branch
+This is an experimental branch that retreives replays from a single S3 bucket using boto3.
+Replays are not uploaded with boto3. This is basically an hotfix until we can figure whether huge
+buckets are supported by Scaleway's Object Storage.
+
 ## Latest Essential Tatoe Server
 This server handles every non real time client feature, so:
 - Ingame scoreboards
