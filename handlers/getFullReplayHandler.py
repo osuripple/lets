@@ -16,7 +16,7 @@ class handler(requestsManager.asyncRequestHandler):
 	@sentry.captureTornado
 	def asyncGet(self, replayID):
 		try:
-			fullReplay = replayHelper.buildFullReplay(scoreID=replayID)
+			fullReplay = replayHelper.buildFullReplay(scoreID=replayID, useS3=True)
 			self.write(fullReplay)
 			self.add_header("Content-type", "application/octet-stream")
 			self.set_header("Content-length", len(fullReplay))

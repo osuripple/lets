@@ -1,8 +1,11 @@
+import io
 import os
+
+from botocore.exceptions import ClientError
 
 from common import generalUtils
 from constants import exceptions, dataTypes
-from helpers import binaryHelper
+from helpers import binaryHelper, s3
 from objects import glob
 
 def toDotTicks(unixTime):
@@ -11,7 +14,28 @@ def toDotTicks(unixTime):
 	"""
 	return (10000000*unixTime) + 621355968000000000
 
-def getFirstReplayFileName(scoreID):
+
+def getRawReplayDisk(scoreID):
+	fileName = _getFirstReplayFileName(scoreID)
+	if fileName is None:
+		raise FileNotFoundError()
+	with open(fileName, "rb") as f:
+		return f.read()
+
+
+def getRawReplayS3(scoreID):
+	with io.BytesIO() as f:
+		try:
+			s3.getClient().download_fileobj(glob.conf["_S3_REPLAYS_BUCKET"], "replay_{}.osrxd".format(scoreID), f)
+		except ClientError as e:
+			if e.response["Error"]["Code"] == "404":
+				raise FileNotFoundError()
+			raise
+		f.seek(0)
+		return f.read()
+
+
+def _getFirstReplayFileName(scoreID):
 	"""
 	Iterates over all REPLAYS_FOLDERS in config, and returns the
 	path of the replay. It starts from the first folder, if the replay
@@ -27,7 +51,7 @@ def getFirstReplayFileName(scoreID):
 			return fileName
 	return None
 
-def buildFullReplay(scoreID=None, scoreData=None, rawReplay=None):
+def buildFullReplay(scoreID=None, scoreData=None, rawReplay=None, useS3=False):
 	if all(v is None for v in (scoreID, scoreData)) or all(v is not None for v in (scoreID, scoreData)):
 		raise AttributeError("Either scoreID or scoreData must be provided, not neither or both")
 
@@ -43,14 +67,7 @@ def buildFullReplay(scoreID=None, scoreData=None, rawReplay=None):
 		raise exceptions.scoreNotFoundError()
 
 	if rawReplay is None:
-		# Make sure raw replay exists
-		fileName = getFirstReplayFileName(scoreID)
-		if fileName is None:
-			raise FileNotFoundError()
-
-		# Read raw replay
-		with open(fileName, "rb") as f:
-			rawReplay = f.read()
+		rawReplay = (getRawReplayDisk if not useS3 else getRawReplayS3)(scoreID)
 
 	# Calculate missing replay data
 	rank = generalUtils.getRank(int(scoreData["play_mode"]), int(scoreData["mods"]), int(scoreData["accuracy"]),

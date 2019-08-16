@@ -52,12 +52,9 @@ class handler(requestsManager.asyncRequestHandler):
 
 			# Serve replay
 			log.info("Serving replay_{}.osr".format(replayID))
-			fileName = replayHelper.getFirstReplayFileName(replayID)
-			if fileName is not None:
-				with open(fileName, "rb") as f:
-					fileContent = f.read()
-				self.write(fileContent)
-			else:
+			try:
+				self.write(replayHelper.getRawReplayS3(replayID))
+			except FileNotFoundError:
 				log.warning("Replay {} doesn't exist".format(replayID))
 				self.write("")
 		except exceptions.invalidArgumentsException:

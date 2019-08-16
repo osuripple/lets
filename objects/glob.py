@@ -1,8 +1,11 @@
+from collections import defaultdict
+
 import personalBestCache
 import userStatsCache
 from common.ddog import datadogClient
 from common.files import fileBuffer, fileLocks
 from common.web import schiavo
+import helpers.s3
 from helpers.aqlHelper import AqlThresholds
 
 try:
@@ -19,6 +22,7 @@ conf = None
 application = None
 pool = None
 pascoa = {}
+s3Connections = defaultdict(helpers.s3.clientFactory)
 
 
 # Cache and objects
