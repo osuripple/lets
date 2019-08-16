@@ -26,7 +26,7 @@ def getRawReplayDisk(scoreID):
 def getRawReplayS3(scoreID):
 	with io.BytesIO() as f:
 		try:
-			s3.getClient().download_fileobj(glob.conf["_S3_REPLAYS_BUCKET"], "replay_{}.osrxd".format(scoreID), f)
+			s3.getClient().download_fileobj(glob.conf["_S3_REPLAYS_BUCKET"], "replay_{}.osr".format(scoreID), f)
 		except ClientError as e:
 			if e.response["Error"]["Code"] == "404":
 				raise FileNotFoundError()
