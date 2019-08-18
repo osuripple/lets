@@ -11,7 +11,10 @@ def getClient():
 
 
 def getWriteReplayBucketName():
-    return objects.glob.db.fetch("SELECT `name` FROM s3_replay_buckets WHERE max_score_id IS NULL LIMIT 1")["name"]
+    r = objects.glob.db.fetch("SELECT `name` FROM s3_replay_buckets WHERE max_score_id IS NULL LIMIT 1")
+    if r is None:
+        raise RuntimeError("No write replays S3 write bucket!")
+    return r["name"]
 
 
 def getReadReplayBucketName(scoreID):
