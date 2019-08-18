@@ -2,11 +2,17 @@ import io
 import os
 
 from botocore.exceptions import ClientError
+from timeout_decorator import timeout
 
 from common import generalUtils
-from constants import exceptions, dataTypes
-from helpers import binaryHelper, s3
+from common.log import logUtils as log
+from common.sentry import sentry
+from constants import exceptions
+from constants import dataTypes
+from helpers import binaryHelper
+from helpers import s3
 from objects import glob
+
 
 def toDotTicks(unixTime):
 	"""
@@ -15,23 +21,33 @@ def toDotTicks(unixTime):
 	return (10000000*unixTime) + 621355968000000000
 
 
-def getRawReplayDisk(scoreID):
-	fileName = _getFirstReplayFileName(scoreID)
-	if fileName is None:
-		raise FileNotFoundError()
-	with open(fileName, "rb") as f:
+def _getRawReplayFailedLocal(scoreID):
+	with open(os.path.join(glob.conf["FAILED_REPLAYS_FOLDER"], "replay_{}.osr".format(scoreID)), "rb") as f:
 		return f.read()
 
 
-def getRawReplayS3(scoreID, fallback=True):
+@timeout(5, use_signals=False)
+def getRawReplayS3(scoreID):
+	scoreID = int(scoreID)
+	if not glob.conf["S3_ENABLED"]:
+		log.warning("S3 is disabled! Using failed local")
+		return _getRawReplayFailedLocal(scoreID)
+
+	fileName = "replay_{}.osr".format(scoreID)
+	log.debug("Downloading {} from s3".format(fileName))
 	with io.BytesIO() as f:
+		bucket = s3.getReadReplayBucketName(scoreID)
 		try:
-			s3.getClient().download_fileobj(glob.conf["_S3_REPLAYS_BUCKET"], "replay_{}.osr".format(scoreID), f)
+			s3.getClient().download_fileobj(bucket, fileName, f)
 		except ClientError as e:
-			if e.response["Error"]["Code"] == "404":
-				if fallback:
-					return getRawReplayDisk(scoreID)
-				raise FileNotFoundError()
+			# 404 -> no such key
+			# 400 -> no such bucket
+			code = e.response["Error"]["Code"]
+			if code in ("404", "400"):
+				log.warning("S3 replay returned {}, trying to get from failed replays".format(code))
+				if code == "400":
+					sentry.captureMessage("Invalid S3 replays bucket ({})! (got error 400)".format(bucket))
+				return _getRawReplayFailedLocal(scoreID)
 			raise
 		f.seek(0)
 		return f.read()
@@ -53,7 +69,8 @@ def _getFirstReplayFileName(scoreID):
 			return fileName
 	return None
 
-def buildFullReplay(scoreID=None, scoreData=None, rawReplay=None, useS3=False):
+
+def buildFullReplay(scoreID=None, scoreData=None, rawReplay=None):
 	if all(v is None for v in (scoreID, scoreData)) or all(v is not None for v in (scoreID, scoreData)):
 		raise AttributeError("Either scoreID or scoreData must be provided, not neither or both")
 
@@ -67,22 +84,38 @@ def buildFullReplay(scoreID=None, scoreData=None, rawReplay=None, useS3=False):
 		scoreID = scoreData["id"]
 	if scoreData is None or scoreID is None:
 		raise exceptions.scoreNotFoundError()
+	scoreID = int(scoreID)
 
 	if rawReplay is None:
-		rawReplay = (getRawReplayDisk if not useS3 else getRawReplayS3)(scoreID)
+		rawReplay = getRawReplayS3(scoreID)
 
 	# Calculate missing replay data
-	rank = generalUtils.getRank(int(scoreData["play_mode"]), int(scoreData["mods"]), int(scoreData["accuracy"]),
-								int(scoreData["300_count"]), int(scoreData["100_count"]), int(scoreData["50_count"]),
-								int(scoreData["misses_count"]))
+	rank = generalUtils.getRank(
+		int(scoreData["play_mode"]),
+		int(scoreData["mods"]),
+		int(scoreData["accuracy"]),
+		int(scoreData["300_count"]),
+		int(scoreData["100_count"]),
+		int(scoreData["50_count"]),
+		int(scoreData["misses_count"])
+	)
 	magicHash = generalUtils.stringMd5(
-		"{}p{}o{}o{}t{}a{}r{}e{}y{}o{}u{}{}{}".format(int(scoreData["100_count"]) + int(scoreData["300_count"]),
-													  scoreData["50_count"], scoreData["gekis_count"],
-													  scoreData["katus_count"], scoreData["misses_count"],
-													  scoreData["beatmap_md5"], scoreData["max_combo"],
-													  "True" if int(scoreData["full_combo"]) == 1 else "False",
-													  scoreData["username"], scoreData["score"], rank,
-													  scoreData["mods"], "True"))
+		"{}p{}o{}o{}t{}a{}r{}e{}y{}o{}u{}{}{}".format(
+			int(scoreData["100_count"]) + int(scoreData["300_count"]),
+			scoreData["50_count"],
+			scoreData["gekis_count"],
+			scoreData["katus_count"],
+			scoreData["misses_count"],
+			scoreData["beatmap_md5"],
+			scoreData["max_combo"],
+			"True" if int(scoreData["full_combo"]) == 1 else "False",
+			scoreData["username"],
+			scoreData["score"],
+			rank,
+			scoreData["mods"],
+			"True"
+		)
+	)
 	# Add headers (convert to full replay)
 	fullReplay = binaryHelper.binaryWrite([
 		[scoreData["play_mode"], dataTypes.byte],

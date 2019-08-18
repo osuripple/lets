@@ -1,14 +1,16 @@
 import base64
 import collections
+import io
 import json
+import os
 import sys
 import threading
 import traceback
-from urllib.parse import urlencode
 
 import requests
 import tornado.gen
 import tornado.web
+from timeout_decorator import timeout
 
 import secret.achievements.utils
 from common.constants import gameModes
@@ -21,6 +23,7 @@ from constants import exceptions
 from constants import rankedStatuses
 from constants.exceptions import ppCalcException
 from helpers import aeshelper
+from helpers import s3
 from helpers import replayHelper
 from helpers import leaderboardHelper
 from helpers.generalHelper import zingonify
@@ -274,31 +277,40 @@ class handler(requestsManager.asyncRequestHandler):
 			if s.passed and s.scoreID > 0:
 				if "score" in self.request.files:
 					# Save the replay if it was provided
-					log.debug("Saving replay ({})...".format(s.scoreID))
+					log.debug("Saving replay ({}) locally".format(s.scoreID))
 					replay = self.request.files["score"][0]["body"]
 
-					# Save raw osr in all folders
-					saved_replays = 0
-					replay_save_exception = None
-					for i, replay_folder in enumerate(glob.conf["REPLAYS_FOLDERS"]):
-						# We don't want everything to fail if s3 is offline,
-						# oiseau will take care or re-uploading failed replays to s3 anyways
-						try:
-							with open("{}/replay_{}.osr".format(replay_folder, s.scoreID), "wb") as f:
-								f.write(replay)
-							saved_replays += 1
-						except Exception as e:
-							replay_save_exception = e
-							sentry.captureMessage(
-								"Replay saving error ({}), path index {} ({}). S3 may be offline".format(
-									e, i, replay_folder
-								)
-							)
 
-					# Could not save the replay at all. Re-raise exception and abort score submission
-					if saved_replays == 0:
-						log.debug("Could not save replay! Re-raising exception and aborting score submission.")
-						raise replay_save_exception
+					replayFileName = "replay_{}.osr".format(s.scoreID)
+
+					@timeout(5, use_signals=False)
+					def s3Upload():
+						log.info("Uploading {} -> S3 write Bucket".format(replayFileName))
+						with io.BytesIO() as f:
+							f.write(replay)
+							f.seek(0)
+							s3.getClient().upload_fileobj(f, s3.getWriteReplayBucketName(), replayFileName)
+						glob.db.execute(
+							"UPDATE s3_replay_buckets SET `size` = `size` + 1 WHERE max_score_id IS NULL LIMIT 1"
+						)
+						log.debug("{} has been uploaded to S3".format(replayFileName))
+
+					def saveFailedLocally():
+						log.debug("Saving {} locally in failed replays folder".format(replayFileName))
+						with open(os.path.join(glob.conf["FAILED_REPLAYS_FOLDER"], replayFileName), "wb") as f:
+							f.write(replay)
+
+					try:
+						if glob.conf["S3_ENABLED"]:
+							s3Upload()
+						else:
+							log.warning("S3 Replays upload disabled! Saving locally by default.")
+							saveFailedLocally()
+					except Exception as e:
+						m = "Error while uploading replay to S3 ({}). Saving in failed replays folder.".format(e)
+						log.error(m)
+						saveFailedLocally()
+						sentry.captureMessage(m)
 
 					# Send to cono ALL passed replays, even non high-scores
 					if glob.conf["CONO_ENABLE"]:
@@ -319,7 +331,7 @@ class handler(requestsManager.asyncRequestHandler):
 									)
 								).decode(),
 							})
-						)).start()
+						), daemon=False).start()
 				else:
 					# Restrict if no replay was provided
 					if not restricted:

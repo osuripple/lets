@@ -40,9 +40,7 @@ from handlers import redirectHandler
 from handlers import submitModularHandler
 from handlers import uploadScreenshotHandler
 from handlers import commentHandler
-from helpers import config
 from helpers import consoleHelper
-from common import generalUtils
 from common import agpl
 from helpers.config import Config
 from objects import glob
@@ -133,13 +131,14 @@ if __name__ == "__main__":
 
 		# Create data/oppai maps folder if needed
 		consoleHelper.printNoNl("> Checking folders... ")
-		paths = [
+		paths = (
 			".data",
 			".data/oppai",
 			".data/catch_the_pp",
 			glob.conf["BEATMAPS_FOLDER"],
-			glob.conf["SCREENSHOTS_FOLDER"]
-		] + glob.conf["REPLAYS_FOLDERS"]
+			glob.conf["SCREENSHOTS_FOLDER"],
+			glob.conf["FAILED_REPLAYS_FOLDER"]
+		)
 		for i in paths:
 			if not os.path.exists(i):
 				os.makedirs(i, 0o770)

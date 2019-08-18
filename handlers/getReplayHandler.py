@@ -1,5 +1,4 @@
-import os
-
+import timeout_decorator
 import tornado.gen
 import tornado.web
 
@@ -52,11 +51,17 @@ class handler(requestsManager.asyncRequestHandler):
 
 			# Serve replay
 			log.info("Serving replay_{}.osr".format(replayID))
+			r = ""
+			replayID = int(replayID)
 			try:
-				self.write(replayHelper.getRawReplayS3(replayID))
+				r = replayHelper.getRawReplayS3(replayID)
+			except timeout_decorator.TimeoutError:
+				log.warning("S3 timed out")
+				sentry.captureMessage("S3 timeout while fetching replay.")
 			except FileNotFoundError:
 				log.warning("Replay {} doesn't exist".format(replayID))
-				self.write("")
+			finally:
+				self.write(r)
 		except exceptions.invalidArgumentsException:
 			pass
 		except exceptions.need2FAException:
