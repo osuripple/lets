@@ -88,7 +88,9 @@ class oppai:
 		log.debug("oppai ~> running {}".format(command))
 		process = subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 		try:
-			output = json.loads(process.stdout.decode("utf-8", errors="ignore"))
+			output = process.stdout.decode("utf-8", errors="ignore")
+			log.debug("oppai ~> out: {}".format(output))
+			output = json.loads(output)
 			if "code" not in output or "errstr" not in output:
 				raise OppaiError("No code in json output")
 			if output["code"] != 200:
@@ -167,8 +169,8 @@ class oppai:
 				self.pp = pp_list
 
 			log.debug("oppai ~> Calculated PP: {}, stars: {}".format(self.pp, self.stars))
-		except OppaiError:
-			log.error("oppai ~> oppai-ng error!")
+		except OppaiError as e:
+			log.error("oppai ~> oppai-ng error! {}".format(e))
 			self.pp = 0
 		except exceptions.osuApiFailException:
 			log.error("oppai ~> osu!api error!")
