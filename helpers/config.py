@@ -53,9 +53,8 @@ class Config:
 
 			"S3_ENDPOINT_URL": config("S3_ENDPOINT_URL", default="https://s3.fr-par.scw.cloud"),
 			"S3_REGION": config("S3_REGION", default="fr-par"),
-			"S3_ACCESS_KEY_ID": config("S3_ACCESS_KEY_ID"),
-			"S3_SECRET_ACCESS_KEY": config("S3_SECRET_ACCESS_KEY"),
-			"S3_ENABLED": config("S3_ENABLED", default="true", cast=bool),
+			"S3_ACCESS_KEY_ID": config("S3_ACCESS_KEY_ID", default=""),
+			"S3_SECRET_ACCESS_KEY": config("S3_SECRET_ACCESS_KEY", default=""),
 
 			"FAILED_REPLAYS_FOLDER": config("FAILED_REPLAYS_FOLDER", default=".data/failed_replays")
 		}
@@ -71,6 +70,10 @@ class Config:
 	@property
 	def schiavo_enabled(self):
 		return bool(self["SCHIAVO_URL"])
+
+	@property
+	def s3_enabled(self):
+		return bool(self["S3_ACCESS_KEY_ID"]) and bool(self["S3_ACCESS_KEY_ID"])
 
 	def __getitem__(self, item):
 		return self._config[item]

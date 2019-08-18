@@ -29,7 +29,7 @@ def _getRawReplayFailedLocal(scoreID):
 @timeout(5, use_signals=False)
 def getRawReplayS3(scoreID):
 	scoreID = int(scoreID)
-	if not glob.conf["S3_ENABLED"]:
+	if not glob.conf.s3_enabled:
 		log.warning("S3 is disabled! Using failed local")
 		return _getRawReplayFailedLocal(scoreID)
 

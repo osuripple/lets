@@ -233,6 +233,18 @@ if __name__ == "__main__":
 			sys.exit()
 		consoleHelper.printDone()
 
+		# Check if s3 is enabled
+		if not glob.conf.s3_enabled:
+			raise consoleHelper.printColored("[!] Warning! S3 is disabled", bcolors.YELLOW)
+		else:
+			c = glob.db.fetch("SELECT COUNT(*) AS c FROM s3_replay_buckets WHERE max_score_id IS NULL")["c"]
+			if c != 1:
+				consoleHelper.printColored(
+					"[!] There must be only one bucket flagged as WRITE bucket! You have {}.".format(c),
+					bcolors.RED
+				)
+				sys.exit()
+
 		# Discord
 		if glob.conf.schiavo_enabled:
 			glob.schiavo = schiavo.schiavo(glob.conf["SCHIAVO_URL"], "**lets**")

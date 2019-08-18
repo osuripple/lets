@@ -301,7 +301,7 @@ class handler(requestsManager.asyncRequestHandler):
 							f.write(replay)
 
 					try:
-						if glob.conf["S3_ENABLED"]:
+						if glob.conf.s3_enabled:
 							s3Upload()
 						else:
 							log.warning("S3 Replays upload disabled! Saving locally by default.")
