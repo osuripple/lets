@@ -295,22 +295,23 @@ class handler(requestsManager.asyncRequestHandler):
 						)
 						log.debug("{} has been uploaded to S3".format(replayFileName))
 
-					def saveFailedLocally():
-						log.debug("Saving {} locally in failed replays folder".format(replayFileName))
-						with open(os.path.join(glob.conf["FAILED_REPLAYS_FOLDER"], replayFileName), "wb") as f:
+					def saveLocally(folder):
+						log.debug("Saving {} locally in {}".format(replayFileName, folder))
+						with open(os.path.join(folder, replayFileName), "wb") as f:
 							f.write(replay)
 
-					try:
-						if glob.conf.s3_enabled:
+					saveLocally(glob.conf["REPLAYS_FOLDER"])
+					if glob.conf.s3_enabled:
+						try:
 							s3Upload()
-						else:
-							log.warning("S3 Replays upload disabled! Saving locally by default.")
-							saveFailedLocally()
-					except Exception as e:
-						m = "Error while uploading replay to S3 ({}). Saving in failed replays folder.".format(e)
-						log.error(m)
-						saveFailedLocally()
-						sentry.captureMessage(m)
+						except Exception as e:
+							m = "Error while uploading replay to S3 ({}). Saving in failed replays folder.".format(e)
+							log.error(m)
+							saveLocally(glob.conf["FAILED_REPLAYS_FOLDER"])
+							sentry.captureMessage(m)
+					else:
+						log.warning("S3 Replays upload disabled! Only saving locally.")
+
 
 					# Send to cono ALL passed replays, even non high-scores
 					if glob.conf["CONO_ENABLE"]:

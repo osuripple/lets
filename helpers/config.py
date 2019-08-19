@@ -28,7 +28,8 @@ class Config:
 			"BANCHO_API_KEY": config("BANCHO_API_KEY", default="changeme"),
 
 			"THREADS": config("THREADS", default="16", cast=int),
-			"REPLAYS_FOLDERS": config("REPLAYS_FOLDERS", default=".data/replays", cast=Csv(str)),
+			# "REPLAYS_FOLDERS": config("REPLAYS_FOLDERS", default=".data/replays", cast=Csv(str)),
+			"REPLAYS_FOLDER": config("REPLAYS_FOLDER", default=".data/local_replays"),
 			"BEATMAPS_FOLDER": config("BEATMAPS_FOLDER", default=".data/beatmaps", cast=str),
 			"SCREENSHOTS_FOLDER": config("SCREENSHOTS_FOLDER", default=".data/screenshots", cast=str),
 
