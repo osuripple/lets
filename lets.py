@@ -217,7 +217,7 @@ if __name__ == "__main__":
 				"[!] Error while loading achievements! ({})".format(e),
 				bcolors.RED,
 			)
-			sys.exit()
+			raise e
 		consoleHelper.printDone()
 
 		# Set achievements version
