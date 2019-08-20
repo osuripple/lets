@@ -236,7 +236,7 @@ if __name__ == "__main__":
 
 		# Check if s3 is enabled
 		if not glob.conf.s3_enabled:
-			raise consoleHelper.printColored("[!] Warning! S3 is disabled", bcolors.YELLOW)
+			consoleHelper.printColored("[!] Warning! S3 is disabled", bcolors.YELLOW)
 		else:
 			c = glob.db.fetch("SELECT COUNT(*) AS c FROM s3_replay_buckets WHERE max_score_id IS NULL")["c"]
 			if c != 1:
