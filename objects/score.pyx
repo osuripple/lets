@@ -149,7 +149,6 @@ class score:
 		data -- score dictionarty
 		rank -- rank in scoreboard. Optional.
 		"""
-		#print(str(data))
 		self.scoreID = data["id"]
 		if "username" in data:
 			self.playerName = data["username"]

@@ -1,3 +1,5 @@
+import logging
+
 import tornado.gen
 import tornado.web
 
@@ -8,7 +10,7 @@ class handler(requestsManager.asyncRequestHandler):
 	@tornado.web.asynchronous
 	@tornado.gen.engine
 	def asyncGet(self):
-		print("404: {}".format(self.request.uri))
+		logging.info("404: {}".format(self.request.uri))
 		self.write("""
 				<html>
 					<head>
