@@ -135,12 +135,14 @@ if __name__ == "__main__":
 		try:
 			logging.info("Connecting to MySQL database")
 			glob.db = dbConnector.db(
-				glob.conf["DB_HOST"],
-				glob.conf["DB_PORT"],
-				glob.conf["DB_USERNAME"],
-				glob.conf["DB_PASSWORD"],
-				glob.conf["DB_NAME"],
-				glob.conf["DB_WORKERS"]
+				host=glob.conf["DB_HOST"],
+				port=glob.conf["DB_PORT"],
+				user=glob.conf["DB_USERNAME"],
+				password=glob.conf["DB_PASSWORD"],
+				database=glob.conf["DB_NAME"],
+				size=glob.conf["DB_WORKERS"],
+				autocommit=True,
+				charset="utf8"
 			)
 		except:
 			# Exception while connecting to db
@@ -199,7 +201,7 @@ if __name__ == "__main__":
 		try:
 			secret.achievements.utils.load_achievements()
 		except:
-			logging.error("Error while loading achievements! ({})".format(e))
+			logging.error("Error while loading achievements")
 			raise
 
 		# Set achievements version
@@ -259,6 +261,7 @@ if __name__ == "__main__":
 				constant_tags=["worker:{}".format(glob.serverPort)]
 			)
 		else:
+			glob.dog = datadogClient.datadogClient()
 			logging.warning("Datadog stats tracking is disabled!")
 
 		# Connect to pubsub channels
