@@ -140,10 +140,10 @@ if __name__ == "__main__":
 				user=glob.conf["DB_USERNAME"],
 				password=glob.conf["DB_PASSWORD"],
 				database=glob.conf["DB_NAME"],
-				size=glob.conf["DB_WORKERS"],
 				autocommit=True,
 				charset="utf8"
 			)
+			glob.db.fetch("SELECT 1")
 		except:
 			# Exception while connecting to db
 			logging.error("Error while connection to database. Please check your config.ini and run the server again")
@@ -273,6 +273,9 @@ if __name__ == "__main__":
 		# Check debug mods
 		if glob.conf["DEBUG"]:
 			logging.warning("Server running in debug mode.")
+
+		# Close main thread db connection as we don't need it anymore
+		glob.threadScope.dbClose()
 
 		# Server start message and console output
 		logging.info("L.E.T.S. is listening for clients on {}:{}...".format(

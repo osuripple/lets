@@ -212,6 +212,7 @@ class handler(requestsManager.asyncRequestHandler):
 
 			# Save score in db
 			s.saveScoreInDB()
+			log.debug("Score id is {}".format(s.scoreID))
 
 			# Remove lock as we have the score in the database at this point
 			# and we can perform duplicates check through MySQL
@@ -293,7 +294,7 @@ class handler(requestsManager.asyncRequestHandler):
 						with io.BytesIO() as f:
 							f.write(replay)
 							f.seek(0)
-							s3.getClient().upload_fileobj(f, s3.getWriteReplayBucketName(), replayFileName)
+							glob.threadScope.s3.upload_fileobj(f, s3.getWriteReplayBucketName(), replayFileName)
 						glob.db.execute(
 							"UPDATE s3_replay_buckets SET `size` = `size` + 1 WHERE max_score_id IS NULL LIMIT 1"
 						)

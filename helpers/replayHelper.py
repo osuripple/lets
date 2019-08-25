@@ -38,7 +38,7 @@ def getRawReplayS3(scoreID):
 	with io.BytesIO() as f:
 		bucket = s3.getReadReplayBucketName(scoreID)
 		try:
-			s3.getClient().download_fileobj(bucket, fileName, f)
+			glob.threadScope.s3.download_fileobj(bucket, fileName, f)
 		except ClientError as e:
 			# 404 -> no such key
 			# 400 -> no such bucket

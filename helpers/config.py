@@ -11,7 +11,7 @@ class Config:
 			"DB_USERNAME": config("DB_USERNAME", default="ripple"),
 			"DB_PASSWORD": config("DB_PASSWORD"),
 			"DB_NAME": config("DB_NAME", default="ripple"),
-			"DB_WORKERS": config("DB_WORKERS", default="8", cast=int),
+			# "DB_WORKERS": config("DB_WORKERS", default="8", cast=int),
 
 			"REDIS_HOST": config("REDIS_HOST", default="127.0.0.1"),
 			"REDIS_PORT": config("REDIS_PORT", default="6379", cast=int),

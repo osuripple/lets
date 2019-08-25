@@ -6,8 +6,8 @@ import objects.glob
 from common.log import logUtils as log
 
 
-def getClient():
-    return objects.glob.s3Connections[threading.get_ident()]
+# def getClient():
+#     return objects.glob.s3Connections[threading.get_ident()]
 
 
 def getWriteReplayBucketName():
@@ -31,7 +31,6 @@ def getReadReplayBucketName(scoreID):
 
 
 def clientFactory():
-    log.info("Created a new S3 client for thread {}".format(threading.get_ident()))
     return boto3.Session(region_name=objects.glob.conf["S3_REGION"]).client(
         "s3",
         endpoint_url=objects.glob.conf["S3_ENDPOINT_URL"],
