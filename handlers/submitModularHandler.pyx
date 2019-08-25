@@ -178,18 +178,22 @@ class handler(requestsManager.asyncRequestHandler):
 			if (s.pp >= 800 and s.gameMode == gameModes.STD) and not restricted:
 				userUtils.restrict(userID)
 				userUtils.appendNotes(userID, "Restricted due to too high pp gain ({}pp)".format(s.pp))
-				log.warning("**{}** ({}) has been restricted due to too high pp gain **({}pp)**".format(username, userID, s.pp), "cm")
+				log.cm(
+					"**{}** ({}) has been restricted due to too high pp gain **({}pp)**".format(username, userID, s.pp)
+				)
 
 			# Check notepad hack
 			if bmk is None and bml is None:
 				# No bmk and bml params passed, edited or super old client
-				#log.warning("{} ({}) most likely submitted a score from an edited client or a super old client".format(username, userID), "cm")
+				#log.cm("{} ({}) most likely submitted a score from an edited client or a super old client".format(username, userID))
 				pass
 			elif bmk != bml and not restricted:
 				# bmk and bml passed and they are different, restrict the user
 				userUtils.restrict(userID)
 				userUtils.appendNotes(userID, "Restricted due to notepad hack")
-				log.warning("**{}** ({}) has been restricted due to notepad hack".format(username, userID), "cm")
+				log.cm(
+					"**{}** ({}) has been restricted due to notepad hack".format(username, userID)
+				)
 				return
 
 			# Right before submitting the score, get the personal best score object (we need it for charts)
@@ -223,7 +227,7 @@ class handler(requestsManager.asyncRequestHandler):
 			if haxFlags != 0 and not restricted:
 				userHelper.restrict(userID)
 				userHelper.appendNotes(userID, "-- Restricted due to clientside anti cheat flag ({}) (cheated score id: {})".format(haxFlags, s.scoreID))
-				log.warning("**{}** ({}) has been restricted due clientside anti cheat flag **({})**".format(username, userID, haxFlags), "cm")'''
+				log.cm("**{}** ({}) has been restricted due clientside anti cheat flag **({})**".format(username, userID, haxFlags))'''
 
 			# Mi stavo preparando per scendere
 			# Mi stavo preparando per comprare i dolci
@@ -337,11 +341,14 @@ class handler(requestsManager.asyncRequestHandler):
 					# Restrict if no replay was provided
 					if not restricted:
 						userUtils.restrict(userID)
-						userUtils.appendNotes(userID, "Restricted due to missing replay while submitting a score "
-													  "(most likely he used a score submitter)")
-						log.warning("**{}** ({}) has been restricted due to replay not found on map {}".format(
+						userUtils.appendNotes(
+							userID,
+							"Restricted due to missing replay while submitting a score "
+							"(most likely they used a score submitter)"
+						)
+						log.cm("**{}** ({}) has been restricted due to replay not found on map {}".format(
 							username, userID, s.fileMd5
-						), "cm")
+						))
 
 			# Update beatmap playcount (and passcount)
 			beatmap.incrementPlaycount(s.fileMd5, s.passed)
