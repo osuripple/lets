@@ -1,14 +1,16 @@
 import base64
 import collections
+import io
 import json
+import os
 import sys
 import threading
 import traceback
-from urllib.parse import urlencode
 
 import requests
 import tornado.gen
 import tornado.web
+from timeout_decorator import timeout
 
 import secret.achievements.utils
 from common.constants import gameModes
@@ -21,6 +23,7 @@ from constants import exceptions
 from constants import rankedStatuses
 from constants.exceptions import ppCalcException
 from helpers import aeshelper
+from helpers import s3
 from helpers import replayHelper
 from helpers import leaderboardHelper
 from helpers.generalHelper import zingonify
@@ -175,18 +178,22 @@ class handler(requestsManager.asyncRequestHandler):
 			if (s.pp >= 800 and s.gameMode == gameModes.STD) and not restricted:
 				userUtils.restrict(userID)
 				userUtils.appendNotes(userID, "Restricted due to too high pp gain ({}pp)".format(s.pp))
-				log.warning("**{}** ({}) has been restricted due to too high pp gain **({}pp)**".format(username, userID, s.pp), "cm")
+				log.cm(
+					"**{}** ({}) has been restricted due to too high pp gain **({}pp)**".format(username, userID, s.pp)
+				)
 
 			# Check notepad hack
 			if bmk is None and bml is None:
 				# No bmk and bml params passed, edited or super old client
-				#log.warning("{} ({}) most likely submitted a score from an edited client or a super old client".format(username, userID), "cm")
+				#log.cm("{} ({}) most likely submitted a score from an edited client or a super old client".format(username, userID))
 				pass
 			elif bmk != bml and not restricted:
 				# bmk and bml passed and they are different, restrict the user
 				userUtils.restrict(userID)
 				userUtils.appendNotes(userID, "Restricted due to notepad hack")
-				log.warning("**{}** ({}) has been restricted due to notepad hack".format(username, userID), "cm")
+				log.cm(
+					"**{}** ({}) has been restricted due to notepad hack".format(username, userID)
+				)
 				return
 
 			# Right before submitting the score, get the personal best score object (we need it for charts)
@@ -205,6 +212,7 @@ class handler(requestsManager.asyncRequestHandler):
 
 			# Save score in db
 			s.saveScoreInDB()
+			log.debug("Score id is {}".format(s.scoreID))
 
 			# Remove lock as we have the score in the database at this point
 			# and we can perform duplicates check through MySQL
@@ -220,7 +228,7 @@ class handler(requestsManager.asyncRequestHandler):
 			if haxFlags != 0 and not restricted:
 				userHelper.restrict(userID)
 				userHelper.appendNotes(userID, "-- Restricted due to clientside anti cheat flag ({}) (cheated score id: {})".format(haxFlags, s.scoreID))
-				log.warning("**{}** ({}) has been restricted due clientside anti cheat flag **({})**".format(username, userID, haxFlags), "cm")'''
+				log.cm("**{}** ({}) has been restricted due clientside anti cheat flag **({})**".format(username, userID, haxFlags))'''
 
 			# Mi stavo preparando per scendere
 			# Mi stavo preparando per comprare i dolci
@@ -274,31 +282,41 @@ class handler(requestsManager.asyncRequestHandler):
 			if s.passed and s.scoreID > 0:
 				if "score" in self.request.files:
 					# Save the replay if it was provided
-					log.debug("Saving replay ({})...".format(s.scoreID))
+					log.debug("Saving replay ({}) locally".format(s.scoreID))
 					replay = self.request.files["score"][0]["body"]
 
-					# Save raw osr in all folders
-					saved_replays = 0
-					replay_save_exception = None
-					for i, replay_folder in enumerate(glob.conf["REPLAYS_FOLDERS"]):
-						# We don't want everything to fail if s3 is offline,
-						# oiseau will take care or re-uploading failed replays to s3 anyways
-						try:
-							with open("{}/replay_{}.osr".format(replay_folder, s.scoreID), "wb") as f:
-								f.write(replay)
-							saved_replays += 1
-						except Exception as e:
-							replay_save_exception = e
-							sentry.captureMessage(
-								"Replay saving error ({}), path index {} ({}). S3 may be offline".format(
-									e, i, replay_folder
-								)
-							)
 
-					# Could not save the replay at all. Re-raise exception and abort score submission
-					if saved_replays == 0:
-						log.debug("Could not save replay! Re-raising exception and aborting score submission.")
-						raise replay_save_exception
+					replayFileName = "replay_{}.osr".format(s.scoreID)
+
+					@timeout(5, use_signals=False)
+					def s3Upload():
+						log.info("Uploading {} -> S3 write Bucket".format(replayFileName))
+						with io.BytesIO() as f:
+							f.write(replay)
+							f.seek(0)
+							glob.threadScope.s3.upload_fileobj(f, s3.getWriteReplayBucketName(), replayFileName)
+						glob.db.execute(
+							"UPDATE s3_replay_buckets SET `size` = `size` + 1 WHERE max_score_id IS NULL LIMIT 1"
+						)
+						log.debug("{} has been uploaded to S3".format(replayFileName))
+
+					def saveLocally(folder):
+						log.debug("Saving {} locally in {}".format(replayFileName, folder))
+						with open(os.path.join(folder, replayFileName), "wb") as f:
+							f.write(replay)
+
+					saveLocally(glob.conf["REPLAYS_FOLDER"])
+					if glob.conf.s3_enabled:
+						try:
+							s3Upload()
+						except Exception as e:
+							m = "Error while uploading replay to S3 ({}). Saving in failed replays folder.".format(e)
+							log.error(m)
+							saveLocally(glob.conf["FAILED_REPLAYS_FOLDER"])
+							sentry.captureMessage(m)
+					else:
+						log.warning("S3 Replays upload disabled! Only saving locally.")
+
 
 					# Send to cono ALL passed replays, even non high-scores
 					if glob.conf["CONO_ENABLE"]:
@@ -319,16 +337,19 @@ class handler(requestsManager.asyncRequestHandler):
 									)
 								).decode(),
 							})
-						)).start()
+						), daemon=False).start()
 				else:
 					# Restrict if no replay was provided
 					if not restricted:
 						userUtils.restrict(userID)
-						userUtils.appendNotes(userID, "Restricted due to missing replay while submitting a score "
-													  "(most likely he used a score submitter)")
-						log.warning("**{}** ({}) has been restricted due to replay not found on map {}".format(
+						userUtils.appendNotes(
+							userID,
+							"Restricted due to missing replay while submitting a score "
+							"(most likely they used a score submitter)"
+						)
+						log.cm("**{}** ({}) has been restricted due to replay not found on map {}".format(
 							username, userID, s.fileMd5
-						), "cm")
+						))
 
 			# Update beatmap playcount (and passcount)
 			beatmap.incrementPlaycount(s.fileMd5, s.passed)

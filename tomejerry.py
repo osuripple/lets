@@ -6,22 +6,20 @@ import traceback
 import warnings
 from collections import namedtuple
 from typing import Iterable, Optional, Union, List, Dict, Any
-
 import os
 import threading
 import time
 
-import MySQLdb.cursors
+import pymysql
+import pymysqlpool
 import progressbar
 from abc import abstractmethod, ABC
-from enum import Enum, IntEnum
-from progressbar import DynamicMessage, FormatLabel
+from enum import IntEnum
 
 from helpers.config import Config
 from objects import beatmap
 from objects import score
 from common.db import dbConnector
-from helpers import config
 from objects import glob
 
 
@@ -283,15 +281,17 @@ class Worker:
         # self.scores = [LwScore(x["id"], 0) for x in glob.db.fetchAll(self.ids_query.query, self.ids_query.parameters)]
 
         # Get a db worker
-        cursor = None
-        db_worker = glob.db.pool.getWorker()
-        if db_worker is None:
+        try:
+            db_connection = glob.db.pool.get_conection()
+        except pymysqlpool.GetConnectionFromPoolError:
+            db_connection = None
+        if db_connection is None:
             self.logger.warning("Cannot fetch scores. No database worker available!!")
             return
 
         try:
             # Get a cursor (normal DictCursor)
-            cursor = db_worker.connection.cursor(MySQLdb.cursors.DictCursor)
+            cursor = db_connection.cursor(pymysql.cursors.DictCursor)
             for i, lw_score in enumerate(self.scores):
                 if i % self.log_every == 0:
                     self.logger.debug("Processed {}/{} scores".format(i, self.chunk_size))
@@ -321,11 +321,13 @@ class Worker:
                 finally:
                     self.recalculated_scores_count += 1
         finally:
+            # Not needed according to pymysqlpool :shrug:
             # Close cursor and connection
-            if cursor is not None:
-                cursor.close()
-            if db_worker is not None:
-                glob.db.pool.putWorker(db_worker)
+            # if cursor is not None:
+            #     cursor.close()
+            if db_connection is not None:
+                # This puts the connection back into the pool as well
+                db_connection.close()
             self.logger.debug("PP Recalculated")
 
     def save_recalculations(self):

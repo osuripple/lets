@@ -1,6 +1,3 @@
-import os
-import configparser
-
 from decouple import config, Csv
 
 
@@ -14,7 +11,7 @@ class Config:
 			"DB_USERNAME": config("DB_USERNAME", default="ripple"),
 			"DB_PASSWORD": config("DB_PASSWORD"),
 			"DB_NAME": config("DB_NAME", default="ripple"),
-			"DB_WORKERS": config("DB_WORKERS", default="8", cast=int),
+			# "DB_WORKERS": config("DB_WORKERS", default="8", cast=int),
 
 			"REDIS_HOST": config("REDIS_HOST", default="127.0.0.1"),
 			"REDIS_PORT": config("REDIS_PORT", default="6379", cast=int),
@@ -31,7 +28,8 @@ class Config:
 			"BANCHO_API_KEY": config("BANCHO_API_KEY", default="changeme"),
 
 			"THREADS": config("THREADS", default="16", cast=int),
-			"REPLAYS_FOLDERS": config("REPLAYS_FOLDERS", default=".data/replays", cast=Csv(str)),
+			# "REPLAYS_FOLDERS": config("REPLAYS_FOLDERS", default=".data/replays", cast=Csv(str)),
+			"REPLAYS_FOLDER": config("REPLAYS_FOLDER", default=".data/local_replays"),
 			"BEATMAPS_FOLDER": config("BEATMAPS_FOLDER", default=".data/beatmaps", cast=str),
 			"SCREENSHOTS_FOLDER": config("SCREENSHOTS_FOLDER", default=".data/screenshots", cast=str),
 
@@ -52,7 +50,14 @@ class Config:
 			"CONO_ENABLE": config("CONO_ENABLE", default="0", cast=bool),
 
 			"FOKABOT_API_BASE": config("FOKABOT_API_BASE", default="http://127.0.0.1:4334"),
-			"FOKABOT_API_SECRET": config("FOKABOT_API_SECRET", default="")
+			"FOKABOT_API_SECRET": config("FOKABOT_API_SECRET", default=""),
+
+			"S3_ENDPOINT_URL": config("S3_ENDPOINT_URL", default="https://s3.fr-par.scw.cloud"),
+			"S3_REGION": config("S3_REGION", default="fr-par"),
+			"S3_ACCESS_KEY_ID": config("S3_ACCESS_KEY_ID", default=""),
+			"S3_SECRET_ACCESS_KEY": config("S3_SECRET_ACCESS_KEY", default=""),
+
+			"FAILED_REPLAYS_FOLDER": config("FAILED_REPLAYS_FOLDER", default=".data/failed_replays")
 		}
 
 	@property
@@ -66,6 +71,10 @@ class Config:
 	@property
 	def schiavo_enabled(self):
 		return bool(self["SCHIAVO_URL"])
+
+	@property
+	def s3_enabled(self):
+		return bool(self["S3_ACCESS_KEY_ID"]) and bool(self["S3_ACCESS_KEY_ID"])
 
 	def __getitem__(self, item):
 		return self._config[item]

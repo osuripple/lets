@@ -1,4 +1,5 @@
 import json
+
 import tornado.gen
 import tornado.web
 
@@ -64,7 +65,7 @@ class handler(requestsManager.asyncRequestHandler):
 			# Hax check
 			if "a" in self.request.arguments:
 				if int(self.get_argument("a")) == 1 and not userUtils.getAqn(userID):
-					log.warning("Found AQN folder on user {} ({})".format(username, userID), "cm")
+					log.cm("Found AQN folder on user {} ({})".format(username, userID))
 					userUtils.setAqn(userID)
 
 			# Scoreboard type

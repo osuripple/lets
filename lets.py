@@ -1,5 +1,10 @@
 # General imports
 import argparse
+import logging
+import signal
+
+from helpers.config import Config
+logging.basicConfig(level=logging.DEBUG if Config()["DEBUG"] else logging.INFO)
 
 import os
 import sys
@@ -13,7 +18,6 @@ import tornado.netutil
 from raven.contrib.tornado import AsyncSentryClient
 import redis
 
-from common.constants import bcolors
 from common.db import dbConnector
 from common.ddog import datadogClient
 from common.log import logUtils as log
@@ -40,11 +44,8 @@ from handlers import redirectHandler
 from handlers import submitModularHandler
 from handlers import uploadScreenshotHandler
 from handlers import commentHandler
-from helpers import config
 from helpers import consoleHelper
-from common import generalUtils
 from common import agpl
-from helpers.config import Config
 from objects import glob
 from pubSubHandlers import beatmapUpdateHandler
 import secret.achievements.utils
@@ -105,68 +106,52 @@ if __name__ == "__main__":
 	try:
 		agpl.check_license("ripple", "LETS")
 	except agpl.LicenseError as e:
-		print(str(e))
+		logging.error(str(e))
 		sys.exit(1)
 
 	try:
 		consoleHelper.printServerStartHeader(True)
 
 		# Read config
-		consoleHelper.printNoNl("> Reading config file... ")
+		logging.info("Reading config file... ")
 		glob.conf = Config()
 
-		# if glob.conf.default:
-			# We have generated a default config.ini, quit server
-			# consoleHelper.printWarning()
-			# consoleHelper.printColored("[!] config.ini not found. A default one has been generated.", bcolors.YELLOW)
-			# consoleHelper.printColored("[!] Please edit your config.ini and run the server again.", bcolors.YELLOW)
-			# sys.exit()
-
-		# If we haven't generated a default config.ini, check if it's valid
-		# if not glob.conf.checkConfig():
-		# 	consoleHelper.printError()
-		# 	consoleHelper.printColored("[!] Invalid config.ini. Please configure it properly", bcolors.RED)
-		# 	consoleHelper.printColored("[!] Delete your config.ini to generate a default one", bcolors.RED)
-		# 	sys.exit()
-		# else:
-		# 	consoleHelper.printDone()
-
 		# Create data/oppai maps folder if needed
-		consoleHelper.printNoNl("> Checking folders... ")
-		paths = [
+		logging.info(">hecking folders... ")
+		paths = (
 			".data",
 			".data/oppai",
 			".data/catch_the_pp",
 			glob.conf["BEATMAPS_FOLDER"],
-			glob.conf["SCREENSHOTS_FOLDER"]
-		] + glob.conf["REPLAYS_FOLDERS"]
+			glob.conf["SCREENSHOTS_FOLDER"],
+			glob.conf["FAILED_REPLAYS_FOLDER"],
+			glob.conf["REPLAYS_FOLDER"]
+		)
 		for i in paths:
 			if not os.path.exists(i):
 				os.makedirs(i, 0o770)
-		consoleHelper.printDone()
 
 		# Connect to db
 		try:
-			consoleHelper.printNoNl("> Connecting to MySQL database... ")
+			logging.info("Connecting to MySQL database")
 			glob.db = dbConnector.db(
-				glob.conf["DB_HOST"],
-				glob.conf["DB_PORT"],
-				glob.conf["DB_USERNAME"],
-				glob.conf["DB_PASSWORD"],
-				glob.conf["DB_NAME"],
-				glob.conf["DB_WORKERS"]
+				host=glob.conf["DB_HOST"],
+				port=glob.conf["DB_PORT"],
+				user=glob.conf["DB_USERNAME"],
+				password=glob.conf["DB_PASSWORD"],
+				database=glob.conf["DB_NAME"],
+				autocommit=True,
+				charset="utf8"
 			)
-			consoleHelper.printNoNl(" ")
-			consoleHelper.printDone()
+			glob.db.fetch("SELECT 1")
 		except:
 			# Exception while connecting to db
-			consoleHelper.printError()
-			consoleHelper.printColored("[!] Error while connection to database. Please check your config.ini and run the server again", bcolors.RED)
+			logging.error("Error while connection to database. Please check your config.ini and run the server again")
 			raise
 
 		# Connect to redis
 		try:
-			consoleHelper.printNoNl("> Connecting to redis... ")
+			logging.info("Connecting to redis")
 			glob.redis = redis.Redis(
 				glob.conf["REDIS_HOST"],
 				glob.conf["REDIS_PORT"],
@@ -174,12 +159,9 @@ if __name__ == "__main__":
 				glob.conf["REDIS_PASSWORD"]
 			)
 			glob.redis.ping()
-			consoleHelper.printNoNl(" ")
-			consoleHelper.printDone()
 		except:
 			# Exception while connecting to db
-			consoleHelper.printError()
-			consoleHelper.printColored("[!] Error while connection to redis. Please check your config.ini and run the server again", bcolors.RED)
+			logging.error("Error while connection to redis. Please check your config.ini and run the server again")
 			raise
 
 		# Empty redis cache
@@ -194,89 +176,93 @@ if __name__ == "__main__":
 
 		# Create threads pool
 		try:
-			consoleHelper.printNoNl("> Creating threads pool... ")
+			logging.info("Creating threads pool")
 			glob.pool = ThreadPool(glob.conf["THREADS"])
-			consoleHelper.printDone()
 		except:
-			consoleHelper.printError()
-			consoleHelper.printColored("[!] Error while creating threads pool. Please check your config.ini and run the server again", bcolors.RED)
+			logging.error("Error while creating threads pool. Please check your config.ini and run the server again")
+			raise
 
 		# Check osuapi
 		if not glob.conf["OSU_API_ENABLE"]:
-			consoleHelper.printColored("[!] osu!api features are disabled. If you don't have a valid beatmaps table, all beatmaps will show as unranked", bcolors.YELLOW)
+			logging.warning(
+				"osu!api features are disabled. If you don't have a "
+				"valid beatmaps table, all beatmaps will show as unranked"
+			)
 			if glob.conf["BEATMAP_CACHE_EXPIRE"] > 0:
-				consoleHelper.printColored("[!] IMPORTANT! Your beatmapcacheexpire in config.ini is > 0 and osu!api features are disabled.\nWe do not reccoment this, because too old beatmaps will be shown as unranked.\nSet beatmapcacheexpire to 0 to disable beatmap latest update check and fix that issue.", bcolors.YELLOW)
+				logging.warning(
+					"IMPORTANT! Your beatmapcacheexpire in config.ini is > 0 and osu!api "
+					"features are disabled.\nWe do not reccoment this, because too old "
+					"beatmaps will be shown as unranked.\nSet beatmapcacheexpire to 0 to "
+					"disable beatmap latest update check and fix that issue."
+				)
 
 		# Load achievements
-		consoleHelper.printNoNl("Loading achievements... ")
+		logging.info("Loading achievements")
 		try:
 			secret.achievements.utils.load_achievements()
-		except Exception as e:
-			consoleHelper.printError()
-			consoleHelper.printColored(
-				"[!] Error while loading achievements! ({})".format(e),
-				bcolors.RED,
-			)
-			sys.exit()
-		consoleHelper.printDone()
+		except:
+			logging.error("Error while loading achievements")
+			raise
 
 		# Set achievements version
 		glob.redis.set("lets:achievements_version", glob.ACHIEVEMENTS_VERSION)
-		consoleHelper.printColored("Achievements version is {}".format(glob.ACHIEVEMENTS_VERSION), bcolors.YELLOW)
+		logging.info("Achievements version is {}".format(glob.ACHIEVEMENTS_VERSION))
 
 		# Load AQL thresholds
-		print("Loading AQL thresholds... ")
+		logging.info("Loading AQL thresholds")
 		try:
 			glob.aqlThresholds.reload()
-		except Exception as e:
-			consoleHelper.printError()
-			consoleHelper.printColored("[!] {}".format(e), bcolors.RED,)
-			sys.exit()
-		consoleHelper.printDone()
+		except:
+			logging.error("Error while reloading AQL thresholds")
+			raise
+
+		# Check if s3 is enabled
+		if not glob.conf.s3_enabled:
+			logging.warning("S3 is disabled")
+		else:
+			c = glob.db.fetch("SELECT COUNT(*) AS c FROM s3_replay_buckets WHERE max_score_id IS NULL")["c"]
+			if c != 1:
+				logging.error(
+					"There must be only one bucket flagged as WRITE bucket! You have {}.".format(c),
+				)
+				sys.exit()
 
 		# Discord
 		if glob.conf.schiavo_enabled:
 			glob.schiavo = schiavo.schiavo(glob.conf["SCHIAVO_URL"], "**lets**")
 		else:
-			consoleHelper.printColored("[!] Warning! Schiavo logging is disabled!", bcolors.YELLOW)
+			logging.warning("Schiavo logging is disabled!")
 
 		# Server port
 		try:
 			if cli_args.port:
-				consoleHelper.printColored(
-					"[!] Running on port {}, bypassing config.ini".format(cli_args.port),
-					bcolors.YELLOW
-				)
+				logging.warning("Running on port {}, bypassing config.ini".format(cli_args.port))
 				glob.serverPort = int(cli_args.port)
 			else:
 				glob.serverPort = glob.conf["HTTP_PORT"]
 		except:
-			consoleHelper.printColored("[!] Invalid server port! Please check your config.ini and run the server again", bcolors.RED)
+			logging.error("Invalid server port! Please check your config.ini and run the server again")
+			raise
 
 		# Make app
 		glob.application = make_app()
 
 		# Set up sentry
-		try:
-			if glob.conf.sentry_enabled:
-				glob.application.sentry_client = AsyncSentryClient(glob.conf["SENTRY_DSN"], release=glob.VERSION)
-			else:
-				consoleHelper.printColored("[!] Warning! Sentry logging is disabled!", bcolors.YELLOW)
-		except:
-			consoleHelper.printColored("[!] Error while starting Sentry client! Please check your config.ini and run the server again", bcolors.RED)
+		if glob.conf.sentry_enabled:
+			glob.application.sentry_client = AsyncSentryClient(glob.conf["SENTRY_DSN"], release=glob.VERSION)
+		else:
+			logging.warning("Sentry logging is disabled!")
 
 		# Set up Datadog
-		try:
-			if glob.conf.datadog_enabled:
-				glob.dog = datadogClient.datadogClient(
-					glob.conf["DATADOG_API_KEY"],
-					glob.conf["DATADOG_APP_KEY"],
-					constant_tags=["worker:{}".format(glob.serverPort)]
-				)
-			else:
-				consoleHelper.printColored("[!] Warning! Datadog stats tracking is disabled!", bcolors.YELLOW)
-		except:
-			consoleHelper.printColored("[!] Error while starting Datadog client! Please check your config.ini and run the server again", bcolors.RED)
+		if glob.conf.datadog_enabled:
+			glob.dog = datadogClient.datadogClient(
+				glob.conf["DATADOG_API_KEY"],
+				glob.conf["DATADOG_APP_KEY"],
+				constant_tags=["worker:{}".format(glob.serverPort)]
+			)
+		else:
+			glob.dog = datadogClient.datadogClient()
+			logging.warning("Datadog stats tracking is disabled!")
 
 		# Connect to pubsub channels
 		pubSub.listener(glob.redis, {
@@ -286,20 +272,23 @@ if __name__ == "__main__":
 
 		# Check debug mods
 		if glob.conf["DEBUG"]:
-			consoleHelper.printColored("[!] Server running in debug mode.", bcolors.RED)
+			logging.warning("Server running in debug mode.")
+
+		# Close main thread db connection as we don't need it anymore
+		glob.threadScope.dbClose()
 
 		# Server start message and console output
-		consoleHelper.printColored("> L.E.T.S. is listening for clients on {}:{}...".format(
+		logging.info("L.E.T.S. is listening for clients on {}:{}...".format(
 			glob.conf["HTTP_HOST"],
 			glob.serverPort
-		), bcolors.GREEN)
-		log.logMessage("Server started!", discord="bunker", stdout=False)
+		))
+		log.discord("bunker", "Server started!")
 
 		# Start Tornado
 		glob.application.listen(glob.serverPort, address=glob.conf["HTTP_HOST"])
 		tornado.ioloop.IOLoop.instance().start()
 	finally:
 		# Perform some clean up
-		print("> Disposing server... ")
+		logging.info("Disposing server")
 		glob.fileBuffers.flushAll()
-		consoleHelper.printColored("Goodbye!", bcolors.GREEN)
+		logging.info("Goodbye!")

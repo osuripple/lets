@@ -1,7 +1,9 @@
 """Some console related functions"""
+import logging
 
 from common.constants import bcolors
 from objects import glob
+
 
 ASCII = """ (                 (     
  )\\ )        *   ) )\\ )  
@@ -11,6 +13,7 @@ ASCII = """ (                 (
 | |   | __||_   _|/ __|  
 | |__ | _|   | |  \\__ \\  
 |____||___|  |_|  |___/  \n"""
+
 
 def printServerStartHeader(asciiArt):
 	"""
@@ -22,81 +25,8 @@ def printServerStartHeader(asciiArt):
 	if asciiArt:
 		ascii_list = ASCII.split("\n")
 		for i, x in enumerate(ascii_list):
-			printColored(x, bcolors.YELLOW if i < len(ascii_list) - 4 else bcolors.GREEN)
+			logging.info(x)
 
-	printColored("> Welcome to the Latest Essential Tatoe Server v{}".format(glob.VERSION), bcolors.GREEN)
-	printColored("> Made by the Ripple team", bcolors.GREEN)
-	printColored("> {}https://zxq.co/ripple/lets".format(bcolors.UNDERLINE), bcolors.GREEN)
-	printColored("> Press CTRL+C to exit\n", bcolors.GREEN)
-
-
-def printNoNl(string):
-	"""
-	Print string without new line at the end
-
-	string -- string to print
-	"""
-
-	print(string, end="")
-
-
-def printColored(string, color):
-	"""
-	Print colored string
-
-	string -- string to print
-	color -- see bcolors.py
-	"""
-
-	print("{}{}{}".format(color, string, bcolors.ENDC))
-
-
-def printError():
-	"""Print error text FOR LOADING"""
-
-	printColored("Error", bcolors.RED)
-
-
-def printDone():
-	"""Print error text FOR LOADING"""
-
-	printColored("Done", bcolors.GREEN)
-
-
-def printWarning():
-	"""Print error text FOR LOADING"""
-
-	printColored("Warning", bcolors.YELLOW)
-
-def printGetScoresMessage(message):
-	printColored("[get_scores] {}".format(message), bcolors.PINK)
-
-def printSubmitModularMessage(message):
-	printColored("[submit_modular] {}".format(message), bcolors.YELLOW)
-
-def printBanchoConnectMessage(message):
-	printColored("[bancho_connect] {}".format(message), bcolors.YELLOW)
-
-def printGetReplayMessage(message):
-	printColored("[get_replay] {}".format(message), bcolors.PINK)
-
-def printMapsMessage(message):
-	printColored("[maps] {}".format(message), bcolors.PINK)
-
-def printRippMessage(message):
-	printColored("[ripp] {}".format(message), bcolors.GREEN)
-
-# def printRippoppaiMessage(message):
-# 	printColored("[rippoppai] {}".format(message), bcolors.GREEN)
-
-def printWifiPianoMessage(message):
-	printColored("[wifipiano] {}".format(message), bcolors.GREEN)
-
-def printDebugMessage(message):
-	printColored("[debug] {}".format(message), bcolors.BLUE)
-
-def printScreenshotsMessage(message):
-	printColored("[screenshots] {}".format(message), bcolors.YELLOW)
-
-def printApiMessage(module, message):
-	printColored("[{}] {}".format(module, message), bcolors.GREEN)
+	logging.info("Welcome to the Latest Essential Tatoe Server v{}".format(glob.VERSION))
+	logging.info("Made by the Ripple team")
+	logging.info("https://zxq.co/ripple/lets")
