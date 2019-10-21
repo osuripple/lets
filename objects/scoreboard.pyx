@@ -44,7 +44,11 @@ class scoreboard:
 		cdef str friends = ""
 		cdef str order = ""
 		cdef str limit = ""
-		select = "SELECT id FROM scores WHERE userid = %(userid)s AND beatmap_md5 = %(md5)s AND play_mode = %(mode)s AND completed = 3"
+		select = "SELECT id FROM scores " \
+				 "WHERE userid = %(userid)s " \
+				 "AND beatmap_md5 = %(md5)s " \
+				 "AND play_mode = %(mode)s " \
+				 "AND completed = 3"
 
 		# Mods
 		if self.mods > -1:
@@ -52,7 +56,11 @@ class scoreboard:
 
 		# Friends ranking
 		if self.friends:
-			friends = "AND (scores.userid IN (SELECT user2 FROM users_relationships WHERE user1 = %(userid)s) OR scores.userid = %(userid)s)"
+			friends = "AND (scores.userid IN (" \
+					  "SELECT user2 FROM users_relationships " \
+					  "WHERE user1 = %(userid)s) " \
+					  "OR scores.userid = %(userid)s" \
+					  ")"
 
 		# Sort and limit at the end
 		order = "ORDER BY score DESC"
@@ -100,7 +108,14 @@ class scoreboard:
 
 		# Get top 50 scores
 		select = "SELECT *"
-		joins = "FROM scores STRAIGHT_JOIN users ON scores.userid = users.id STRAIGHT_JOIN users_stats ON users.id = users_stats.id WHERE scores.beatmap_md5 = %(beatmap_md5)s AND scores.play_mode = %(play_mode)s AND scores.completed = 3 AND (users.privileges & 1 > 0 OR users.id = %(userid)s)"
+		joins = "FROM scores STRAIGHT_JOIN users " \
+				"ON scores.userid = users.id " \
+				"STRAIGHT_JOIN users_stats " \
+				"ON users.id = users_stats.id " \
+				"WHERE scores.beatmap_md5 = %(beatmap_md5)s " \
+				"AND scores.play_mode = %(play_mode)s " \
+				"AND scores.completed = 3 " \
+				"AND (users.is_public = 1 OR users.id = %(userid)s)"
 
 		# Country ranking
 		if self.country:
@@ -116,7 +131,11 @@ class scoreboard:
 
 		# Friends ranking
 		if self.friends:
-			friends = "AND (scores.userid IN (SELECT user2 FROM users_relationships WHERE user1 = %(userid)s) OR scores.userid = %(userid)s)"
+			friends = "AND (scores.userid IN (" \
+					  "SELECT user2 FROM users_relationships " \
+					  "WHERE user1 = %(userid)s) " \
+					  "OR scores.userid = %(userid)s" \
+					  ")"
 		else:
 			friends = ""
 
@@ -131,7 +150,12 @@ class scoreboard:
 
 		# Build query, get params and run query
 		query = self.buildQuery(locals())
-		params = {"beatmap_md5": self.beatmap.fileMD5, "play_mode": self.gameMode, "userid": self.userID, "mods": self.mods}
+		params = {
+			"beatmap_md5": self.beatmap.fileMD5,
+			"play_mode": self.gameMode,
+			"userid": self.userID,
+			"mods": self.mods
+		}
 		topScores = glob.db.fetchAll(query, params)
 
 		# Set data for all scores
@@ -154,7 +178,7 @@ class scoreboard:
 				self.scores.append(s)
 				c+=1
 
-		'''# If we have more than 50 scores, run query to get scores count
+		# If we have more than 50 scores, run query to get scores count
 		if c >= 50:
 			# Count all scores on this map
 			select = "SELECT COUNT(*) AS count"
@@ -163,16 +187,19 @@ class scoreboard:
 			# Build query, get params and run query
 			query = self.buildQuery(locals())
 			count = glob.db.fetch(query, params)
-			if count == None:
-				self.totalScores = 0
-			else:
-				self.totalScores = count["count"]
+			self.totalScores = 0 if count is None else count["count"]
 		else:
-			self.totalScores = c-1'''
+			self.totalScores = c-1
 
 		# If personal best score was not in top 50, try to get it from cache
 		if personalBestScoreID is not None and self.personalBestRank < 1:
-			self.personalBestRank = glob.personalBestCache.get(self.userID, self.beatmap.fileMD5, self.country, self.friends, self.mods)
+			self.personalBestRank = glob.personalBestCache.get(
+				self.userID,
+				self.beatmap.fileMD5,
+				self.country,
+				self.friends,
+				self.mods
+			)
 
 		# It's not even in cache, get it from db
 		if personalBestScoreID is not None and self.personalBestRank < 1:
@@ -184,29 +211,53 @@ class scoreboard:
 			glob.personalBestCache.set(self.userID, self.personalBestRank, self.beatmap.fileMD5)
 
 	def setPersonalBestRank(self):
-		"""
-		Set personal best rank ONLY
-		Ikr, that query is HUGE but xd
-		"""
 		# Before running the HUGE query, make sure we have a score on that map
-		cdef str query = "SELECT id FROM scores WHERE beatmap_md5 = %(md5)s AND userid = %(userid)s AND play_mode = %(mode)s AND completed = 3"
+		cdef str query = "SELECT id FROM scores " \
+						 "WHERE beatmap_md5 = %(md5)s " \
+						 "AND userid = %(userid)s " \
+						 "AND play_mode = %(mode)s " \
+						 "AND completed = 3"
 		# Mods
 		if self.mods > -1:
 			query += " AND scores.mods = %(mods)s"
 		# Friends ranking
 		if self.friends:
-			query += " AND (scores.userid IN (SELECT user2 FROM users_relationships WHERE user1 = %(userid)s) OR scores.userid = %(userid)s)"
+			query += " AND (scores.userid IN (" \
+					 "SELECT user2 FROM users_relationships " \
+					 "WHERE user1 = %(userid)s) " \
+					 "OR scores.userid = %(userid)s" \
+					 ")"
 		# Sort and limit at the end
 		query += " LIMIT 1"
-		hasScore = glob.db.fetch(query, {"md5": self.beatmap.fileMD5, "userid": self.userID, "mode": self.gameMode, "mods": self.mods})
+		hasScore = glob.db.fetch(
+			query,
+			{
+				"md5": self.beatmap.fileMD5,
+				"userid": self.userID,
+				"mode": self.gameMode,
+				"mods": self.mods
+			}
+		)
 		if hasScore is None:
 			return
 
 		# We have a score, run the huge query
 		# Base query
-		query = """SELECT COUNT(*) AS rank FROM scores STRAIGHT_JOIN users ON scores.userid = users.id STRAIGHT_JOIN users_stats ON users.id = users_stats.id WHERE scores.score >= (
-		SELECT score FROM scores WHERE beatmap_md5 = %(md5)s AND play_mode = %(mode)s AND completed = 3 AND userid = %(userid)s LIMIT 1
-		) AND scores.beatmap_md5 = %(md5)s AND scores.play_mode = %(mode)s AND scores.completed = 3 AND users.privileges & 1 > 0"""
+		query = """SELECT COUNT(*) AS rank FROM scores
+		STRAIGHT_JOIN users ON scores.userid = users.id
+		STRAIGHT_JOIN users_stats ON users.id = users_stats.id
+		WHERE scores.score >= (
+			SELECT score FROM scores
+			WHERE beatmap_md5 = %(md5)s
+			AND play_mode = %(mode)s
+			AND completed = 3
+			AND userid = %(userid)s
+			LIMIT 1
+		)
+		AND scores.beatmap_md5 = %(md5)s
+		AND scores.play_mode = %(mode)s
+		AND scores.completed = 3
+		AND users.is_public = 1"""
 		# Country
 		if self.country:
 			query += " AND users_stats.country = (SELECT country FROM users_stats WHERE id = %(userid)s LIMIT 1)"
@@ -215,10 +266,22 @@ class scoreboard:
 			query += " AND scores.mods = %(mods)s"
 		# Friends
 		if self.friends:
-			query += " AND (scores.userid IN (SELECT user2 FROM users_relationships WHERE user1 = %(userid)s) OR scores.userid = %(userid)s)"
+			query += " AND (scores.userid IN (" \
+					 "SELECT user2 FROM users_relationships " \
+					 "WHERE user1 = %(userid)s) " \
+					 "OR scores.userid = %(userid)s" \
+					 ")"
 		# Sort and limit at the end
 		query += " ORDER BY score DESC LIMIT 1"
-		result = glob.db.fetch(query, {"md5": self.beatmap.fileMD5, "userid": self.userID, "mode": self.gameMode, "mods": self.mods})
+		result = glob.db.fetch(
+			query,
+			{
+				"md5": self.beatmap.fileMD5,
+				"userid": self.userID,
+				"mode": self.gameMode,
+				"mods": self.mods
+			}
+		)
 		if result is not None:
 			self.personalBestRank = result["rank"]
 
