@@ -285,10 +285,21 @@ if __name__ == "__main__":
 		log.discord("bunker", "Server started!")
 
 		# Start Tornado
+		def term(_, __):
+			log.info("Stopping server...")
+			tornado.ioloop.IOLoop.instance().add_callback_from_signal(
+				lambda: tornado.ioloop.IOLoop.instance().stop()
+			)
+
+		signal.signal(signal.SIGINT, term)
+		signal.signal(signal.SIGTERM, term)
 		glob.application.listen(glob.serverPort, address=glob.conf["HTTP_HOST"])
 		tornado.ioloop.IOLoop.instance().start()
 	finally:
 		# Perform some clean up
 		logging.info("Disposing server")
 		glob.fileBuffers.flushAll()
+		if glob.redis.connection_pool is not None:
+			glob.redis.connection_pool.disconnect()
+		# TODO: properly dispose mysql connections
 		logging.info("Goodbye!")

@@ -26,9 +26,16 @@ class ThreadScope(threading.local):
         return self._db
 
     def dbClose(self):
+        tid = threading.get_ident()
+        if self._db is None:
+            log.debug(
+                "Attempted to close a None db connection for thread {} (this thread has no db conn!)".format(tid)
+            )
+            return
         try:
             self._db.close()
-        except:
+        except Exception as e:
+            log.warning("Error ({}) while closing db connection for thread {}. Failing silently.".format(e, tid))
             pass
-        log.info("Closed and destroyed db connection for thread {}".format(threading.get_ident()))
+        log.info("Closed and destroyed db connection for thread {}".format(tid))
         self._db = None
