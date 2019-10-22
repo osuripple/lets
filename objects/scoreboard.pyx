@@ -257,7 +257,7 @@ class scoreboard:
 		AND scores.beatmap_md5 = %(md5)s
 		AND scores.play_mode = %(mode)s
 		AND scores.completed = 3
-		AND users.is_public = 1"""
+		AND (users.is_public = 1 OR users.id = %(userid)s)"""
 		# Country
 		if self.country:
 			query += " AND users_stats.country = (SELECT country FROM users_stats WHERE id = %(userid)s LIMIT 1)"
