@@ -74,7 +74,7 @@ class Config:
 
 	@property
 	def s3_enabled(self):
-		return bool(self["S3_ACCESS_KEY_ID"]) and bool(self["S3_ACCESS_KEY_ID"])
+		return bool(self["S3_ACCESS_KEY_ID"]) and bool(self["S3_SECRET_ACCESS_KEY"])
 
 	def __getitem__(self, item):
 		return self._config[item]
