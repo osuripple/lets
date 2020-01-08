@@ -11,9 +11,9 @@ from helpers.generalHelper import clamp
 class beatmap:
 	__slots__ = ("songName", "fileMD5", "rankedStatus", "rankedStatusFrozen", "beatmapID", "beatmapSetID", "offset",
 	             "rating", "starsStd", "starsTaiko", "starsCtb", "starsMania", "AR", "OD", "maxCombo", "hitLength",
-	             "bpm", "playcount" ,"passcount", "refresh", "disablePP")
+	             "bpm", "playcount" ,"passcount", "refresh", "disablePP", "fileName")
 
-	def __init__(self, md5 = None, beatmapSetID = None, gameMode = 0, refresh=False):
+	def __init__(self, md5 = None, beatmapSetID = None, gameMode = 0, refresh=False, fileName=None):
 		"""
 		Initialize a beatmap object.
 
@@ -22,6 +22,7 @@ class beatmap:
 		"""
 		self.songName = ""
 		self.fileMD5 = ""
+		self.fileName = fileName
 		self.rankedStatus = rankedStatuses.NOT_SUBMITTED
 		self.rankedStatusFrozen = 0
 		self.beatmapID = 0
@@ -102,11 +103,7 @@ class beatmap:
 
 		# Add new beatmap data
 		log.debug("Saving beatmap data in db...")
-		objects.glob.db.execute(
-			"INSERT INTO `beatmaps` (`id`, `beatmap_id`, `beatmapset_id`, `beatmap_md5`, `song_name`, "
-			"`ar`, `od`, `difficulty_std`, `difficulty_taiko`, `difficulty_ctb`, `difficulty_mania`, "
-			"`max_combo`, `hit_length`, `bpm`, `ranked`, `latest_update`, `ranked_status_freezed`, `disable_pp`) "
-			"VALUES (NULL, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", (
+		params = [
 			self.beatmapID,
 			self.beatmapSetID,
 			self.fileMD5,
@@ -124,7 +121,30 @@ class beatmap:
 			int(time.time()),
 			frozen,
 			self.disablePP
-		))
+		]
+		if self.fileName is not None:
+			params.append(self.fileName)
+		objects.glob.db.execute(
+			"INSERT INTO `beatmaps` (`id`, `beatmap_id`, `beatmapset_id`, `beatmap_md5`, `song_name`, "
+			"`ar`, `od`, `difficulty_std`, `difficulty_taiko`, `difficulty_ctb`, `difficulty_mania`, "
+			"`max_combo`, `hit_length`, `bpm`, `ranked`, "
+			"`latest_update`, `ranked_status_freezed`, `disable_pp`{extra_q}) "
+			"VALUES (NULL, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s{extra_p})".format(
+				extra_q=", `file_name`" if self.fileName is not None else "",
+				extra_p=", %s" if self.fileName is not None else "",
+			), params
+		)
+
+	def saveFileName(self, fileName):
+		# Temporary workaround to avoid re-fetching all beatmaps from osu!api
+		r = objects.glob.db.fetch("SELECT file_name FROM beatmaps WHERE beatmap_md5 = %s LIMIT 1", (self.fileMD5,))
+		if r is None:
+			return
+		if r["file_name"] is None:
+			objects.glob.db.execute(
+				"UPDATE beatmaps SET file_name = %s WHERE beatmap_md5 = %s LIMIT 1",
+				(self.fileName, self.fileMD5)
+			)
 
 	def setDataFromDB(self, md5):
 		"""
@@ -244,6 +264,9 @@ class beatmap:
 		# We have data from osu!api, set beatmap data
 		log.debug("Got beatmap data from osu!api")
 		self.songName = "{} - {} [{}]".format(mainData["artist"], mainData["title"], mainData["version"])
+		self.fileName = "{} - {} ({}) [{}].osu".format(
+			mainData["artist"], mainData["title"], mainData["creator"], mainData["version"]
+		).replace("\\", "")
 		self.fileMD5 = md5
 		self.rankedStatus = convertRankedStatus(int(mainData["approved"]))
 		self.beatmapID = int(mainData["beatmap_id"])
