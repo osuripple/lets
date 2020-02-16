@@ -32,7 +32,7 @@ def getRankInfo(userID, gameMode):
 	data["currentRank"] = position + 1
 	return data
 
-def update(userID, newScore, gameMode):
+def update(userID, newScore, gameMode, *, relax=False):
 	"""
 	Update gamemode's leaderboard.
 	Doesn't do anything if userID is banned/restricted.
@@ -40,14 +40,19 @@ def update(userID, newScore, gameMode):
 	:param userID: user
 	:param newScore: new score or pp
 	:param gameMode: gameMode number
+	:param relax: if True, update relax global leaderboard, otherwise update classic global leaderboard
 	"""
 	if userUtils.isAllowed(userID):
 		log.debug("Updating leaderboard...")
-		glob.redis.zadd("ripple:leaderboard:{}".format(scoreUtils.readableGameMode(gameMode)), str(userID), str(newScore))
+		glob.redis.zadd(
+			"ripple:leaderboard:{}{}".format(scoreUtils.readableGameMode(gameMode), ":relax" if relax else ""),
+			str(userID),
+			str(newScore)
+		)
 	else:
 		log.debug("Leaderboard update for user {} skipped (not allowed)".format(userID))
 
-def updateCountry(userID, newScore, gameMode):
+def updateCountry(userID, newScore, gameMode, *, relax=False):
 	"""
 	Update gamemode's country leaderboard.
 	Doesn't do anything if userID is banned/restricted.
@@ -55,13 +60,18 @@ def updateCountry(userID, newScore, gameMode):
 	:param userID: user, country is determined by the user
 	:param newScore: new score or pp
 	:param gameMode: gameMode number
+	:param relax: if True, update relax country leaderboard, otherwise update classic country leaderboard
 	:return:
 	"""
 	if userUtils.isAllowed(userID):
 		country = userUtils.getCountry(userID)
 		if country is not None and len(country) > 0 and country.lower() != "xx":
 			log.debug("Updating {} country leaderboard...".format(country))
-			k = "ripple:leaderboard:{}:{}".format(scoreUtils.readableGameMode(gameMode), country.lower())
+			k = "ripple:leaderboard:{}:{}{}".format(
+				scoreUtils.readableGameMode(gameMode),
+				country.lower(),
+				":relax" if relax else ""
+			)
 			glob.redis.zadd(k, str(userID), str(newScore))
 	else:
 		log.debug("Country leaderboard update for user {} skipped (not allowed)".format(userID))

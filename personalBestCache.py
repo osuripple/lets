@@ -6,7 +6,7 @@ class cacheMiss(Exception):
 	pass
 
 class personalBestCache:
-	def get(self, userID, fileMd5, country=False, friends=False, mods=-1):
+	def get(self, userID, fileMd5, country=False, friends=False, mods=-1, relax=False):
 		"""
 		Get cached personal best rank
 
@@ -14,6 +14,7 @@ class personalBestCache:
 		:param fileMd5: beatmap md5
 		:param country: True if country leaderboard, otherwise False
 		:param friends: True if friends leaderboard, otherwise False
+		:param relax: True if relax leaderboard, False if classic leaderboard
 		:param mods: leaderboard mods
 		:return: 0 if cache miss, otherwise rank number
 		"""
@@ -30,9 +31,14 @@ class personalBestCache:
 			cachedCountry = generalUtils.stringToBool(data[2])
 			cachedFriends = generalUtils.stringToBool(data[3])
 			cachedMods = int(data[4])
+			cachedRelax = generalUtils.stringToBool(data[5])
 
 			# Check if everything matches
-			if fileMd5 != cachedfileMd5 or country != cachedCountry or friends != cachedFriends or mods != cachedMods:
+			if fileMd5 != cachedfileMd5 \
+				or country != cachedCountry \
+				or friends != cachedFriends \
+				or mods != cachedMods \
+				or relax != cachedRelax:
 				raise cacheMiss()
 
 			# Cache hit
@@ -42,7 +48,7 @@ class personalBestCache:
 			log.debug("personalBestCache miss")
 			return 0
 
-	def set(self, userID, rank, fileMd5, country=False, friends=False, mods=-1):
+	def set(self, userID, rank, fileMd5, country=False, friends=False, mods=-1, relax=False):
 		"""
 		Set userID's redis personal best cache
 
@@ -52,7 +58,12 @@ class personalBestCache:
 		:param country: True if country leaderboard, otherwise False
 		:param friends: True if friends leaderboard, otherwise False
 		:param mods: leaderboard mods
+		:param relax: True if relax leaderboard, False if classic
 		:return:
 		"""
-		glob.redis.set("lets:personal_best_cache:{}".format(userID), "{}|{}|{}|{}|{}".format(rank, fileMd5, country, friends, mods), 1800)
+		glob.redis.set(
+			"lets:personal_best_cache:{}".format(userID),
+			"{}|{}|{}|{}|{}|{}".format(rank, fileMd5, country, friends, mods, relax),
+			1800
+		)
 		log.debug("personalBestCache set")

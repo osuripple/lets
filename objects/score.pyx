@@ -68,6 +68,10 @@ class score:
 		return x
 
 	@property
+	def isRelax(self):
+		return self.mods & (mods.RELAX | mods.RELAX2) > 0
+
+	@property
 	def fullPlayTime(self):
 		return self._fullPlayTime
 
@@ -196,6 +200,7 @@ class score:
 			#self.rank = scoreData[12]
 			self.mods = int(scoreData[13])
 			self.passed = scoreData[14] == 'True'
+			log.debug("passed: {}".format(self.passed))
 			self.gameMode = int(scoreData[15])
 			#self.playDateTime = int(scoreData[16])
 			self.playDateTime = int(time.time())
@@ -235,22 +240,40 @@ class score:
 		try:
 			self.completed = 0
 			if not scoreUtils.isRankable(self.mods):
+				log.debug("Unrankable mods")
 				return
 			if self.passed:
+				log.debug("Passed")
 				# Get userID
 				userID = userUtils.getID(self.playerName)
 
 				# Make sure we don't have another score identical to this one
 				# TODO: time check
-				duplicate = glob.db.fetch("SELECT id FROM scores WHERE userid = %s AND beatmap_md5 = %s AND play_mode = %s AND score = %s LIMIT 1", [userID, self.fileMd5, self.gameMode, self.score])
+				duplicate = glob.db.fetch(
+					"SELECT id FROM scores "
+					"WHERE userid = %s AND beatmap_md5 = %s "
+					"AND is_relax = %s AND play_mode = %s "
+					"AND score = %s "
+					"LIMIT 1",
+					(userID, self.fileMd5, self.isRelax, self.gameMode, self.score)
+				)
 				if duplicate is not None:
 					# Found same score in db. Don't save this score.
+					log.debug("Score duplicate")
 					self.completed = -1
 					return
 
 				# No duplicates found.
 				# Get right "completed" value
-				personalBest = glob.db.fetch("SELECT id, score FROM scores WHERE userid = %s AND beatmap_md5 = %s AND play_mode = %s AND completed = 3 LIMIT 1", [userID, self.fileMd5, self.gameMode])
+				log.debug("No duplicated")
+				personalBest = glob.db.fetch(
+					"SELECT id, score FROM scores "
+					"WHERE userid = %s AND beatmap_md5 = %s "
+					"AND is_relax = %s AND play_mode = %s "
+					"AND completed = 3 "
+					"LIMIT 1",
+					(userID, self.fileMd5, self.isRelax, self.gameMode)
+				)
 				if personalBest is None:
 					# This is our first score on this map, so it's our best score
 					self.completed = 3
@@ -262,8 +285,10 @@ class score:
 					self.oldPersonalBest = personalBest["id"]
 					self.completed = 3 if self.score > personalBest["score"] else 2
 			elif self.quit:
+				log.debug("Quit")
 				self.completed = 0
 			elif self.failed:
+				log.debug("Failed")
 				self.completed = 1
 		finally:
 			log.debug("Completed status: {}".format(self.completed))

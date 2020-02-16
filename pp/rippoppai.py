@@ -5,7 +5,7 @@ import json
 import os
 import subprocess
 
-from common.constants import gameModes
+from common.constants import gameModes, mods
 from common.log import logUtils as log
 from common.ripple import scoreUtils
 from constants import exceptions
@@ -83,6 +83,24 @@ class oppai:
 		log.debug("oppai ~> Initialized oppai diffcalc")
 		self.calculatePP()
 
+	def fix_relax_pp(self, aim_pp: float, acc_pp: float, speed_pp: float) -> float:
+		final_multiplier = 1.12
+		if self.mods & mods.EASY:
+			final_multiplier *= 0.9
+		if self.mods & mods.SPUNOUT:
+			final_multiplier *= 0.95
+		aim = aim_pp ** 1.1
+		acc = acc_pp ** 1.1
+		speed = speed_pp ** 1.1
+		old_pp = ((aim + acc + speed) ** (1 / 1.1)) * final_multiplier
+		if self.mods & mods.RELAX:
+			speed = 0
+		if self.mods & mods.RELAX2:
+			aim = 0
+		pp = ((aim + acc + speed) ** (1 / 1.1)) * final_multiplier
+		log.debug(f"Fixed relax pp value: {pp}. Was {old_pp}")
+		return pp
+
 	@staticmethod
 	def _runOppaiProcess(command):
 		log.debug("oppai ~> running {}".format(command))
@@ -99,12 +117,17 @@ class oppai:
 				raise OppaiError("No pp/stars entry in oppai json output")
 			pp = output["pp"]
 			stars = output["stars"]
+			pp_parts = {
+				"aim": output.get("aim_pp", None),
+				"speed": output.get("speed_pp", None),
+				"acc": output.get("acc_pp", None),
+			}
 
 			log.debug("oppai ~> full output: {}".format(output))
 			log.debug("oppai ~> pp: {}, stars: {}".format(pp, stars))
 		except (json.JSONDecodeError, IndexError, OppaiError) as e:
 			raise OppaiError(e)
-		return pp, stars
+		return pp, stars, pp_parts
 
 	def calculatePP(self):
 		"""
@@ -146,19 +169,21 @@ class oppai:
 			# Calculate pp
 			if not self.tillerino:
 				# self.pp, self.stars = self._runOppaiProcess(command)
-				temp_pp, self.stars = self._runOppaiProcess(command)
+				temp_pp, self.stars, pp_parts = self._runOppaiProcess(command)
 				if (self.gameMode == gameModes.TAIKO and self.beatmap.starsStd > 0 and temp_pp > 800) or \
 					self.stars > 50:
 					# Invalidate pp for bugged taiko converteds and bugged inf pp std maps
 					self.pp = 0
 				else:
 					self.pp = temp_pp
+				if self.gameMode == gameModes.STD and self.score.isRelax:
+					self.pp = self.fix_relax_pp(pp_parts["aim"], pp_parts["acc"], pp_parts["speed"])
 			else:
 				pp_list = []
 				for acc in [100, 99, 98, 95]:
 					temp_command = command
 					temp_command += " {acc:.2f}%".format(acc=acc)
-					pp, self.stars = self._runOppaiProcess(temp_command)
+					pp, self.stars, _ = self._runOppaiProcess(temp_command)
 
 					# If this is a broken converted, set all pp to 0 and break the loop
 					if self.gameMode == gameModes.TAIKO and self.beatmap.starsStd > 0 and pp > 800:

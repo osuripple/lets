@@ -88,8 +88,8 @@ class handler(requestsManager.asyncRequestHandler):
 				aeskey = "h89f2-890h2h89b34g-h80g134n90133"
 
 			# Get score data
-			log.debug("Decrypting score data...")
 			scoreData = aeshelper.decryptRinjdael(aeskey, iv, scoreDataEnc, True).split(":")
+			log.debug(scoreData)
 			if len(scoreData) < 16 or len(scoreData[0]) != 32:
 				return
 			username = scoreData[1].strip()
@@ -199,10 +199,10 @@ class handler(requestsManager.asyncRequestHandler):
 			# Right before submitting the score, get the personal best score object (we need it for charts)
 			if s.passed and s.oldPersonalBest > 0:
 				# We have an older personal best. Get its rank (try to get it from cache first)
-				oldPersonalBestRank = glob.personalBestCache.get(userID, s.fileMd5)
+				oldPersonalBestRank = glob.personalBestCache.get(userID, s.fileMd5, relax=s.isRelax)
 				if oldPersonalBestRank == 0:
 					# oldPersonalBestRank not found in cache, get it from db through a scoreboard object
-					oldScoreboard = scoreboard.scoreboard(username, s.gameMode, beatmapInfo, False)
+					oldScoreboard = scoreboard.scoreboard(username, s.gameMode, beatmapInfo, False, relax=s.isRelax)
 					oldScoreboard.setPersonalBestRank()
 					oldPersonalBestRank = max(oldScoreboard.personalBestRank, 0)
 				oldPersonalBest = score.score(s.oldPersonalBest, oldPersonalBestRank)
@@ -345,18 +345,17 @@ class handler(requestsManager.asyncRequestHandler):
 								).decode(),
 							})
 						), daemon=False).start()
-				else:
+				elif not restricted:
 					# Restrict if no replay was provided
-					if not restricted:
-						userUtils.restrict(userID)
-						userUtils.appendNotes(
-							userID,
-							"Restricted due to missing replay while submitting a score "
-							"(most likely they used a score submitter)"
-						)
-						log.cm("**{}** ({}) has been restricted due to replay not found on map {}".format(
-							username, userID, s.fileMd5
-						))
+					userUtils.restrict(userID)
+					userUtils.appendNotes(
+						userID,
+						"Restricted due to missing replay while submitting a score "
+						"(most likely they used a score submitter)"
+					)
+					log.cm("**{}** ({}) has been restricted due to replay not found on map {}".format(
+						username, userID, s.fileMd5
+					))
 
 			# Update beatmap playcount (and passcount)
 			beatmap.incrementPlaycount(s.fileMd5, s.passed)
@@ -375,12 +374,12 @@ class handler(requestsManager.asyncRequestHandler):
 			if s.passed:
 				# Get old stats and rank
 				oldUserStats = glob.userStatsCache.get(userID, s.gameMode)
-				oldRank = userUtils.getGameRank(userID, s.gameMode)
+				oldRank = userUtils.getGameRank(userID, s.gameMode, relax=s.isRelax)
 
 			# Always update users stats (total/ranked score, playcount, level, acc and pp)
 			# even if not passed
 			log.debug("Updating {}'s stats...".format(username))
-			userUtils.updateStats(userID, s)
+			userUtils.updateStats(userID, s, relax=s.isRelax)
 
 			# Update personal beatmaps playcount
 			userUtils.incrementUserBeatmapPlaycount(userID, s.gameMode, beatmapInfo.beatmapID)
@@ -390,16 +389,16 @@ class handler(requestsManager.asyncRequestHandler):
 			# (only if we passed that song)
 			if s.passed:
 				# Get new stats
-				newUserStats = userUtils.getUserStats(userID, s.gameMode)
+				newUserStats = userUtils.getUserStats(userID, s.gameMode, relax=s.isRelax)
 				glob.userStatsCache.update(userID, s.gameMode, newUserStats)
 
 				# Update leaderboard (global and country) if score/pp has changed
 				if s.completed == 3 and newUserStats["pp"] != oldUserStats["pp"]:
-					leaderboardHelper.update(userID, newUserStats["pp"], s.gameMode)
-					leaderboardHelper.updateCountry(userID, newUserStats["pp"], s.gameMode)
+					leaderboardHelper.update(userID, newUserStats["pp"], s.gameMode, relax=s.isRelax)
+					leaderboardHelper.updateCountry(userID, newUserStats["pp"], s.gameMode, relax=s.isRelax)
 
 			# Update total hits
-			userUtils.updateTotalHits(score=s)
+			userUtils.updateTotalHits(score=s, relax=s.isRelax)
 			# TODO: max combo
 
 			# Update latest activity
@@ -428,7 +427,7 @@ class handler(requestsManager.asyncRequestHandler):
 				glob.redis.publish("peppy:update_cached_stats", userID)
 
 				# Get personal best after submitting the score
-				newScoreboard = scoreboard.scoreboard(username, s.gameMode, beatmapInfo, False)
+				newScoreboard = scoreboard.scoreboard(username, s.gameMode, beatmapInfo, False, relax=s.isRelax)
 				newScoreboard.setPersonalBestRank()
 				personalBestID = newScoreboard.getPersonalBestID()
 				assert personalBestID is not None
@@ -497,12 +496,16 @@ class handler(requestsManager.asyncRequestHandler):
 
 				# send message to #announce if we're rank #1
 				if newScoreboard.personalBestRank == 1 and s.completed == 3 and not restricted:
-					annmsg = "[https://ripple.moe/?u={} {}] achieved rank #1 on [https://osu.ppy.sh/b/{} {}] ({})".format(
+					annmsg =\
+						"[https://ripple.moe/?u={} {}] " \
+						"achieved rank #1 on " \
+						"[https://osu.ppy.sh/b/{} {}] ({}, {})".format(
 						userID,
 						username.encode().decode("ASCII", "ignore"),
 						beatmapInfo.beatmapID,
 						beatmapInfo.songName.encode().decode("ASCII", "ignore"),
-						gameModes.getGamemodeFull(s.gameMode)
+						gameModes.getGamemodeFull(s.gameMode),
+						"relax" if s.isRelax else "classic"
 					)
 					requests.post(
 						"{}/api/v0/send_message".format(glob.conf["FOKABOT_API_BASE"].rstrip("/")),

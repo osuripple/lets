@@ -1,5 +1,5 @@
 from common.log import logUtils as log
-from common.constants import gameModes
+from common.constants import gameModes, mods
 from constants import exceptions
 from helpers import mapsHelper
 
@@ -36,6 +36,10 @@ class Cicciobello:
         self.pp = 0
         self.calculate_pp()
 
+    @property
+    def unrelaxMods(self):
+        return self.mods & ~(mods.RELAX | mods.RELAX2)
+
     def calculate_pp(self):
         try:
             # Cache beatmap
@@ -54,7 +58,7 @@ class Cicciobello:
 
             # Calculate difficulty
             calcBeatmap = CalcBeatmap(mapFile)
-            difficulty = Difficulty(beatmap=calcBeatmap, mods=self.mods)
+            difficulty = Difficulty(beatmap=calcBeatmap, mods=self.unrelaxMods)
 
             # Calculate pp
             if self.tillerino:

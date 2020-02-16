@@ -73,6 +73,7 @@ class handler(requestsManager.asyncRequestHandler):
 			country = False
 			friends = False
 			modsFilter = -1
+			isRelax = userUtils.isRelaxLeaderboard(userID)
 			if scoreboardType == 4:
 				# Country leaderboard
 				country = True
@@ -97,7 +98,8 @@ class handler(requestsManager.asyncRequestHandler):
 
 			# Create leaderboard object, link it to bmap and get all scores
 			sboard = scoreboard.scoreboard(
-				username, gameMode, bmap, setScores=True, country=country, mods=modsFilter, friends=friends
+				username, gameMode, bmap, setScores=True, country=country,
+				mods=modsFilter, friends=friends, relax=isRelax
 			)
 
 			# Data to return
@@ -111,13 +113,17 @@ class handler(requestsManager.asyncRequestHandler):
 				knowsPPLeaderboard = glob.redis.get("lets:knows_pp_leaderboard:{}".format(userID)) is not None
 				if modsFilter & mods.AUTOPLAY > 0 and not knowsPPLeaderboard:
 					glob.redis.set("lets:knows_pp_leaderboard:{}".format(userID), "1", 1800)
-					glob.redis.publish("peppy:notification", json.dumps({
-						"userID": userID,
-						"message": "Hi there! Scores are now sorted by PP. You can change scores sort mode by "
-								   "toggling the 'Auto' mod and filtering the leaderboard by Active mods. Note "
-								   "that this option is available only for donors and we don't recommend saving "
-								   "replays when the leaderboard is sorted by pp, due to some client limitations."
-					}))
+					glob.redis.publish(
+						"peppy:notification",
+						json.dumps({
+							"userID": userID,
+							"message":
+								"Hi there! Scores are now sorted by PP. You can change scores sort mode by "
+								"toggling the 'Auto' mod and filtering the leaderboard by Active mods. Note "
+								"that this option is available only for donors and we don't recommend saving "
+								"replays when the leaderboard is sorted by pp, due to some client limitations."
+						})
+					)
 
 			# Datadog stats
 			glob.dog.increment(glob.DATADOG_PREFIX+".served_leaderboards")
