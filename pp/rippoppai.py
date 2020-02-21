@@ -83,24 +83,6 @@ class oppai:
 		log.debug("oppai ~> Initialized oppai diffcalc")
 		self.calculatePP()
 
-	def fix_relax_pp(self, aim_pp: float, acc_pp: float, speed_pp: float) -> float:
-		final_multiplier = 1.12
-		if self.mods & mods.EASY:
-			final_multiplier *= 0.9
-		if self.mods & mods.SPUNOUT:
-			final_multiplier *= 0.95
-		aim = aim_pp ** 1.1
-		acc = acc_pp ** 1.1
-		speed = speed_pp ** 1.1
-		old_pp = ((aim + acc + speed) ** (1 / 1.1)) * final_multiplier
-		if self.mods & mods.RELAX:
-			speed = 0
-		if self.mods & mods.RELAX2:
-			aim = 0
-		pp = ((aim + acc + speed) ** (1 / 1.1)) * final_multiplier
-		log.debug(f"Fixed relax pp value: {pp}. Was {old_pp}")
-		return pp
-
 	@staticmethod
 	def _runOppaiProcess(command):
 		log.debug("oppai ~> running {}".format(command))
@@ -164,6 +146,12 @@ class oppai:
 				command += " {misses}xm".format(misses=self.misses)
 			if self.gameMode == gameModes.TAIKO:
 				command += " -taiko"
+			if self.score.isRelax:
+				command += " -rv1"
+				if (self.score.mods & mods.RELAX) > 0:
+					command += " -relax"
+				elif (self.score.mods & mods.RELAX2) > 0:
+					command += " -autopilot"
 			command += " -ojson"
 
 			# Calculate pp
@@ -176,8 +164,6 @@ class oppai:
 					self.pp = 0
 				else:
 					self.pp = temp_pp
-				if self.gameMode == gameModes.STD and self.score.isRelax:
-					self.pp = self.fix_relax_pp(pp_parts["aim"], pp_parts["acc"], pp_parts["speed"])
 			else:
 				pp_list = []
 				for acc in [100, 99, 98, 95]:
