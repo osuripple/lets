@@ -2,6 +2,7 @@ from collections import defaultdict
 
 import personalBestCache
 import userStatsCache
+from common.ddog import datadogClient
 from common.files import fileBuffer, fileLocks
 from common.web import schiavo
 import helpers.s3
@@ -31,8 +32,7 @@ fLocks = fileLocks.fileLocks()
 userStatsCache = userStatsCache.userStatsCache()
 personalBestCache = personalBestCache.personalBestCache()
 fileBuffers = fileBuffer.buffersList()
-# dog = datadogClient.datadogClient()
-dog = None
+dog = datadogClient.datadogClient()
 schiavo = schiavo.schiavo()
 achievementClasses = {}
 aqlThresholds = AqlThresholds()

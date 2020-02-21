@@ -5,15 +5,14 @@ import sys
 import traceback
 import warnings
 from collections import namedtuple
-from typing import Iterable, Optional, Union, List, Dict, Any
+from typing import Iterable, Optional, Union, List, Dict, Any, Iterator
 import os
 import threading
 import time
 
 import pymysql
-import pymysqlpool
 import progressbar
-from abc import abstractmethod, ABC
+from abc import ABC
 from enum import IntEnum
 
 from helpers.config import Config
@@ -33,33 +32,8 @@ RecalculatorQuery = namedtuple("RecalculatorQuery", "query parameters")
 
 class WorkerStatus(IntEnum):
     NOT_STARTED = 0
-    RECALCULATING = 1
-    SAVING = 2
-    DONE = 3
-
-
-class LwScore:
-    """
-    A lightweight score object, that can hold score id and pp only
-    """
-    __slots__ = ("score_id", "pp")
-
-    def __init__(self, score_id: Optional[int]=None, pp: Optional[int]=None, score_: Optional[score.score]=None):
-        """
-        Initializes a new LwScore. Either score_id and pp OR just score must be provided.
-
-        :param score_id: id of the score. Optional.
-        :param pp: pp. Optional.
-        :param score_: score object. Optional.
-        """
-        if score_ is not None:
-            self.score_id = score_.scoreID
-            self.pp = score_.pp
-        elif score_id is not None and pp is not None:
-            self.score_id = score_id
-            self.pp = pp
-        else:
-            raise RuntimeError("")
+    WORKING = 1
+    DONE = 2
 
 
 class Recalculator(ABC):
@@ -77,18 +51,6 @@ class Recalculator(ABC):
         self.ids_query: RecalculatorQuery = ids_query
         self.count_query: RecalculatorQuery = count_query
 
-    @abstractmethod
-    def offset_ids_query(self, limit: int, offset: int) -> RecalculatorQuery:
-        """
-        Returns a new `RecalculatorQuery` based on `self.ids_query`, but based with LIMIT and OFFSET.
-        Will be run by each worker to get their scores.
-
-        :param limit: LIMIT value
-        :param offset: OFFSET value
-        :return: `RecalculatorQuery` with LIMIT and OFFSET
-        """
-        raise NotImplementedError()
-
 
 class SimpleRecalculator(Recalculator):
     """
@@ -97,7 +59,7 @@ class SimpleRecalculator(Recalculator):
     def __init__(
         self,
         conditions: Union[Iterable[str], str],
-        parameters: Optional[Union[Iterable[str], Dict[str, Any]]]=None
+        parameters: Optional[Union[Iterable[str], Dict[str, Any]]] = None
     ):
         """
         Initializes a new SimpleRecalculator
@@ -109,7 +71,7 @@ class SimpleRecalculator(Recalculator):
         :param parameters: Iterable (list, tuple, ...) or dict that contains the query's parameters.
         These will be passed to MySQLdb to bind the query's parameters (%s and %(name)s)
         """
-        if type(conditions) is list or type(conditions) is tuple:
+        if type(conditions) in (list, tuple):
             conditions_str = " AND ".join(conditions)
         elif type(conditions) is str:
             conditions_str = conditions
@@ -120,9 +82,6 @@ class SimpleRecalculator(Recalculator):
             ids_query=RecalculatorQuery(q.format("scores.id AS id", conditions_str), parameters),
             count_query=RecalculatorQuery(q.format("COUNT(*) AS c", conditions_str), parameters)
         )
-
-    def offset_ids_query(self, limit: int, offset: int) -> str:
-        return self.ids_query.query + " LIMIT {} OFFSET {}".format(limit, offset)
 
 
 class ScoreIdsPool:
@@ -135,8 +94,8 @@ class ScoreIdsPool:
         """
         Initializes a new pool
         """
-        self._lock = threading.RLock()
-        self.scores = []
+        self._lock = threading.Lock()
+        self.scores: List[int] = []
 
     def load(self, recalculator: Recalculator):
         """
@@ -147,77 +106,45 @@ class ScoreIdsPool:
         """
         with self._lock:
             query_result = glob.db.fetchAll(recalculator.ids_query.query, recalculator.ids_query.parameters)
-            self.scores += [LwScore(x["id"], 0) for x in query_result]
+            self.scores += [x["id"] for x in query_result]
         self.logger.debug("Loaded {} scores".format(len(self.scores)))
 
-    def chunk(self, chunk_size: int) -> List[int]:
-        """
-        Returns a chunk of score ids of the specified size, and removes the chunk from the pool.
-
-        :param chunk_size: size of the chunk
-        :return: score ids list
-        """
-        with self._lock:
-            chunked_scores = self.scores[:chunk_size]
-            self.scores = self.scores[chunk_size:]
-        self.logger.debug("Chunked {} scores. Current scores in pool: {}".format(chunk_size, len(self.scores)))
-        return chunked_scores
-
-    @property
-    def is_empty(self):
-        """
-        Whether the pool is empty or not
-
-        :return: `True` if the pool is empty else `False`
-        """
-        return not bool(self.scores)
+    def __iter__(self) -> Iterator[int]:
+        for x in self.scores:
+            with self._lock:
+                yield x
 
 
 class Worker:
     """
     A tomejerry worker. Recalculates pp for a set of scores.
     """
-    score_ids_pool = ScoreIdsPool()
+    processed_scores_count = 0
+    recalculated_scores_count = 0
+    failed_scores_count = 0
 
-    def __init__(self, chunk_size: int, worker_id: int=-1, start: bool=True):
+    processed_scores_count_lock = threading.Lock()
+    recalculated_scores_count_lock = threading.Lock()
+    failed_scores_count_lock = threading.Lock()
+
+    def __init__(self, pool_iter, *, worker_id: int = -1, start: bool = True):
         """
         Initializes a new worker.
 
-        :param chunk_size: Number of scores to process
         :param worker_id: This worker's id. Optional. Default: -1.
         :param start: Whether to start the worker immediately or not
         :param
         """
+        self.pool_iter = pool_iter
         self.worker_id: int = worker_id
-        self.thread: threading.Thread = None
+        self.thread: Optional[threading.Thread] = None
         self.logger: logging.Logger = logging.getLogger("w{}".format(worker_id))
-        self.recalculated_scores_count: int = 0
-        self.saved_scores_count: int = 0
-        self.chunk_size: int = chunk_size
-        self.scores: List[LwScore] = self.score_ids_pool.chunk(self.chunk_size)
         self.status: WorkerStatus = WorkerStatus.NOT_STARTED
-        self.failed_scores: int = 0
         if start:
             self.threaded_work()
 
-    def recycle(self, start: bool=True):
-        """
-        Recycles this worker with a new chunk of scores
-
-        :param start: Whether to start the worker immediately or not
-        :return:
-        """
-        if self.thread.is_alive():
-            raise RuntimeError("The thread is still alive")
-        del self.thread
-        self.thread = None
-        self.status = WorkerStatus.NOT_STARTED
-        self.scores = self.score_ids_pool.chunk(self.chunk_size)
-        self.logger.debug("Recycled with {} new scores".format(self.chunk_size))
-        if start:
-            self.threaded_work()
-
-    def recalc_score(self, score_data: Dict) -> score:
+    @staticmethod
+    def recalc_score(score_data: Dict) -> score.score:
         """
         Recalculates pp for a score
 
@@ -238,7 +165,7 @@ class Worker:
         del b
         return s
 
-    def _work(self):
+    def _work(self, close_connection: bool = True):
         """
         Run worker's work. Fetches scores, recalculates pp and saves the results in the database.
 
@@ -248,16 +175,16 @@ class Worker:
         if self.status == WorkerStatus.DONE:
             raise RuntimeError("This worker has been disposed")
 
-        self.logger.info("Started worker. Assigned {} scores".format(self.chunk_size))
+        self.logger.info("Started worker.")
         try:
-            # Recalculate all pp and save results in memory using LwScore objects
+            # Recalculate all pp and store results in db
             self.recalculate_pp()
-
-            # Store the new pp values permanently in the database
-            self.save_recalculations()
         finally:
             # Mark the worker as disposed at the end
             self.logger.debug("Disposing worker")
+            # Close the thread-local connection at the of the thread
+            if close_connection:
+                glob.threadScope.dbClose()
             self.status = WorkerStatus.DONE
 
     def recalculate_pp(self):
@@ -274,94 +201,54 @@ class Worker:
         # directly would take up too much RAM, so we fetch all the score_ids at the
         # beginning with one query, store them in memory and fetch the data for
         # each score, one by one, using the same connection (to avoid pool overhead)
-        self.status = WorkerStatus.RECALCULATING
+        self.status = WorkerStatus.WORKING
         # self.recalculated_scores_count = 0
 
         # Fetch all score_ids
         # self.scores = [LwScore(x["id"], 0) for x in glob.db.fetchAll(self.ids_query.query, self.ids_query.parameters)]
 
         # Get a db worker
-        try:
-            db_connection = glob.db.pool.get_conection()
-        except pymysqlpool.GetConnectionFromPoolError:
-            db_connection = None
-        if db_connection is None:
-            self.logger.warning("Cannot fetch scores. No database worker available!!")
-            return
+        db_connection = glob.threadScope.db
+        cursor = None
 
         try:
             # Get a cursor (normal DictCursor)
             cursor = db_connection.cursor(pymysql.cursors.DictCursor)
-            for i, lw_score in enumerate(self.scores):
-                if i % self.log_every == 0:
-                    self.logger.debug("Processed {}/{} scores".format(i, self.chunk_size))
-
+            for score_id in self.pool_iter:
                 # Fetch score and beatmap data for this id
                 cursor.execute(
                     "SELECT * FROM scores JOIN beatmaps USING(beatmap_md5) WHERE scores.id = %s LIMIT 1",
-                    (lw_score.score_id,)
+                    (score_id,)
                 )
                 score_ = cursor.fetchone()
                 try:
                     # Recalculate pp
-                    recalculated_score = self.recalc_score(score_)
+                    s = Worker.recalc_score(score_)
+                    if s.pp == 0:
+                        # PP calculator error
+                        self.log_failed_score(score_, "0 pp")
 
-                    if recalculated_score is not None:
-                        # New score returned, store new pp in memory
-                        self.scores[i].pp = recalculated_score.pp
-                        if recalculated_score.pp == 0:
-                            # PP calculator error
-                            self.log_failed_score(score_, "0 pp")
+                    # Update in db
+                    self.logger.debug(f"Updating {score_id} = {s.pp}")
+                    cursor.execute("UPDATE scores SET pp = %s WHERE id = %s LIMIT 1", (s.pp, score_id))
+                    with Worker.recalculated_scores_count_lock:
+                        Worker.recalculated_scores_count += 1
 
                     # Mark for garbage collection
+                    del s
                     del score_
-                    del recalculated_score
                 except Exception as e:
                     self.log_failed_score(score_, str(e), traceback_=True)
                 finally:
-                    self.recalculated_scores_count += 1
+                    with Worker.processed_scores_count_lock:
+                        Worker.processed_scores_count += 1
+                    if Worker.processed_scores_count % 1000 == 0:
+                        self.logger.info(f"Processed {Worker.processed_scores_count} scores")
         finally:
-            # Not needed according to pymysqlpool :shrug:
             # Close cursor and connection
-            # if cursor is not None:
-            #     cursor.close()
-            if db_connection is not None:
-                # This puts the connection back into the pool as well
-                db_connection.close()
+            if cursor is not None:
+                cursor.close()
             self.logger.debug("PP Recalculated")
-
-    def save_recalculations(self):
-        """
-        Saves the recalculated performance points in the database
-
-        :return:
-        """
-        self.status = WorkerStatus.SAVING
-        # self.saved_scores_count = 0
-
-        # Make sure we've at least fetched the scores
-        if not self.scores:
-            self.logger.warning("No scores to update.")
-            return
-
-        # Update db
-        self.logger.debug("Updating scores in database")
-        for i, lw_score in enumerate(self.scores):
-            if i % self.log_every == 0:
-                self.logger.debug("Updated {}/{} scores".format(i, self.chunk_size))
-            glob.db.execute("UPDATE scores SET pp = %s WHERE id = %s LIMIT 1", (lw_score.pp, lw_score.score_id))
-            self.saved_scores_count += 1
-
-        self.logger.debug("Scores updated")
-
-    @property
-    def log_every(self) -> int:
-        """
-        Number of scores that have to be processed before logging the worker's status
-
-        :return:
-        """
-        return max(min((self.chunk_size // 3), 1000), 1)
 
     def threaded_work(self):
         """
@@ -372,7 +259,7 @@ class Worker:
         self.thread = threading.Thread(target=self._work)
         self.thread.start()
 
-    def log_failed_score(self, score_: Dict[str, Any], additional_information: str="", traceback_: bool=False):
+    def log_failed_score(self, score_: Dict[str, Any], additional_information: str = "", traceback_: bool = False):
         """
         Logs a failed score.
 
@@ -387,10 +274,13 @@ class Worker:
             msg = "\n\n\nUnhandled exception: {}\n{}".format(sys.exc_info(), traceback.format_exc())
         msg += "score_id:{} ({})".format(score_["id"], additional_information).strip()
         FAILED_SCORES_LOGGER.error(msg)
-        self.failed_scores += 1
+        with self.failed_scores_count_lock:
+            self.failed_scores_count += 1
 
 
-def mass_recalc(recalculator: Recalculator, workers_number: int=MAX_WORKERS, chunk_size: Optional[int]=None):
+def mass_recalc(
+    recalculator: Recalculator, workers_number: int = MAX_WORKERS, chunk_size: Optional[int] = None
+) -> None:
     """
     Recalculate performance points for a set of scores, using multiple workers
 
@@ -422,36 +312,29 @@ def mass_recalc(recalculator: Recalculator, workers_number: int=MAX_WORKERS, chu
     if total_scores == 0:
         return
 
-    # for some reason `typing` believes that `math.ceil` returns a `float`, so we need an extra cast here...
-    scores_per_worker = int(math.ceil(total_scores / workers_number))
-    logging.info("Using {} workers and {} scores per worker".format(workers_number, scores_per_worker))
+    # scores_per_worker = math.ceil(total_scores / workers_number)
+    logging.info("Using {} workers".format(workers_number))
 
     # Load score ids in the pool
     logging.info("Filling score ids pool")
-    Worker.score_ids_pool.load(recalculator)
+    score_ids_pool = ScoreIdsPool()
+    score_ids_pool.load(recalculator)
+    it = iter(score_ids_pool)
 
     # Spawn the workers and start them
     for i in range(workers_number):
         workers.append(
             Worker(
-                chunk_size=chunk_size
-                if chunk_size is not None
-                else len(Worker.score_ids_pool.scores) // workers_number // 3,
+                it,
                 worker_id=i,
                 start=True
             )
         )
 
     # Progress bar loop
-    steps_text = {
-        WorkerStatus.NOT_STARTED: "Starting workers",
-        WorkerStatus.RECALCULATING: "Recalculating pp",
-        WorkerStatus.SAVING: "Updating db"
-    }
     recycles = 0
     widgets = [
         "[ ", "Starting", " ]",
-        "w_pp:<>", "w_db:<>", "w_done:<>", "rec:0",
         progressbar.FormatLabel(" %(value)s/%(max)s "),
         progressbar.Bar(marker="#", left="[", right="]", fill="."),
         progressbar.Percentage(),
@@ -464,54 +347,28 @@ def mass_recalc(recalculator: Recalculator, workers_number: int=MAX_WORKERS, chu
         redirect_stderr=True
     ) as bar:
         while True:
-            lowest_status = min([x.status for x in workers])
-
-            # Loop through all workers to get progress value
-            total_progress_value = sum(
-                [
-                    x.recalculated_scores_count if lowest_status != WorkerStatus.SAVING else x.saved_scores_count
-                    for x in workers
-                ]
-            )
-
-            # Recycle the workers if needed
-            workers_done = [x for x in workers if x.status == WorkerStatus.DONE]
-            if workers_done and not Worker.score_ids_pool.is_empty:
-                logging.info("Recycling workers")
-                recycles += 1
-                for worker in workers_done:
-                    worker.recycle(start=True)
-
             # Output total status information
-            widgets[1] = steps_text.get(lowest_status, "...")
-            widgets[3] = " w_pp:<{}/{}>".format(
-                len([x for x in workers if x.status == WorkerStatus.RECALCULATING]), len(workers)
-            )
-            widgets[4] = " w_db:<{}/{}>".format(
-                len([x for x in workers if x.status == WorkerStatus.SAVING]), len(workers)
-            )
-            widgets[5] = " w_done:<{}/{}>".format(len(workers_done), len(workers))
-            widgets[6] = " rec:{}".format(recycles)
-            bar.update(total_progress_value)
+            widgets[1] = "Recalculating pp"
+            bar.update(Worker.processed_scores_count)
 
             # Exit from the loop if every worker has finished its work
+            workers_done = [x for x in workers if x.status == WorkerStatus.DONE]
             if len(workers_done) == len(workers):
                 break
 
-            # Wait 0.5 s and update the progress bar again
-            time.sleep(0.5)
+            # Wait and update the progress bar again
+            time.sleep(1)
 
     # Recalc done. Print some stats
     end_time = time.time()
-    failed_scores = sum([x.failed_scores for x in workers])
     logging.info(
         "\n\nDone!\n"
         ":: Recalculated\t{} scores\n"
         ":: Failed\t{} scores\n"
         ":: Total\t{} scores\n\n"
         ":: Took\t{:.2f} seconds".format(
-            total_scores - failed_scores,
-            failed_scores,
+            total_scores - Worker.failed_scores_count,
+            Worker.failed_scores_count,
             total_scores,
             end_time - start_time
         )
@@ -533,6 +390,10 @@ def main():
         "-m", "--mods", help="calculates pp for high scores with these mods (flags)", required=False
     )
     recalc_group.add_argument(
+        "-x", "--relax", help="calculates pp for relax/autopilot scores (is_relax = 1)", required=False,
+        action="store_true"
+    )
+    recalc_group.add_argument(
         "-g", "--gamemode", help="calculates pp for scores played on this game mode (std:0, taiko:1, ctb:2, mania:3)",
         required=False
     )
@@ -540,7 +401,10 @@ def main():
         "-u", "--userid", help="calculates pp for high scores set by a specific user (user_id)", required=False
     )
     recalc_group.add_argument(
-        "-b", "--beatmapid", help="calculates pp for high scores played on a specific beatmap (beatmap_id)", required=False
+        "-b",
+        "--beatmapid",
+        help="calculates pp for high scores played on a specific beatmap (beatmap_id)",
+        required=False
     )
     recalc_group.add_argument(
         "-fhd", "--fixstdhd", help="calculates pp for std hd high scores (14/05/2018 pp algorithm changes)",
@@ -556,6 +420,7 @@ def main():
     # Logging
     progressbar.streams.wrap_stderr()
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO)
+    logging.root.setLevel(level=logging.DEBUG if args.verbose else logging.INFO)
     logging.info("Running under {}".format("UNIX" if UNIX else "WIN32"))
 
     # Load config
@@ -574,17 +439,18 @@ def main():
 
     # Disable MySQL db warnings (it spams 'Unsafe statement written to the binary log using statement...'
     # because we use UPDATE with LIMIT 1 when updating performance points after recalculation
-    warnings.filterwarnings("ignore", category=MySQLdb.Warning)
+    warnings.filterwarnings("ignore", category=pymysql.Warning)
 
     # Connect to MySQL
     logging.info("Connecting to MySQL db")
     glob.db = dbConnector.db(
-        glob.conf["DB_HOST"],
-        glob.conf["DB_PORT"],
-        glob.conf["DB_USERNAME"],
-        glob.conf["DB_PASSWORD"],
-        glob.conf["DB_NAME"],
-        max(workers_number, MAX_WORKERS)
+        host=glob.conf["DB_HOST"],
+        port=glob.conf["DB_PORT"],
+        user=glob.conf["DB_USERNAME"],
+        password=glob.conf["DB_PASSWORD"],
+        database=glob.conf["DB_NAME"],
+        autocommit=True,
+        charset="utf8",
     )
 
     # Set verbose
@@ -598,8 +464,10 @@ def main():
         "id": lambda: SimpleRecalculator(("scores.id = %s",), (args.id,)),
         "gamemode": lambda: SimpleRecalculator(("scores.completed = 3", "scores.play_mode = %s",), (args.gamemode,)),
         "userid": lambda: SimpleRecalculator(("scores.completed = 3", "scores.userid = %s",), (args.userid,)),
-        "beatmapid": lambda: SimpleRecalculator(("scores.completed = 3", "beatmaps.beatmap_id = %s",), (args.beatmapid,)),
-        "fixstdhd": lambda: SimpleRecalculator(("scores.completed = 3", "scores.play_mode = 0", "scores.mods & 8 > 0"))
+        "beatmapid":
+            lambda: SimpleRecalculator(("scores.completed = 3", "beatmaps.beatmap_id = %s",), (args.beatmapid,)),
+        "fixstdhd": lambda: SimpleRecalculator(("scores.completed = 3", "scores.play_mode = 0", "scores.mods & 8 > 0")),
+        "relax": lambda: SimpleRecalculator(("scores.is_relax = 1", "scores.completed = 3"))
     }
     recalculator = None
     for k, v in vars(args).items():
