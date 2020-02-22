@@ -7,7 +7,7 @@ import objects.glob
 
 class ThreadScope(threading.local):
     def __init__(self):
-        log.info("Created thread local scope for thread {}".format(threading.get_ident()))
+        log.debug("Created thread local scope for thread {}".format(threading.get_ident()))
         self._s3 = None
         self._db = None
 
@@ -15,14 +15,14 @@ class ThreadScope(threading.local):
     def s3(self):
         if self._s3 is None:
             self._s3 = helpers.s3.clientFactory()
-            log.info("Created a new S3 client for thread {}".format(threading.get_ident()))
+            log.debug("Created a new S3 client for thread {}".format(threading.get_ident()))
         return self._s3
 
     @property
     def db(self):
         if self._db is None:
             self._db = objects.glob.db.connectionFactory()
-            log.info("Created a new db connection for thread {}".format(threading.get_ident()))
+            log.debug("Created a new db connection for thread {}".format(threading.get_ident()))
         return self._db
 
     def dbClose(self):
@@ -37,5 +37,5 @@ class ThreadScope(threading.local):
         except Exception as e:
             log.warning("Error ({}) while closing db connection for thread {}. Failing silently.".format(e, tid))
             pass
-        log.info("Closed and destroyed db connection for thread {}".format(tid))
+        log.debug("Closed and destroyed db connection for thread {}".format(tid))
         self._db = None

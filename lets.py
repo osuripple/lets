@@ -282,7 +282,7 @@ if __name__ == "__main__":
 			glob.conf["HTTP_HOST"],
 			glob.serverPort
 		))
-		log.discord("bunker", "Server started!")
+		# log.discord("bunker", "Server started!")
 
 		# Start Tornado
 		def term(_, __):
