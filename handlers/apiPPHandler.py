@@ -12,11 +12,12 @@ from common.log import logUtils as log
 from common.web import requestsManager
 from constants import exceptions
 from helpers import osuapiHelper
-from objects import glob
-from pp import rippoppai
+from pp import ez
 from common.sentry import sentry
 
 MODULE_NAME = "api/pp"
+
+
 class handler(requestsManager.asyncRequestHandler):
 	"""
 	Handler for /api/v1/pp
@@ -106,7 +107,7 @@ class handler(requestsManager.asyncRequestHandler):
 					else:
 						log.debug("Cached pp not found. Calculating pp with oppai...")
 						# Cached pp not found, calculate them
-						oppai = rippoppai.oppai(bmap, mods=modsEnum, tillerino=True)
+						oppai = ez.Ez(bmap, mods_=modsEnum, tillerino=True)
 						returnPP = oppai.pp
 						bmap.starsStd = oppai.stars
 
@@ -118,7 +119,7 @@ class handler(requestsManager.asyncRequestHandler):
 					# Specific accuracy/mods, calculate pp
 					# Create oppai instance
 					log.debug("Specific request ({}%/{}). Calculating pp with oppai...".format(accuracy, modsEnum))
-					oppai = rippoppai.oppai(bmap, mods=modsEnum, tillerino=accuracy is None)
+					oppai = ez.Ez(bmap, mods_=modsEnum, tillerino=accuracy is None)
 					bmap.starsStd = oppai.stars
 					if accuracy is not None:
 						returnPP = calculatePPFromAcc(oppai, accuracy)
@@ -161,10 +162,10 @@ class handler(requestsManager.asyncRequestHandler):
 			log.debug(str(data))
 
 			# Send response
-			#self.clear()
 			self.write(json.dumps(data))
 			self.set_header("Content-Type", "application/json")
 			self.set_status(statusCode)
+
 
 def calculatePPFromAcc(ppcalc, acc):
 	ppcalc.acc = acc

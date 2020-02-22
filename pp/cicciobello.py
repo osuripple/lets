@@ -9,13 +9,13 @@ from pp.catch_the_pp import ppCalc
 
 
 class Cicciobello:
-    def __init__(self, _beatmap, _score=None, accuracy=0, mods=0, combo=-1, misses=0, tillerino=False):
+    def __init__(self, beatmap_, score_=None, accuracy=0, mods_=0, combo=-1, misses=0, tillerino=False):
         # Beatmap is always present
-        self.beatmap = _beatmap
+        self.beatmap = beatmap_
 
         # If passed, set everything from score object
-        if _score is not None:
-            self.score = _score
+        if score_ is not None:
+            self.score = score_
             self.accuracy = self.score.accuracy
             self.mods = self.score.mods
             self.combo = self.score.maxCombo
@@ -23,7 +23,7 @@ class Cicciobello:
         else:
             # Otherwise, set acc and mods from params (tillerino)
             self.accuracy = accuracy
-            self.mods = mods
+            self.mods = mods_
             self.combo = combo
             if self.combo < 0:
                 self.combo = self.beatmap.maxCombo
@@ -63,7 +63,7 @@ class Cicciobello:
             # Calculate pp
             if self.tillerino:
                 results = []
-                for acc in [1, 0.99, 0.98, 0.95]:
+                for acc in (1, 0.99, 0.98, 0.95):
                     results.append(ppCalc.calculate_pp(
                         diff=difficulty,
                         accuracy=acc,
