@@ -82,17 +82,18 @@ class Ez:
 				raise exceptions.unsupportedGameModeException()
 
 			ez = oppai.ezpp_new()
+
+			if self.misses > 0:
+				oppai.ezpp_set_nmiss(ez, self.misses)
+			if self.combo >= 0:
+				oppai.ezpp_set_combo(ez, self.combo)
+			if self.gameMode == gameModes.TAIKO:
+				oppai.ezpp_set_mode_override(ez, gameModes.TAIKO)
 			if not self.tillerino:
 				if self.acc > 0:
 					oppai.ezpp_set_accuracy_percent(ez, self.acc)
 			if self.mods > mods.NOMOD:
 				oppai.ezpp_set_mods(ez, modsFixed)
-			if self.combo >= 0:
-				oppai.ezpp_set_combo(ez, self.combo)
-			if self.misses > 0:
-				oppai.ezpp_set_nmiss(ez, self.misses)
-			if self.gameMode == gameModes.TAIKO:
-				oppai.ezpp_set_mode_override(ez, gameModes.TAIKO)
 			if self.score.isRelax:
 				oppai.ezpp_set_relax_version(ez, 1)
 				if (self.score.mods & mods.RELAX) > 0:
@@ -100,7 +101,6 @@ class Ez:
 				elif (self.score.mods & mods.RELAX2) > 0:
 					oppai.ezpp_set_autopilot(ez, 1)
 
-			oppai.ezpp_set_autocalc(ez, 1)
 			oppai.ezpp_dup(ez, mapFile)
 			if not self.tillerino:
 				temp_pp = oppai.ezpp_pp(ez)
