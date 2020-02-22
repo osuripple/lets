@@ -4,9 +4,6 @@
 [submodule "secret"]
 	path = secret
 	url = git@zxq.co:ripple/lets-secret.git
-[submodule "pp/oppai-ng"]
-	path = pp/oppai-ng
-	url = https://zxq.co/ripple/oppai-ng.git
 [submodule "pp/maniapp-osu-tools"]
 	path = pp/maniapp-osu-tools
 	url = git@zxq.co:ripple/maniapp-osu-tools.git
