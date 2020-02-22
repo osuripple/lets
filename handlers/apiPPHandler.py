@@ -1,10 +1,7 @@
 import json
-import sys
-import traceback
 
 import tornado.gen
 import tornado.web
-from raven.contrib.tornado import SentryMixin
 
 from objects import beatmap
 from common.constants import gameModes
@@ -12,7 +9,7 @@ from common.log import logUtils as log
 from common.web import requestsManager
 from constants import exceptions
 from helpers import osuapiHelper
-from pp import ez
+from pp import ez, cicciobello, wifipiano3
 from common.sentry import sentry
 
 MODULE_NAME = "api/pp"
@@ -84,7 +81,6 @@ class handler(requestsManager.asyncRequestHandler):
 			if bmap.hitLength > 900:
 				raise exceptions.beatmapTooLongException(MODULE_NAME)
 
-			returnPP = []
 			if gameMode == gameModes.STD and bmap.starsStd == 0:
 				# Mode Specific beatmap, auto detect game mode
 				if bmap.starsTaiko > 0:
@@ -96,35 +92,20 @@ class handler(requestsManager.asyncRequestHandler):
 
 			# Calculate pp
 			if gameMode in (gameModes.STD, gameModes.TAIKO):
-				# Std pp
-				if accuracy is None and modsEnum == 0:
-					# Generic acc/nomod
-					# Get cached pp values
-					cachedPP = bmap.getCachedTillerinoPP()
-					if cachedPP != [0,0,0,0]:
-						log.debug("Got cached pp.")
-						returnPP = cachedPP
-					else:
-						log.debug("Cached pp not found. Calculating pp with oppai...")
-						# Cached pp not found, calculate them
-						oppai = ez.Ez(bmap, mods_=modsEnum, tillerino=True)
-						returnPP = oppai.pp
-						bmap.starsStd = oppai.stars
-
-						# Cache values in DB
-						log.debug("Saving cached pp...")
-						if type(returnPP) is list and len(returnPP) == 4:
-							bmap.saveCachedTillerinoPP(returnPP)
-				else:
-					# Specific accuracy/mods, calculate pp
-					# Create oppai instance
-					log.debug("Specific request ({}%/{}). Calculating pp with oppai...".format(accuracy, modsEnum))
-					oppai = ez.Ez(bmap, mods_=modsEnum, tillerino=accuracy is None)
-					bmap.starsStd = oppai.stars
-					if accuracy is not None:
-						returnPP = calculatePPFromAcc(oppai, accuracy)
-					else:
-						returnPP = oppai.pp
+				# osu!standard and osu!taiko
+				oppai = ez.Ez(bmap, mods_=modsEnum, tillerino=accuracy is None, acc=accuracy, gameMode=gameMode)
+				bmap.starsStd = oppai.stars
+				returnPP = oppai.pp
+			elif gameMode == gameModes.CTB:
+				# osu!catch
+				ciccio = cicciobello.Cicciobello(
+					bmap,
+					mods_=modsEnum,
+					tillerino=accuracy is None,
+					accuracy=accuracy
+				)
+				bmap.starsStd = ciccio.stars
+				returnPP = ciccio.pp
 			else:
 				raise exceptions.unsupportedGameModeException()
 
@@ -132,6 +113,7 @@ class handler(requestsManager.asyncRequestHandler):
 			data = {
 				"song_name": bmap.songName,
 				"pp": [x for x in returnPP] if type(returnPP) is list else returnPP,
+				"game_mode": gameMode,
 				"length": bmap.hitLength,
 				"stars": bmap.starsStd,
 				"ar": bmap.AR,

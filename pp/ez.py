@@ -14,7 +14,7 @@ class Ez:
 	Std pp cacalculator, based on oppai-ng
 	"""
 
-	def __init__(self, beatmap_, score_=None, acc=0, mods_=0, tillerino=False):
+	def __init__(self, beatmap_, score_=None, acc=None, mods_=None, tillerino=False, gameMode=gameModes.STD):
 		"""
 		Set oppai params.
 
@@ -49,7 +49,9 @@ class Ez:
 			# Otherwise, set acc and mods from params (tillerino)
 			self.acc = acc
 			self.mods = mods_
-			if self.beatmap.starsStd > 0:
+			if gameMode is not None:
+				self.gameMode = gameMode
+			elif self.beatmap.starsStd > 0:
 				self.gameMode = gameModes.STD
 			elif self.beatmap.starsTaiko > 0:
 				self.gameMode = gameModes.TAIKO
@@ -94,15 +96,17 @@ class Ez:
 					oppai.ezpp_set_accuracy_percent(ez, self.acc)
 			if self.mods > mods.NOMOD:
 				oppai.ezpp_set_mods(ez, modsFixed)
-			if self.score.isRelax:
+			relax = (self.mods & mods.RELAX) > 0
+			autopilot = (self.mods & mods.RELAX2) > 0
+			if relax or autopilot:
 				oppai.ezpp_set_relax_version(ez, 1)
-				if (self.score.mods & mods.RELAX) > 0:
+				if relax:
 					oppai.ezpp_set_relax(ez, 1)
-				elif (self.score.mods & mods.RELAX2) > 0:
+				elif autopilot:
 					oppai.ezpp_set_autopilot(ez, 1)
 
-			oppai.ezpp_dup(ez, mapFile)
 			if not self.tillerino:
+				oppai.ezpp_dup(ez, mapFile)
 				temp_pp = oppai.ezpp_pp(ez)
 				self.stars = oppai.ezpp_stars(ez)
 				if (self.gameMode == gameModes.TAIKO and self.beatmap.starsStd > 0 and temp_pp > 800) or \
@@ -112,15 +116,20 @@ class Ez:
 				else:
 					self.pp = temp_pp
 			else:
+				with open(mapFile, "r") as f:
+					data = f.read()
+				oppai.ezpp_data_dup(ez, data, len(data.encode()))
 				pp_list = []
 				self.stars = oppai.ezpp_stars(ez)
+				oppai.ezpp_set_autocalc(ez, 1)
 				for acc in (100, 99, 98, 95):
-					temp_pp = oppai.ezpp_set_accuracy_percent(ez, acc)
+					oppai.ezpp_set_accuracy_percent(ez, acc)
+					pp = oppai.ezpp_pp(ez)
 					# If this is a broken converted, set all pp to 0 and break the loop
-					if self.gameMode == gameModes.TAIKO and self.beatmap.starsStd > 0 and temp_pp > 800:
+					if self.gameMode == gameModes.TAIKO and self.beatmap.starsStd > 0 and pp > 800:
 						pp_list = [0, 0, 0, 0]
 						break
-					pp_list.append(temp_pp)
+					pp_list.append(pp)
 				self.pp = pp_list
 			log.debug("oppai ~> Calculated PP: {}, stars: {}".format(self.pp, self.stars))
 		except exceptions.osuApiFailException:
