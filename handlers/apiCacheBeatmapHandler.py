@@ -44,11 +44,8 @@ class handler(requestsManager.asyncRequestHandler):
 			for i in apiResponse:
 				log.debug("Saving beatmap {} in db".format(i["file_md5"]))
 				bmap = beatmap.beatmap(i["file_md5"], int(i["beatmapset_id"]), refresh=refresh)
-				pp = glob.db.fetch("SELECT pp_100 FROM beatmaps WHERE beatmap_id = %s LIMIT 1", [bmap.beatmapID])
-				if pp is None:
-					pp = 0
-				else:
-					pp = pp["pp_100"]
+				# TODO: reimplement? actually, this seems to be unused
+				pp = 0
 				data["maps"].append({
 					"id": bmap.beatmapID,
 					"name": bmap.songName,
