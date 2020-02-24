@@ -514,7 +514,7 @@ class handler(requestsManager.asyncRequestHandler):
 					requests.post(
 						"{}/api/v0/send_message".format(glob.conf["FOKABOT_API_BASE"].rstrip("/")),
 						headers={"Secret": glob.conf["FOKABOT_API_SECRET"]},
-						json={"message": annmsg, "target": "#announce"}
+						json={"message": annmsg, "target": "#announce-relax" if s.isRelax else "#announce"}
 					)
 
 				# Write message to client
