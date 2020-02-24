@@ -332,6 +332,7 @@ class handler(requestsManager.asyncRequestHandler):
 						threading.Thread(target=lambda: glob.redis.publish(
 							"cono:analyze", json.dumps({
 								"score_id": s.scoreID,
+								"relax": s.isRelax,
 								"beatmap_id": beatmapInfo.beatmapID,
 								"user_id": s.playerUserID,
 								"game_mode": s.gameMode,
