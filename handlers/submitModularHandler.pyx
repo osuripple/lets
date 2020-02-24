@@ -136,11 +136,6 @@ class handler(requestsManager.asyncRequestHandler):
 			s = score.score()
 			s.setDataFromScoreData(scoreData, quit_=quit_, failed=failed)
 
-			if s.completed == -1:
-				# Duplicated score
-				log.warning("Duplicated score detected, this is normal right after restarting the server")
-				return
-
 			# Set score stuff missing in score data
 			s.playerUserID = userID
 
@@ -173,6 +168,14 @@ class handler(requestsManager.asyncRequestHandler):
 				log.error("Caught an exception in pp calculation, re-raising after saving score in db")
 				s.pp = 0
 				midPPCalcException = e
+
+			# Set completed status
+			s.setCompletedStatus()
+
+			if s.completed == -1:
+				# Duplicated score
+				log.warning("Duplicated score detected, this is normal right after restarting the server")
+				return
 
 			# Restrict obvious cheaters
 			if s.pp >= 800 and s.gameMode == gameModes.STD and not restricted and not s.isRelax:

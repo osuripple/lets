@@ -209,9 +209,6 @@ class score:
 			self.quit = quit_
 			self.failed = failed
 
-			# Set completed status
-			self.setCompletedStatus()
-
 
 	def getData(self, pp=False):
 		"""Return score row relative to this score for getscores"""
@@ -267,7 +264,7 @@ class score:
 				# Get right "completed" value
 				log.debug("No duplicated")
 				personalBest = glob.db.fetch(
-					"SELECT id, score FROM scores "
+					"SELECT id, score, pp FROM scores "
 					"WHERE userid = %s AND beatmap_md5 = %s "
 					"AND is_relax = %s AND play_mode = %s "
 					"AND completed = 3 "
@@ -283,7 +280,12 @@ class score:
 					# Compare personal best's score with current score
 					self.rankedScoreIncrease = self.score-personalBest["score"]
 					self.oldPersonalBest = personalBest["id"]
-					self.completed = 3 if self.score > personalBest["score"] else 2
+					if personalBest["pp"] is not None and self.pp != personalBest["pp"]:
+						# Different pp
+						self.completed = 3 if self.pp > personalBest["pp"] else 2
+					else:
+						# None pp(?) or same pp, fallback with score
+						self.completed = 3 if self.score > personalBest["score"] else 2
 			elif self.quit:
 				log.debug("Quit")
 				self.completed = 0
