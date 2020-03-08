@@ -1,3 +1,4 @@
+import math
 import time
 
 import pp
@@ -280,7 +281,7 @@ class score:
 					# Compare personal best's score with current score
 					self.rankedScoreIncrease = self.score-personalBest["score"]
 					self.oldPersonalBest = personalBest["id"]
-					if personalBest["pp"] is not None and self.pp != personalBest["pp"]:
+					if personalBest["pp"] is not None and not math.isclose(self.pp, personalBest["pp"], abs_tol=0.01):
 						# Different pp
 						self.completed = 3 if self.pp > personalBest["pp"] else 2
 					else:
