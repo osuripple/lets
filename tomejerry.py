@@ -14,6 +14,7 @@ import progressbar
 from abc import ABC
 from enum import IntEnum
 
+from helpers import mapsHelper
 from helpers.config import Config
 from objects import beatmap
 from objects import score
@@ -126,12 +127,13 @@ class Worker:
     recalculated_scores_count_lock = threading.Lock()
     failed_scores_count_lock = threading.Lock()
 
-    def __init__(self, pool_iter, *, worker_id: int = -1, start: bool = True):
+    def __init__(self, pool_iter, *, worker_id: int = -1, start: bool = True, no_download: bool = False):
         """
         Initializes a new worker.
 
         :param worker_id: This worker's id. Optional. Default: -1.
         :param start: Whether to start the worker immediately or not
+        :param no_download: If True, do not attempt to download non-existing maps.
         :param
         """
         self.pool_iter = pool_iter
@@ -139,15 +141,18 @@ class Worker:
         self.thread: Optional[threading.Thread] = None
         self.logger: logging.Logger = logging.getLogger("w{}".format(worker_id))
         self.status: WorkerStatus = WorkerStatus.NOT_STARTED
+        self.no_download: bool = no_download
         if start:
             self.threaded_work()
 
     @staticmethod
-    def recalc_score(score_data: Dict) -> score.score:
+    def recalc_score(score_data: Dict, no_download=False) -> Optional[score.score]:
         """
         Recalculates pp for a score
 
         :param score_data: dict containing score and beatmap information about a score.
+        :param no_download: if True, raise FileNotFoundError() if the map should be re-downloaded.
+                            this ensures no requests are made to osu!
         :return: new `score` object, with `pp` attribute set to the new value
         """
         # Create score object and set its data
@@ -158,6 +163,10 @@ class Worker:
         # Create beatmap object and set its data
         b: beatmap.beatmap = beatmap.beatmap()
         b.setDataFromDict(score_data)
+
+        # Abort if we are running in no_download mode and the map should be re-downloaded
+        if no_download and mapsHelper.shouldDownloadMap(mapsHelper.cachedMapPath(b.beatmapID), b):
+            raise FileNotFoundError("no_download mode and local map not found")
 
         # Calculate score pp
         s.calculatePP(b)
@@ -222,7 +231,17 @@ class Worker:
                 score_ = cursor.fetchone()
                 try:
                     # Recalculate pp
-                    s = Worker.recalc_score(score_)
+                    try:
+                        s = Worker.recalc_score(score_, no_download=self.no_download)
+                    except FileNotFoundError as e:
+                        if self.no_download:
+                            # No map found locally
+                            self.log_failed_score(score_, str(e))
+                            continue
+
+                        # Not running in no_download mode, something else happened. Re-raise.
+                        raise e
+
                     if s.pp == 0:
                         # PP calculator error
                         self.log_failed_score(score_, "0 pp")
@@ -235,10 +254,10 @@ class Worker:
 
                     # Mark for garbage collection
                     del s
-                    del score_
                 except Exception as e:
                     self.log_failed_score(score_, str(e), traceback_=True)
                 finally:
+                    del score_
                     with Worker.processed_scores_count_lock:
                         Worker.processed_scores_count += 1
                     if Worker.processed_scores_count % 1000 == 0:
@@ -278,18 +297,23 @@ class Worker:
 
 
 def mass_recalc(
-    recalculator: Recalculator, workers_number: int = MAX_WORKERS, chunk_size: Optional[int] = None
+    recalculator: Recalculator, workers_number: int = MAX_WORKERS,
+    no_download: bool = False,
 ) -> None:
     """
     Recalculate performance points for a set of scores, using multiple workers
 
     :param recalculator: the recalculator that will be used
     :param workers_number: the number of workers to spawn
+    :param no_download: If True, do not attempt to download non-existing maps.
     :return:
     """
     start_time = time.time()
     global FAILED_SCORES_LOGGER
     workers = []
+
+    if no_download:
+        logging.warning("Running in no download mode.")
 
     logging.info("Query: {} ({})".format(recalculator.ids_query.query, recalculator.ids_query.parameters))
 
@@ -326,6 +350,7 @@ def mass_recalc(
             Worker(
                 it,
                 worker_id=i,
+                no_download=no_download,
                 start=True
             )
         )
@@ -412,8 +437,15 @@ def main():
     parser.add_argument("-w", "--workers", help="number of workers. {} by default. Max {}".format(
         MAX_WORKERS // 2, MAX_WORKERS
     ), required=False)
-    parser.add_argument("-cs", "--chunksize", help="score chunks size", required=False)
     parser.add_argument("-v", "--verbose", help="verbose/debug mode", required=False, action="store_true")
+    parser.add_argument(
+        "-nodl",
+        "--no-download",
+        help="do not download non-existing maps. This will cause all scores on non-cached "
+             "map to fail, but will speed everything up if all maps are present.",
+        required=False,
+        action="store_true"
+    )
     args = parser.parse_args()
 
     # Logging
@@ -430,11 +462,6 @@ def main():
     workers_number = MAX_WORKERS // 2
     if args.workers is not None:
         workers_number = int(args.workers)
-
-    # Get chunk size from arguments if set
-    chunk_size = None
-    if args.chunksize is not None:
-        chunk_size = int(args.chunksize)
 
     # Disable MySQL db warnings (it spams 'Unsafe statement written to the binary log using statement...'
     # because we use UPDATE with LIMIT 1 when updating performance points after recalculation
@@ -477,7 +504,7 @@ def main():
 
     # Execute mass recalc
     if recalculator is not None:
-        mass_recalc(recalculator, workers_number, chunk_size)
+        mass_recalc(recalculator, workers_number, no_download=args.no_download)
     else:
         logging.warning("No recalc option specified")
         parser.print_help()

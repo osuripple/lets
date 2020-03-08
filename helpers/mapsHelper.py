@@ -20,17 +20,23 @@ def isBeatmap(fileName=None, content=None):
         raise ValueError("Either `fileName` or `content` must be provided.")
     return firstLine.lower().startswith("osu file format v")
 
-def cacheMap(mapFile, _beatmap):
+def shouldDownloadMap(mapFile, _beatmap):
     # Check if we have to download the .osu file
-    download = False
     if not os.path.isfile(mapFile):
         # .osu file doesn't exist. We must download it
-        download = True
+        return True
     else:
         # File exists, check md5
         if generalUtils.fileMd5(mapFile) != _beatmap.fileMD5 or not isBeatmap(mapFile):
             # MD5 don't match, redownload .osu file
-            download = True
+            return True
+
+    # File exists and md5 matches. There's no need to download it again.
+    return False
+
+def cacheMap(mapFile, _beatmap):
+    # Check if we have to download the .osu file
+    download = shouldDownloadMap(mapFile, _beatmap)
 
     # Download .osu file if needed
     if download:
