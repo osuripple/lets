@@ -2,6 +2,7 @@
 import argparse
 import logging
 import signal
+import threading
 
 from helpers.config import Config
 logging.basicConfig(level=logging.DEBUG if Config()["DEBUG"] else logging.INFO)
@@ -92,7 +93,7 @@ def make_app():
 	], default_handler_class=defaultHandler.handler)
 
 
-if __name__ == "__main__":
+def main():
 	parser = argparse.ArgumentParser(
 		description=consoleHelper.ASCII + "\n\nLatest Essential Tatoe Server v{}\nBy The Ripple Team".format(
 			glob.VERSION
@@ -100,6 +101,7 @@ if __name__ == "__main__":
 		formatter_class=argparse.RawTextHelpFormatter
 	)
 	parser.add_argument("-p", "--port", help="Run on a specific port (bypasses config.ini)", required=False)
+	parser.add_argument("-q", "--quiet", help="Log less stuff during startup", required=False, default=False, action="store_true")
 	cli_args = parser.parse_args()
 
 	# AGPL license agreement
@@ -110,14 +112,19 @@ if __name__ == "__main__":
 		sys.exit(1)
 
 	try:
-		consoleHelper.printServerStartHeader(True)
+		if not cli_args.quiet:
+			consoleHelper.printServerStartHeader(True)
+
+		def loudLog(s, f=logging.info):
+			if not cli_args.quiet:
+				f(s)
 
 		# Read config
-		logging.info("Reading config file... ")
+		loudLog("Reading config file... ")
 		glob.conf = Config()
 
 		# Create data/oppai maps folder if needed
-		logging.info("Checking folders... ")
+		loudLog("Checking folders... ")
 		paths = (
 			".data",
 			glob.conf["BEATMAPS_FOLDER"],
@@ -131,7 +138,7 @@ if __name__ == "__main__":
 
 		# Connect to db
 		try:
-			logging.info("Connecting to MySQL database")
+			loudLog("Connecting to MySQL database")
 			glob.db = dbConnector.db(
 				host=glob.conf["DB_HOST"],
 				port=glob.conf["DB_PORT"],
@@ -149,7 +156,7 @@ if __name__ == "__main__":
 
 		# Connect to redis
 		try:
-			logging.info("Connecting to redis")
+			loudLog("Connecting to redis")
 			glob.redis = redis.Redis(
 				glob.conf["REDIS_HOST"],
 				glob.conf["REDIS_PORT"],
@@ -174,7 +181,7 @@ if __name__ == "__main__":
 
 		# Create threads pool
 		try:
-			logging.info("Creating threads pool")
+			loudLog("Creating threads pool")
 			glob.pool = ThreadPool(glob.conf["THREADS"])
 		except:
 			logging.error("Error while creating threads pool. Please check your config.ini and run the server again")
@@ -195,7 +202,7 @@ if __name__ == "__main__":
 				)
 
 		# Load achievements
-		logging.info("Loading achievements")
+		loudLog("Loading achievements")
 		try:
 			secret.achievements.utils.load_achievements()
 		except:
@@ -204,10 +211,10 @@ if __name__ == "__main__":
 
 		# Set achievements version
 		glob.redis.set("lets:achievements_version", glob.ACHIEVEMENTS_VERSION)
-		logging.info("Achievements version is {}".format(glob.ACHIEVEMENTS_VERSION))
+		loudLog("Achievements version is {}".format(glob.ACHIEVEMENTS_VERSION))
 
 		# Load AQL thresholds
-		logging.info("Loading AQL thresholds")
+		loudLog("Loading AQL thresholds")
 		try:
 			glob.aqlThresholds.reload()
 		except:
@@ -216,7 +223,7 @@ if __name__ == "__main__":
 
 		# Check if s3 is enabled
 		if not glob.conf.s3_enabled:
-			logging.warning("S3 is disabled")
+			loudLog("S3 is disabled!", logging.warning)
 		else:
 			c = glob.db.fetch("SELECT COUNT(*) AS c FROM s3_replay_buckets WHERE max_score_id IS NULL")["c"]
 			if c != 1:
@@ -234,7 +241,7 @@ if __name__ == "__main__":
 		# Server port
 		try:
 			if cli_args.port:
-				logging.warning("Running on port {}, bypassing config.ini".format(cli_args.port))
+				loudLog("Running on port {}, bypassing config.ini".format(cli_args.port), logging.warning)
 				glob.serverPort = int(cli_args.port)
 			else:
 				glob.serverPort = glob.conf["HTTP_PORT"]
@@ -249,7 +256,7 @@ if __name__ == "__main__":
 		if glob.conf.sentry_enabled:
 			glob.application.sentry_client = AsyncSentryClient(glob.conf["SENTRY_DSN"], release=glob.VERSION)
 		else:
-			logging.warning("Sentry logging is disabled!")
+			loudLog("Sentry logging is disabled!", logging.warning)
 
 		# Set up Datadog
 		if glob.conf.datadog_enabled:
@@ -260,13 +267,15 @@ if __name__ == "__main__":
 			)
 		else:
 			glob.dog = datadogClient.datadogClient()
-			logging.warning("Datadog stats tracking is disabled!")
+			loudLog("Datadog stats tracking is disabled!", logging.warning)
 
 		# Connect to pubsub channels
-		pubSub.listener(glob.redis, {
+		t = pubSub.listener(glob.redis, {
 			"lets:beatmap_updates": beatmapUpdateHandler.handler(),
 			"lets:reload_aql": lambda x: x == b"reload" and glob.aqlThresholds.reload(),
-		}).start()
+		})
+		t.setDaemon(True)
+		t.start()
 
 		# Check debug mods
 		if glob.conf["DEBUG"]:
@@ -284,7 +293,6 @@ if __name__ == "__main__":
 
 		# Start Tornado
 		def term(_, __):
-			log.info("Stopping server...")
 			tornado.ioloop.IOLoop.instance().add_callback_from_signal(
 				lambda: tornado.ioloop.IOLoop.instance().stop()
 			)
@@ -293,6 +301,7 @@ if __name__ == "__main__":
 		signal.signal(signal.SIGTERM, term)
 		glob.application.listen(glob.serverPort, address=glob.conf["HTTP_HOST"])
 		tornado.ioloop.IOLoop.instance().start()
+		logging.debug("IOLoop stopped")
 	finally:
 		# Perform some clean up
 		logging.info("Disposing server")
@@ -300,4 +309,15 @@ if __name__ == "__main__":
 		if glob.redis.connection_pool is not None:
 			glob.redis.connection_pool.disconnect()
 		# TODO: properly dispose mysql connections
+		if glob.pool is not None:
+			# Close db conn in each thread
+			glob.pool.imap(lambda *_: glob.threadScope.dbClose(), [None] * glob.conf["THREADS"], chunksize=1)
+			# Wait for everything else to finish (should always terminate immediately)
+			glob.pool.close()
+			glob.pool.join()
 		logging.info("Goodbye!")
+		# sys.exit(0)
+
+
+if __name__ == "__main__":
+	main()

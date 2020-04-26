@@ -1,0 +1,10 @@
+.git/
+.idea/
+build/
+__pycache__
+
+# This ensures all Cython files are re-compiled when building
+# the image rather than copying the local ones made with nyo/cython
+**/*.pyc
+**/*.c
+**/*.so

@@ -20,7 +20,7 @@ class AqlThresholds:
 
         :return:
         """
-        log.info("Reloading AQL thresholds")
+        log.debug("Reloading AQL thresholds")
         self._thresholds = {}
         for x in glob.db.fetchAll(
             "SELECT `name`, value_string FROM system_settings WHERE `name` LIKE 'aql\_threshold\_%%'"
