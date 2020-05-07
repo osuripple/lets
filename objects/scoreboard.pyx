@@ -21,6 +21,7 @@ class scoreboard:
 		self.scores = []				# list containing all top 50 scores objects. First object is personal best
 		self.totalScores = 0
 		self.personalBestRank = -1		# our personal best rank, -1 if not found yet
+		self.personalBestDone = False
 		self.username = username		# username of who's requesting the scoreboard. None if not known
 		self.userID = userUtils.getID(self.username)	# username's userID
 		self.gameMode = gameMode		# requested gameMode
@@ -49,11 +50,11 @@ class scoreboard:
 		cdef str order = ""
 		cdef str limit = ""
 		select = "SELECT id FROM scores " \
-				 "WHERE userid = %(userid)s " \
-				 "AND beatmap_md5 = %(md5)s " \
+				 "WHERE beatmap_md5 = %(md5)s " \
 				 "AND is_relax = %(isRelax)s " \
 				 "AND play_mode = %(mode)s " \
-				 "AND completed = 3"
+				 "AND completed = 3 " \
+				 "AND userid = %(userid)s "
 
 		# Mods
 		if self.mods > -1:
@@ -67,8 +68,8 @@ class scoreboard:
 					  "OR scores.userid = %(userid)s" \
 					  ")"
 
-		# Sort and limit at the end
-		order = "ORDER BY score DESC"
+		# was 'ORDER BY score DESC'. Shouldn't be needed, because completed = 3 is already the max score/pp
+		order = ""
 		limit = "LIMIT 1"
 
 		# Build query, get params and run query
@@ -118,10 +119,13 @@ class scoreboard:
 
 		# Get top 50 scores
 		select = "SELECT *"
-		joins = "FROM scores STRAIGHT_JOIN users " \
+		if self.country:
+			join_stats = "JOIN users_stats ON users.id = users_stats.id"
+		else:
+			join_stats = ""
+		joins = "FROM scores JOIN users " \
 				"ON scores.userid = users.id " \
-				"STRAIGHT_JOIN users_stats " \
-				"ON users.id = users_stats.id " \
+				f" {join_stats} " \
 				"WHERE scores.beatmap_md5 = %(beatmap_md5)s " \
 				"AND scores.is_relax = %(isRelax)s " \
 				"AND scores.play_mode = %(play_mode)s " \
@@ -192,8 +196,9 @@ class scoreboard:
 
 		# If we have more than 50 scores, run query to get scores count
 		if c >= 50:
-			# Count all scores on this map
+			# Count all scores on this map and do not order
 			select = "SELECT COUNT(*) AS count"
+			order = ""
 			limit = "LIMIT 1"
 
 			# Build query, get params and run query
@@ -227,9 +232,9 @@ class scoreboard:
 		cdef str query = "SELECT id FROM scores " \
 						 "WHERE beatmap_md5 = %(md5)s " \
 						 "AND is_relax = %(isRelax)s " \
-						 "AND userid = %(userid)s " \
 						 "AND play_mode = %(mode)s " \
-						 "AND completed = 3"
+						 "AND completed = 3 " \
+						 "AND userid = %(userid)s "
 		# Mods
 		if self.mods > -1:
 			query += " AND scores.mods = %(mods)s"
@@ -257,9 +262,13 @@ class scoreboard:
 
 		# We have a score, run the huge query
 		# Base query
-		query = """SELECT COUNT(*) AS rank FROM scores
-		STRAIGHT_JOIN users ON scores.userid = users.id
-		STRAIGHT_JOIN users_stats ON users.id = users_stats.id
+		if self.country:
+			join_stats = "JOIN users_stats ON users.id = users_stats.id"
+		else:
+			join_stats = ""
+		query = f"""SELECT COUNT(*) AS rank FROM scores
+		JOIN users ON scores.userid = users.id
+		{join_stats}
 		WHERE scores.score >= (
 			SELECT score FROM scores
 			WHERE beatmap_md5 = %(md5)s
@@ -299,6 +308,7 @@ class scoreboard:
 				"isRelax": self.isRelax
 			}
 		)
+		self.personalBestDone = True
 		if result is not None:
 			self.personalBestRank = result["rank"]
 
@@ -316,7 +326,8 @@ class scoreboard:
 			data += "\n"
 		else:
 			# Set personal best score rank
-			self.setPersonalBestRank()	# sets self.personalBestRank with the huge query
+			if not self.personalBestDone:
+				self.setPersonalBestRank()	# sets self.personalBestRank with the huge query
 			self.scores[0].rank = self.personalBestRank
 			data += self.scores[0].getData()
 
