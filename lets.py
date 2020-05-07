@@ -45,6 +45,7 @@ from handlers import redirectHandler
 from handlers import submitModularHandler
 from handlers import uploadScreenshotHandler
 from handlers import commentHandler
+from handlers import seasonalHandler
 from helpers import consoleHelper
 from common import agpl
 from objects import glob
