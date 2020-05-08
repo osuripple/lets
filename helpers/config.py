@@ -9,7 +9,7 @@ class Config:
 			"DB_HOST": config("DB_HOST", default="localhost"),
 			"DB_PORT": config("DB_PORT", default="3306", cast=int),
 			"DB_USERNAME": config("DB_USERNAME", default="ripple"),
-			"DB_PASSWORD": config("DB_PASSWORD"),
+			"DB_PASSWORD": config("DB_PASSWORD", default="changeme"),
 			"DB_NAME": config("DB_NAME", default="ripple"),
 			# "DB_WORKERS": config("DB_WORKERS", default="8", cast=int),
 
