@@ -8,4 +8,4 @@ class handler(requestsManager.asyncRequestHandler):
 	@tornado.web.asynchronous
 	@tornado.gen.engine
 	def asyncGet(self):
-		self.write(requests.get("https://osu.ppy.sh/web/osu-getseasonal.php", timeout=5).text)
+		self.write(requests.get("http://s.ripple.moe/bg.json", timeout=5).text)
