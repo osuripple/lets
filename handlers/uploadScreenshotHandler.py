@@ -1,10 +1,12 @@
 import os
+import io
 import sys
 import traceback
 
 import tornado.gen
 import tornado.web
 from raven.contrib.tornado import SentryMixin
+import botocore.errorfactory
 
 from common.log import logUtils as log
 from common.ripple import userUtils
@@ -50,19 +52,40 @@ class handler(requestsManager.asyncRequestHandler):
 			glob.redis.set("lets:screenshot:{}".format(userID), 1, 60)
 
 			# Get a random screenshot id
+			hasS3 = bool(glob.conf["S3_SCREENSHOTS_BUCKET"]) \
+				and bool(glob.conf["S3_SCREENSHOTS_REGION"]) \
+				and bool(glob.conf["S3_SCREENSHOTS_ENDPOINT_URL"])
 			found = False
 			screenshotID = ""
 			while not found:
 				screenshotID = generalUtils.randomString(8)
-				if not os.path.isfile("{}/{}.jpg".format(glob.conf["SCREENSHOTS_FOLDER"], screenshotID)):
-					found = True
-
-			# Write screenshot file to .data folder
-			with open("{}/{}.jpg".format(glob.conf["SCREENSHOTS_FOLDER"], screenshotID), "wb") as f:
-				f.write(self.request.files["ss"][0]["body"])
+				if hasS3:
+					try:
+						glob.threadScope.s3Screenshots.head_object(
+							Bucket=glob.conf["S3_SCREENSHOTS_BUCKET"],
+							Key=f"{screenshotID}.jpg"
+						)
+						found = False
+					except botocore.errorfactory.ClientError:
+						found = True
+				else:
+					found = not os.path.isfile("{}/{}.jpg".format(glob.conf["SCREENSHOTS_FOLDER"], screenshotID))
 
 			# Output
 			log.info("New screenshot ({})".format(screenshotID))
+
+			# Write screenshot file to .data folder
+			if hasS3:
+				with io.BytesIO(self.request.files["ss"][0]["body"]) as f:
+					glob.threadScope.s3Screenshots.upload_fileobj(
+						f,
+						glob.conf["S3_SCREENSHOTS_BUCKET"],
+						f"{screenshotID}.jpg",
+						ExtraArgs={"ACL": "public-read"}
+					)
+			else:
+				with open("{}/{}.jpg".format(glob.conf["SCREENSHOTS_FOLDER"], screenshotID), "wb") as f:
+					f.write(self.request.files["ss"][0]["body"])
 
 			# Return screenshot link
 			self.write("{}/ss/{}.jpg".format(glob.conf["SERVER_URL"], screenshotID))

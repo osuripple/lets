@@ -30,10 +30,10 @@ def getReadReplayBucketName(scoreID):
     return getWriteReplayBucketName()
 
 
-def clientFactory():
-    return boto3.Session(region_name=objects.glob.conf["S3_REGION"]).client(
+def clientFactory(*, region, endpoint, accessKeyId, secretAccessKey):
+    return boto3.Session(region_name=region).client(
         "s3",
-        endpoint_url=objects.glob.conf["S3_ENDPOINT_URL"],
-        aws_access_key_id=objects.glob.conf["S3_ACCESS_KEY_ID"],
-        aws_secret_access_key=objects.glob.conf["S3_SECRET_ACCESS_KEY"]
+        endpoint_url=endpoint,
+        aws_access_key_id=accessKeyId,
+        aws_secret_access_key=secretAccessKey
     )

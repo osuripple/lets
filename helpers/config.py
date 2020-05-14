@@ -57,6 +57,10 @@ class Config:
 			"S3_ACCESS_KEY_ID": config("S3_ACCESS_KEY_ID", default=""),
 			"S3_SECRET_ACCESS_KEY": config("S3_SECRET_ACCESS_KEY", default=""),
 
+			"S3_SCREENSHOTS_ENDPOINT_URL": config("S3_SCREENSHOTS_ENDPOINT_URL", default="https://s3.fr-par.scw.cloud"),
+			"S3_SCREENSHOTS_REGION": config("S3_SCREENSHOTS_REGION", default="fr-par"),
+			"S3_SCREENSHOTS_BUCKET": config("S3_SCREENSHOTS_BUCKET", default=""),
+
 			"FAILED_REPLAYS_FOLDER": config("FAILED_REPLAYS_FOLDER", default=".data/failed_replays")
 		}
 
