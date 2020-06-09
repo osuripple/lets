@@ -16,7 +16,7 @@ import secret.achievements.utils
 from common.constants import gameModes
 from common.constants import mods
 from common.log import logUtils as log
-from common.ripple import userUtils, fokabot
+from common.ripple import userUtils, fokabot, bancho
 from common.sentry import sentry
 from common.web import requestsManager
 from constants import exceptions, autoLast, scoreOverwrite
@@ -382,7 +382,7 @@ class handler(requestsManager.asyncRequestHandler):
 			if userAutoLast == autoLast.MESSAGE:
 				fokabot.last(userID)
 			elif userAutoLast == autoLast.NOTIFICATION:
-				userUtils.banchoNotification(
+				bancho.notification(
 					userID,
 					f"Your latest score is worth\n{s.pp:.2f} pp{' (personal best!)' if s.completed == 3 else ''}"
 				)
