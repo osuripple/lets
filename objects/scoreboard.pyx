@@ -1,6 +1,6 @@
 from objects import score
 from common.ripple import userUtils
-from constants import rankedStatuses
+from constants import rankedStatuses, displayModes
 from common.constants import mods as modsEnum
 from objects import glob
 
@@ -8,7 +8,8 @@ from objects import glob
 class scoreboard:
 	def __init__(
 		self, username, gameMode, beatmap, setScores = True,
-		country = False, friends = False, mods = -1, relax = False
+		country = False, friends = False, mods = -1, relax = False,
+		display = displayModes.SCORE
 	):
 		"""
 		Initialize a leaderboard object
@@ -30,6 +31,7 @@ class scoreboard:
 		self.friends = friends
 		self.mods = mods
 		self.isRelax = relax
+		self.display = display
 		if setScores:
 			self.setScores()
 
@@ -155,12 +157,10 @@ class scoreboard:
 			friends = ""
 
 		# Sort and limit at the end
-		if self.mods <= -1 or self.mods & modsEnum.AUTOPLAY == 0:
-			# Order by score if we aren't filtering by mods or autoplay mod is disabled
-			order = "ORDER BY score DESC"
-		elif self.mods & modsEnum.AUTOPLAY > 0:
-			# Otherwise, filter by pp
+		if self.display == displayModes.PP:
 			order = "ORDER BY pp DESC"
+		else:
+			order = "ORDER BY score DESC"
 		limit = "LIMIT 50"
 
 		# Build query, get params and run query
@@ -333,6 +333,6 @@ class scoreboard:
 
 		# Output top 50 scores
 		for i in self.scores[1:]:
-			data += i.getData(pp=self.mods > -1 and self.mods & modsEnum.AUTOPLAY > 0)
+			data += i.getData(pp=self.display == displayModes.PP)
 
 		return data

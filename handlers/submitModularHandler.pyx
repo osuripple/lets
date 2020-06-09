@@ -16,10 +16,10 @@ import secret.achievements.utils
 from common.constants import gameModes
 from common.constants import mods
 from common.log import logUtils as log
-from common.ripple import userUtils
+from common.ripple import userUtils, fokabot
 from common.sentry import sentry
 from common.web import requestsManager
-from constants import exceptions
+from constants import exceptions, autoLast
 from constants import rankedStatuses
 from constants.exceptions import ppCalcException
 from helpers import aeshelper
@@ -368,6 +368,16 @@ class handler(requestsManager.asyncRequestHandler):
 			if s.scoreID:
 				glob.redis.publish("api:score_submission", s.scoreID)
 
+			# Auto !last
+			userAutoLast = userUtils.getAutoLast(userID, s.isRelax)
+			if userAutoLast == autoLast.MESSAGE:
+				fokabot.last(userID)
+			elif userAutoLast == autoLast.NOTIFICATION:
+				userUtils.banchoNotification(
+					userID,
+					f"Your latest score is worth\n{s.pp:.2f} pp{' (personal best!)' if s.completed == 3 else ''}"
+				)
+
 			# Re-raise pp calc exception after saving score, cake, replay etc
 			# so Sentry can track it without breaking score submission
 			if midPPCalcException is not None:
@@ -513,12 +523,7 @@ class handler(requestsManager.asyncRequestHandler):
 					)
 					fokaM = None
 					try:
-						requests.post(
-							"{}/api/v0/send_message".format(glob.conf["FOKABOT_API_BASE"].rstrip("/")),
-							headers={"Secret": glob.conf["FOKABOT_API_SECRET"]},
-							json={"message": annmsg, "target": "#announce-relax" if s.isRelax else "#announce"},
-							timeout=3
-						)
+						fokabot.message(annmsg, "#announce-relax" if s.isRelax else "#announce")
 					except requests.Timeout as e:
 						fokaM ="FokaBot #1 timeout."
 					except requests.ConnectionError as e:
