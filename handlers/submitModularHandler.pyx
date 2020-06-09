@@ -19,7 +19,7 @@ from common.log import logUtils as log
 from common.ripple import userUtils, fokabot
 from common.sentry import sentry
 from common.web import requestsManager
-from constants import exceptions, autoLast
+from constants import exceptions, autoLast, scoreOverwrite
 from constants import rankedStatuses
 from constants.exceptions import ppCalcException
 from helpers import aeshelper
@@ -170,7 +170,16 @@ class handler(requestsManager.asyncRequestHandler):
 				midPPCalcException = e
 
 			# Set completed status
-			s.setCompletedStatus()
+			if s.isRelax:
+				# Relax always overwrites score based on PP
+				# Because score on relax is not relevant
+				overwritePolicy = scoreOverwrite.PP
+			else:
+				# Classic, on the other hands, behaves differently
+				# based on user preferences. Each game mode can
+				# have its own score overwrite policy
+				overwritePolicy = userUtils.getScoreOverwrite(userID, s.gameMode)
+			s.setCompletedStatus(overwritePolicy=overwritePolicy)
 
 			if s.completed == -1:
 				# Duplicated score

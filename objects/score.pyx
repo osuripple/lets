@@ -3,6 +3,7 @@ import time
 
 import pp
 from common.constants import gameModes, mods
+from constants import scoreOverwrite
 from objects import beatmap
 from common.log import logUtils as log
 from common.ripple import userUtils
@@ -231,7 +232,7 @@ class score:
 			self.date
 		)
 
-	def setCompletedStatus(self):
+	def setCompletedStatus(self, overwritePolicy=scoreOverwrite.PP):
 		"""
 		Set this score completed status and rankedScoreIncrease
 		"""
@@ -281,12 +282,14 @@ class score:
 					# Compare personal best's score with current score
 					self.rankedScoreIncrease = self.score-personalBest["score"]
 					self.oldPersonalBest = personalBest["id"]
-					if personalBest["pp"] is not None and not math.isclose(self.pp, personalBest["pp"], abs_tol=0.01):
-						# Different pp
-						self.completed = 3 if self.pp > personalBest["pp"] else 2
+					if overwritePolicy == scoreOverwrite.PP and \
+							personalBest["pp"] is not None and \
+							not math.isclose(self.pp, personalBest["pp"], abs_tol=0.01):
+						# User prioritizes pp
+						self.completed = 3 if self.pp >= personalBest["pp"] else 2
 					else:
-						# None pp(?) or same pp, fallback with score
-						self.completed = 3 if self.score > personalBest["score"] else 2
+						# User prioritizes score, or we have no pp, or we have same pp
+						self.completed = 3 if self.score >= personalBest["score"] else 2
 			elif self.quit:
 				log.debug("Quit")
 				self.completed = 0
