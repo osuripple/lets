@@ -378,14 +378,15 @@ class handler(requestsManager.asyncRequestHandler):
 				glob.redis.publish("api:score_submission", s.scoreID)
 
 			# Auto !last
-			userAutoLast = userUtils.getAutoLast(userID, s.isRelax)
-			if userAutoLast == autoLast.MESSAGE:
-				fokabot.last(userID)
-			elif userAutoLast == autoLast.NOTIFICATION:
-				bancho.notification(
-					userID,
-					f"Your latest score is worth\n{s.pp:.2f} pp{' (personal best!)' if s.completed == 3 else ''}"
-				)
+			if s.completed == 3:
+				userAutoLast = userUtils.getAutoLast(userID, s.isRelax)
+				if userAutoLast == autoLast.MESSAGE:
+					fokabot.last(userID)
+				elif userAutoLast == autoLast.NOTIFICATION:
+					bancho.notification(
+						userID,
+						f"Your latest score is worth\n{s.pp:.2f} pp{' (personal best!)' if s.completed == 3 else ''}"
+					)
 
 			# Update leaderboard relax mode
 			if userUtils.isRelaxLeaderboard(userID) != s.isRelax:
