@@ -387,6 +387,11 @@ class handler(requestsManager.asyncRequestHandler):
 					f"Your latest score is worth\n{s.pp:.2f} pp{' (personal best!)' if s.completed == 3 else ''}"
 				)
 
+			# Update leaderboard relax mode
+			if userUtils.isRelaxLeaderboard(userID) != s.isRelax:
+				log.info("Notifying delta about relax switch")
+				glob.redis.publish("peppy:switch_relax", json.dumps({"user_id": userID, "relax": s.isRelax}))
+
 			# Re-raise pp calc exception after saving score, cake, replay etc
 			# so Sentry can track it without breaking score submission
 			if midPPCalcException is not None:
