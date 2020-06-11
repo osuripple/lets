@@ -6,9 +6,14 @@ name: default
 steps:
   - name: submodules
     image: docker:git
+    environment:
+      GIT_USERNAME:
+        from_secret: git_username
+      GIT_PASSWORD:
+        from_secret: git_password
     commands:
-      - git config submodule.secret.url https://${GIT_USERNAME}:${GIT_PASSWORD}@zxq.co/ripple/lets-secret.git
-      - git config submodule.pp/maniapp-osu-tools.url https://${GIT_USERNAME}:${GIT_PASSWORD}@zxq.co/ripple/maniapp-osu-tools.git
+      - git config submodule.secret.url https://$GIT_USERNAME:$GIT_PASSWORD@zxq.co/ripple/lets-secret.git
+      - git config submodule.pp/maniapp-osu-tools.url https://$GIT_USERNAME:$GIT_PASSWORD@zxq.co/ripple/maniapp-osu-tools.git
       - git submodule update --init --recursive
     secrets: [ git_username, git_password ]
 
