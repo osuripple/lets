@@ -14,6 +14,8 @@ steps:
     commands:
       - git config submodule.secret.url https://$GIT_USERNAME:$GIT_PASSWORD@zxq.co/ripple/lets-secret.git
       - git config submodule.pp/maniapp-osu-tools.url https://$GIT_USERNAME:$GIT_PASSWORD@zxq.co/ripple/maniapp-osu-tools.git
+      - git submodule update --init
+      - cd pp/maniapp-osu-tools && git config submodule.osu.url https://$GIT_USERNAME:$GIT_PASSWORD@zxq.co/ripple/maniapp-osu.git && cd ../..
       - git submodule update --init --recursive
     secrets: [ git_username, git_password ]
 
@@ -28,7 +30,7 @@ steps:
       - git submodule update --init --recursive
       - mkdir -p /cache/${DRONE_REPO}/docker
       - git clone https://$GIT_USERNAME:$GIT_PASSWORD@zxq.co/ripple/dockerfiles /dockerfiles
-      - cat VERSION | tr -d '\n' | sed 's/.*/&-slim/' > .tags
+      - cat version | tr -d '\n' | sed 's/.*/&-slim/' > .tags
       - cp /dockerfiles/dockerfiles/lets.Dockerfile Dockerfile
     volumes:
       - name: cache
