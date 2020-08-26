@@ -69,7 +69,7 @@ steps:
   - name: deploy
     image: d.nyodev.xyz/ripple-drone/deploy
     settings:
-      service: hanayo
+      service: lets
       secret:
         from_secret: deploy_secret
       url:
