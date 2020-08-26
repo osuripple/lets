@@ -22,6 +22,11 @@ steps:
       event:
         - push
 
+  - name: create-tags
+    image: busybox
+    commands:
+      - cat version | tr -d '\n' > .tags
+
   - name: prepare-docker
     image: docker:git
     environment:
@@ -33,12 +38,14 @@ steps:
       - git submodule update --init --recursive
       - mkdir -p /cache/${DRONE_REPO}/docker
       - git clone https://$GIT_USERNAME:$GIT_PASSWORD@zxq.co/ripple/dockerfiles /dockerfiles
-      - cat version | tr -d '\n' > .tags
       - cp /dockerfiles/dockerfiles/lets.Dockerfile Dockerfile
     volumes:
       - name: cache
         path: /cache
     secrets: [ git_username, git_password ]
+    when:
+      event:
+        - push
 
   - name: package-docker
     image: plugins/docker
