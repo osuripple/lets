@@ -18,6 +18,9 @@ steps:
       - cd pp/maniapp-osu-tools && git config submodule.osu.url https://$GIT_USERNAME:$GIT_PASSWORD@zxq.co/ripple/maniapp-osu.git && cd ../..
       - git submodule update --init --recursive
     secrets: [ git_username, git_password ]
+    when:
+      event:
+        - push
 
   - name: prepare-docker
     image: docker:git
@@ -52,6 +55,27 @@ steps:
     volumes:
       - name: docker
         path: /var/lib/docker
+    when:
+      event:
+        - push
+
+  - name: deploy
+    image: d.nyodev.xyz/ripple-drone/deploy
+    settings:
+      service: hanayo
+      secret:
+        from_secret: deploy_secret
+      url:
+        from_secret: deploy_url
+    secrets: [deploy_secret, deploy_url]
+    when:
+      event:
+        - promote
+      target:
+        - production
+
+image_pull_secrets:
+  - docker_registry_credentials
 
 volumes:
   - name: cache
