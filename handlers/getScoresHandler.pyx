@@ -43,7 +43,9 @@ class handler(requestsManager.asyncRequestHandler):
 			md5 = self.get_argument("c")
 			fileName = self.get_argument("f")
 			beatmapSetID = self.get_argument("i")
-			gameMode = self.get_argument("m")
+			gameMode = int(self.get_argument("m"))
+			if gameMode < 0 or gameMode > 3:
+				raise exceptions.invalidArgumentsException(self.MODULE_NAME)
 			username = self.get_argument("us")
 			password = self.get_argument("ha")
 			scoreboardType = int(self.get_argument("v"))
@@ -110,7 +112,7 @@ class handler(requestsManager.asyncRequestHandler):
 			self.write(data)
 
 			glob.stats["served_leaderboards"].labels(
-				game_mode=scoreUtils.readableGameMode(gameMode),
+				game_mode=scoreUtils.readableGameMode(int(gameMode)),
 				relax="1" if isRelax else "0",
 			).inc()
 
