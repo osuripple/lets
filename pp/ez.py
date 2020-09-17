@@ -181,5 +181,5 @@ class Ez:
 			try:
 				return self._calculatePP()
 			finally:
-				if self.pp <= 0 and excC is not None:
+				if not self.tillerino and self.pp <= 0 and excC is not None:
 					excC.inc()
