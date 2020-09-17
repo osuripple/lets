@@ -10,11 +10,12 @@ from helpers import replayHelper
 from objects import glob
 from common.sentry import sentry
 
-MODULE_NAME = "get_replay"
 class handler(requestsManager.asyncRequestHandler):
 	"""
 	Handler for osu-getreplay.php
 	"""
+	MODULE_NAME = "get_replay"
+
 	@tornado.web.asynchronous
 	@tornado.gen.engine
 	@sentry.captureTornado
@@ -25,7 +26,7 @@ class handler(requestsManager.asyncRequestHandler):
 
 			# Check arguments
 			if not requestsManager.checkArguments(self.request.arguments, ["c", "u", "h"]):
-				raise exceptions.invalidArgumentsException(MODULE_NAME)
+				raise exceptions.invalidArgumentsException(self.MODULE_NAME)
 
 			# Get arguments
 			username = self.get_argument("u")
@@ -35,11 +36,11 @@ class handler(requestsManager.asyncRequestHandler):
 			# Login check
 			userID = userUtils.getID(username)
 			if userID == 0:
-				raise exceptions.loginFailedException(MODULE_NAME, userID)
+				raise exceptions.loginFailedException(self.MODULE_NAME, userID)
 			if not userUtils.checkLogin(userID, password, ip):
-				raise exceptions.loginFailedException(MODULE_NAME, username)
+				raise exceptions.loginFailedException(self.MODULE_NAME, username)
 			if userUtils.check2FA(userID, ip):
-				raise exceptions.need2FAException(MODULE_NAME, username, ip)
+				raise exceptions.need2FAException(self.MODULE_NAME, username, ip)
 
 			# Get user ID
 			replayData = glob.db.fetch("SELECT scores.*, users.username AS uname FROM scores LEFT JOIN users ON scores.userid = users.id WHERE scores.id = %s", [replayID])
@@ -58,8 +59,12 @@ class handler(requestsManager.asyncRequestHandler):
 			except timeout_decorator.TimeoutError:
 				log.warning("S3 timed out")
 				sentry.captureMessage("S3 timeout while fetching replay.")
+				glob.stats["replay_download_failures"].labels(type="raw_s3_timeout").inc()
 			except FileNotFoundError:
 				log.warning("Replay {} doesn't exist".format(replayID))
+			except:
+				glob.stats["replay_download_failures"].labels(type="raw_other").inc()
+				raise
 			finally:
 				self.write(r)
 		except exceptions.invalidArgumentsException:

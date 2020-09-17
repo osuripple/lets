@@ -1,24 +1,22 @@
 import json
-import sys
-import traceback
 
 import tornado.gen
 import tornado.web
-from raven.contrib.tornado import SentryMixin
 
 from objects import beatmap
 from common.log import logUtils as log
 from common.web import requestsManager
 from constants import exceptions
 from helpers import osuapiHelper
-from objects import glob
 from common.sentry import sentry
 
-MODULE_NAME = "api/cacheBeatmap"
+
 class handler(requestsManager.asyncRequestHandler):
 	"""
 	Handler for /api/v1/cacheBeatmap
 	"""
+	MODULE_NAME = "api/cacheBeatmap"
+
 	@tornado.web.asynchronous
 	@tornado.gen.engine
 	@sentry.captureTornado
@@ -28,7 +26,7 @@ class handler(requestsManager.asyncRequestHandler):
 		try:
 			# Check arguments
 			if not requestsManager.checkArguments(self.request.arguments, ["sid", "refresh"]):
-				raise exceptions.invalidArgumentsException(MODULE_NAME)
+				raise exceptions.invalidArgumentsException(self.MODULE_NAME)
 
 			# Get beatmap set data from osu api
 			beatmapSetID = self.get_argument("sid")

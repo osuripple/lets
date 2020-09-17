@@ -38,6 +38,8 @@ class Config:
 			"DATADOG_API_KEY": config("DATADOG_API_KEY", default=""),
 			"DATADOG_APP_KEY": config("DATADOG_APP_KEY", default=""),
 
+			"PROMETHEUS_PORT": config("PROMETHEUS_PORT", default=""),
+
 			"OSU_API_ENABLE": config("OSU_API_ENABLE", default="1", cast=bool),
 			"OSU_API_URL": config("OSU_API_URL", default="https://osu.ppy.sh"),
 			"OSU_API_KEY": config("OSU_API_KEY", default=""),

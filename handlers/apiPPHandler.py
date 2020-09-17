@@ -12,13 +12,13 @@ from helpers import osuapiHelper
 from pp import ez, cicciobello, wifipiano3
 from common.sentry import sentry
 
-MODULE_NAME = "api/pp"
-
 
 class handler(requestsManager.asyncRequestHandler):
 	"""
 	Handler for /api/v1/pp
 	"""
+	MODULE_NAME = "api/pp"
+
 	@tornado.web.asynchronous
 	@tornado.gen.engine
 	@sentry.captureTornado
@@ -28,18 +28,18 @@ class handler(requestsManager.asyncRequestHandler):
 		try:
 			# Check arguments
 			if not requestsManager.checkArguments(self.request.arguments, ["b"]):
-				raise exceptions.invalidArgumentsException(MODULE_NAME)
+				raise exceptions.invalidArgumentsException(self.MODULE_NAME)
 
 			# Get beatmap ID and make sure it's a valid number
 			beatmapID = self.get_argument("b")
 			if not beatmapID.isdigit():
-				raise exceptions.invalidArgumentsException(MODULE_NAME)
+				raise exceptions.invalidArgumentsException(self.MODULE_NAME)
 
 			# Get mods
 			if "m" in self.request.arguments:
 				modsEnum = self.get_argument("m")
 				if not modsEnum.isdigit():
-					raise exceptions.invalidArgumentsException(MODULE_NAME)
+					raise exceptions.invalidArgumentsException(self.MODULE_NAME)
 				modsEnum = int(modsEnum)
 			else:
 				modsEnum = 0
@@ -48,7 +48,7 @@ class handler(requestsManager.asyncRequestHandler):
 			if "g" in self.request.arguments:
 				gameMode = self.get_argument("g")
 				if not gameMode.isdigit():
-					raise exceptions.invalidArgumentsException(MODULE_NAME)
+					raise exceptions.invalidArgumentsException(self.MODULE_NAME)
 				gameMode = int(gameMode)
 			else:
 				gameMode = 0
@@ -59,7 +59,7 @@ class handler(requestsManager.asyncRequestHandler):
 				try:
 					accuracy = float(accuracy)
 				except ValueError:
-					raise exceptions.invalidArgumentsException(MODULE_NAME)
+					raise exceptions.invalidArgumentsException(self.MODULE_NAME)
 			else:
 				accuracy = None
 
@@ -70,7 +70,7 @@ class handler(requestsManager.asyncRequestHandler):
 			# TODO: Move this to beatmap object
 			osuapiData = osuapiHelper.osuApiRequest("get_beatmaps", "b={}".format(beatmapID))
 			if osuapiData is None or "file_md5" not in osuapiData or "beatmapset_id" not in osuapiData:
-				raise exceptions.invalidBeatmapException(MODULE_NAME)
+				raise exceptions.invalidBeatmapException(self.MODULE_NAME)
 			beatmapMd5 = osuapiData["file_md5"]
 			beatmapSetID = osuapiData["beatmapset_id"]
 
@@ -79,7 +79,7 @@ class handler(requestsManager.asyncRequestHandler):
 
 			# Check beatmap length
 			if bmap.hitLength > 900:
-				raise exceptions.beatmapTooLongException(MODULE_NAME)
+				raise exceptions.beatmapTooLongException(self.MODULE_NAME)
 
 			if gameMode == gameModes.STD and bmap.starsStd == 0:
 				# Mode Specific beatmap, auto detect game mode

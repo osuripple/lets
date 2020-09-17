@@ -5,6 +5,10 @@ import subprocess
 
 from common.log import logUtils as log
 from helpers import mapsHelper
+from objects import glob
+
+latency = glob.stats["pp_calc_latency_seconds"].labels(game_mode="mania", relax="0")
+excC = glob.stats["pp_calc_failures"].labels(game_mode="mania", relax="0")
 
 
 class PianoError(Exception):
@@ -56,6 +60,7 @@ class WiFiPiano:
 		log.debug("wifipiano3 ~> returned pp: {}".format(pp))
 		return pp
 
+	@latency.time()
 	def getPP(self):
 		try:
 			# Reset pp
@@ -70,6 +75,8 @@ class WiFiPiano:
 			log.warning("Invalid beatmap {}".format(self.beatmap.beatmapID))
 			self.pp = 0
 		finally:
+			if self.pp == 0 and excC is not None:
+				excC.inc()
 			return self.pp
 
 	@property

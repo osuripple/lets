@@ -5,18 +5,19 @@ from objects import beatmap
 from objects import scoreboard
 from common.constants import privileges
 from common.log import logUtils as log
-from common.ripple import userUtils
+from common.ripple import userUtils, scoreUtils
 from common.web import requestsManager
 from constants import exceptions
 from objects import glob
 from common.constants import mods
 from common.sentry import sentry
 
-MODULE_NAME = "get_scores"
 class handler(requestsManager.asyncRequestHandler):
 	"""
 	Handler for /web/osu-osz2-getscores.php
 	"""
+	MODULE_NAME = "get_scores"
+
 	@tornado.web.asynchronous
 	@tornado.gen.engine
 	@sentry.captureTornado
@@ -36,7 +37,7 @@ class handler(requestsManager.asyncRequestHandler):
 				self.request.arguments,
 				["c", "f", "i", "m", "us", "v", "vv", "mods"]
 			):
-				raise exceptions.invalidArgumentsException(MODULE_NAME)
+				raise exceptions.invalidArgumentsException(self.MODULE_NAME)
 
 			# GET parameters
 			md5 = self.get_argument("c")
@@ -51,14 +52,14 @@ class handler(requestsManager.asyncRequestHandler):
 			# Login and ban check
 			userID = userUtils.getID(username)
 			if userID == 0:
-				raise exceptions.loginFailedException(MODULE_NAME, userID)
+				raise exceptions.loginFailedException(self.MODULE_NAME, userID)
 			if not userUtils.checkLogin(userID, password, ip):
-				raise exceptions.loginFailedException(MODULE_NAME, username)
+				raise exceptions.loginFailedException(self.MODULE_NAME, username)
 			if userUtils.check2FA(userID, ip):
-				raise exceptions.need2FAException(MODULE_NAME, username, ip)
+				raise exceptions.need2FAException(self.MODULE_NAME, username, ip)
 			# Ban check is pointless here, since there's no message on the client
 			#if userHelper.isBanned(userID) == True:
-			#	raise exceptions.userBannedException(MODULE_NAME, username)
+			#	raise exceptions.userBannedException(self.MODULE_NAME, username)
 
 			# Hax check
 			if "a" in self.request.arguments:
@@ -107,6 +108,11 @@ class handler(requestsManager.asyncRequestHandler):
 			data += bmap.getData(sboard.totalScores, scoreboardVersion)
 			data += sboard.getScoresData()
 			self.write(data)
+
+			glob.stats["served_leaderboards"].labels(
+				game_mode=scoreUtils.readableGameMode(gameMode),
+				relax="1" if isRelax else "0",
+			).inc()
 
 			# Send bancho notification if needed
 			"""

@@ -7,6 +7,8 @@ from common.web import requestsManager
 
 
 class handler(requestsManager.asyncRequestHandler):
+	MODULE_NAME = "default"
+
 	@tornado.web.asynchronous
 	@tornado.gen.engine
 	def asyncGet(self):

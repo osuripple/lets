@@ -2,7 +2,6 @@
 import argparse
 import logging
 import signal
-import threading
 
 from helpers.config import Config
 logging.basicConfig(level=logging.DEBUG if Config()["DEBUG"] else logging.INFO)
@@ -18,10 +17,10 @@ import tornado.web
 import tornado.netutil
 from raven.contrib.tornado import AsyncSentryClient
 import redis
+import prometheus_client
 
 from common.db import dbConnector
 from common.ddog import datadogClient
-from common.log import logUtils as log
 from common.redis import pubSub
 from common.web import schiavo
 from handlers import apiCacheBeatmapHandler, rateHandler, changelogHandler
@@ -104,6 +103,7 @@ def main():
 		formatter_class=argparse.RawTextHelpFormatter
 	)
 	parser.add_argument("-p", "--port", help="Run on a specific port (bypasses config.ini)", required=False)
+	parser.add_argument("-s", "--stats-port", help="Run prometheus on a specific port (bypasses config.ini)", required=False)
 	parser.add_argument("-q", "--quiet", help="Log less stuff during startup", required=False, default=False, action="store_true")
 	cli_args = parser.parse_args()
 
@@ -252,6 +252,17 @@ def main():
 			logging.error("Invalid server port! Please check your config.ini and run the server again")
 			raise
 
+		# Prometheus port
+		try:
+			if cli_args.stats_port:
+				loudLog("Running stats exporter on port {}, bypassing config.ini".format(cli_args.stats_port), logging.warning)
+				glob.statsPort = int(cli_args.stats_port)
+			elif glob.conf["PROMETHEUS_PORT"]:
+				glob.statsPort = int(glob.conf["PROMETHEUS_PORT"])
+		except:
+			logging.error("Invalid stats port! Please check your config.ini and run the server again")
+			raise
+
 		# Make app
 		glob.application = make_app()
 
@@ -302,6 +313,9 @@ def main():
 
 		signal.signal(signal.SIGINT, term)
 		signal.signal(signal.SIGTERM, term)
+		if glob.statsPort is not None:
+			logging.info("Stats exporter listening on 0.0.0.0:{}".format(glob.statsPort))
+			prometheus_client.start_http_server(glob.statsPort, addr="0.0.0.0")
 		glob.application.listen(glob.serverPort, address=glob.conf["HTTP_HOST"])
 		tornado.ioloop.IOLoop.instance().start()
 		logging.debug("IOLoop stopped")

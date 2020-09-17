@@ -8,9 +8,9 @@ from common.web import requestsManager
 from constants import exceptions
 from objects import glob
 
-MODULE_NAME = "comments"
 
 class handler(requestsManager.asyncRequestHandler):
+	MODULE_NAME = "comments"
 	CLIENT_WHO = {"normal": "", "player": "player", "admin": "bat", "donor": "subscriber"}
 
 	@tornado.web.asynchronous
@@ -20,7 +20,7 @@ class handler(requestsManager.asyncRequestHandler):
 		try:
 			# Required arguments check
 			if not requestsManager.checkArguments(self.request.arguments, ("u", "p", "a")):
-				raise exceptions.invalidArgumentsException(MODULE_NAME)
+				raise exceptions.invalidArgumentsException(self.MODULE_NAME)
 
 			# Get arguments
 			username = self.get_argument("u")
@@ -33,13 +33,13 @@ class handler(requestsManager.asyncRequestHandler):
 			# Login and ban check
 			userID = userUtils.getID(username)
 			if userID == 0:
-				raise exceptions.loginFailedException(MODULE_NAME, userID)
+				raise exceptions.loginFailedException(self.MODULE_NAME, userID)
 			if not userUtils.checkLogin(userID, password, ip):
-				raise exceptions.loginFailedException(MODULE_NAME, username)
+				raise exceptions.loginFailedException(self.MODULE_NAME, username)
 			if userUtils.check2FA(userID, ip):
-				raise exceptions.need2FAException(MODULE_NAME, userID, ip)
+				raise exceptions.need2FAException(self.MODULE_NAME, userID, ip)
 			if userUtils.isBanned(userID):
-				raise exceptions.userBannedException(MODULE_NAME, username)
+				raise exceptions.userBannedException(self.MODULE_NAME, username)
 
 			# Action (depends on 'action' parameter, not on HTTP method)
 			if action == "get":
@@ -63,7 +63,7 @@ class handler(requestsManager.asyncRequestHandler):
 			beatmapSetID = int(self.get_argument("s", default=0))
 			scoreID = int(self.get_argument("r", default=0))
 		except ValueError:
-			raise exceptions.invalidArgumentsException(MODULE_NAME)
+			raise exceptions.invalidArgumentsException(self.MODULE_NAME)
 
 		if beatmapID <= 0:
 			return
@@ -112,14 +112,14 @@ class handler(requestsManager.asyncRequestHandler):
 			beatmapSetID = int(self.get_argument("s", default=0))
 			scoreID = int(self.get_argument("r", default=0))
 		except ValueError:
-			raise exceptions.invalidArgumentsException(MODULE_NAME)
+			raise exceptions.invalidArgumentsException(self.MODULE_NAME)
 
 		# Add a comment, removing all illegal characters and trimming after 128 characters
 		comment = self.get_argument("comment").replace("\r", "").replace("\t", "").replace("\n", "")[:128]
 		try:
 			time_ = int(self.get_argument("starttime"))
 		except ValueError:
-			raise exceptions.invalidArgumentsException(MODULE_NAME)
+			raise exceptions.invalidArgumentsException(self.MODULE_NAME)
 
 		# Type of comment
 		who = "normal"

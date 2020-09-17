@@ -16,7 +16,7 @@ import secret.achievements.utils
 from common.constants import gameModes
 from common.constants import mods
 from common.log import logUtils as log
-from common.ripple import userUtils, fokabot, bancho
+from common.ripple import userUtils, fokabot, bancho, scoreUtils
 from common.sentry import sentry
 from common.web import requestsManager
 from constants import exceptions, autoLast, scoreOverwrite
@@ -34,11 +34,12 @@ from objects import scoreboard
 from objects.charts import BeatmapChart, OverallChart
 from secret import butterCake
 
-MODULE_NAME = "submit_modular"
 class handler(requestsManager.asyncRequestHandler):
 	"""
 	Handler for /web/osu-submit-modular.php
 	"""
+	MODULE_NAME = "submit_modular"
+
 	@tornado.web.asynchronous
 	@tornado.gen.engine
 	#@sentry.captureTornado
@@ -57,7 +58,7 @@ class handler(requestsManager.asyncRequestHandler):
 
 			# Check arguments
 			if not requestsManager.checkArguments(self.request.arguments, ["score", "iv", "pass"]):
-				raise exceptions.invalidArgumentsException(MODULE_NAME)
+				raise exceptions.invalidArgumentsException(self.MODULE_NAME)
 
 			# TODO: Maintenance check
 
@@ -70,7 +71,7 @@ class handler(requestsManager.asyncRequestHandler):
 			try:
 				failTime = max(0, int(self.get_argument("ft", 0)))
 			except ValueError:
-				raise exceptions.invalidArgumentsException(MODULE_NAME)
+				raise exceptions.invalidArgumentsException(self.MODULE_NAME)
 			failed = not quit_ and failTime > 0
 
 			# Get bmk and bml (notepad hack check)
@@ -98,7 +99,7 @@ class handler(requestsManager.asyncRequestHandler):
 			userID = userUtils.getID(username)
 			# User exists check
 			if userID == 0:
-				raise exceptions.loginFailedException(MODULE_NAME, userID)
+				raise exceptions.loginFailedException(self.MODULE_NAME, userID)
 
 			# Score submission lock check
 			lock_key = "lets:score_submission_lock:{}:{}:{}".format(userID, scoreData[0], int(scoreData[9]))
@@ -113,20 +114,20 @@ class handler(requestsManager.asyncRequestHandler):
 
 			# Bancho session/username-pass combo check
 			if not userUtils.checkLogin(userID, password, ip):
-				raise exceptions.loginFailedException(MODULE_NAME, username)
+				raise exceptions.loginFailedException(self.MODULE_NAME, username)
 			# 2FA Check
 			if userUtils.check2FA(userID, ip):
-				raise exceptions.need2FAException(MODULE_NAME, userID, ip)
+				raise exceptions.need2FAException(self.MODULE_NAME, userID, ip)
 			# Generic bancho session check
 			#if not userUtils.checkBanchoSession(userID):
 				# TODO: Ban (see except exceptions.noBanchoSessionException block)
-			#	raise exceptions.noBanchoSessionException(MODULE_NAME, username, ip)
+			#	raise exceptions.noBanchoSessionException(self.MODULE_NAME, username, ip)
 			# Ban check
 			if userUtils.isBanned(userID):
-				raise exceptions.userBannedException(MODULE_NAME, username)
+				raise exceptions.userBannedException(self.MODULE_NAME, username)
 			# Data length check
 			if len(scoreData) < 16:
-				raise exceptions.invalidArgumentsException(MODULE_NAME)
+				raise exceptions.invalidArgumentsException(self.MODULE_NAME)
 
 			# Get restricted
 			restricted = userUtils.isRestricted(userID)
@@ -225,6 +226,11 @@ class handler(requestsManager.asyncRequestHandler):
 			# Save score in db
 			s.saveScoreInDB()
 			log.debug("Score id is {}".format(s.scoreID))
+			glob.stats["submitted_scores"].labels(
+				game_mode=scoreUtils.readableGameMode(s.gameMode),
+				relax="1" if s.isRelax else "0",
+				completed=str(s.completed),
+			).inc()
 
 			# Remove lock as we have the score in the database at this point
 			# and we can perform duplicates check through MySQL
@@ -327,6 +333,7 @@ class handler(requestsManager.asyncRequestHandler):
 							m = "Error while uploading replay to S3 ({}). Saving in failed replays folder.".format(e)
 							log.error(m)
 							saveLocally(glob.conf["FAILED_REPLAYS_FOLDER"])
+							glob.stats["replay_upload_failures"].inc()
 							sentry.captureMessage(m)
 						finally:
 							log.debug("Replay upload background job finished. ok = {}".format(ok))
@@ -590,7 +597,7 @@ class handler(requestsManager.asyncRequestHandler):
 		except:
 			# Try except block to avoid more errors
 			try:
-				log.error("Unknown error in {}!\n```{}\n{}```".format(MODULE_NAME, sys.exc_info(), traceback.format_exc()))
+				log.error("Unknown error in {}!\n```{}\n{}```".format(self.MODULE_NAME, sys.exc_info(), traceback.format_exc()))
 				if glob.conf.sentry_enabled:
 					yield tornado.gen.Task(self.captureException, exc_info=True)
 			except:

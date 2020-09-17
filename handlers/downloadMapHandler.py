@@ -4,11 +4,13 @@ import tornado.web
 from common.web import requestsManager
 from common.sentry import sentry
 
-MODULE_NAME = "direct_download"
+
 class handler(requestsManager.asyncRequestHandler):
 	"""
 	Handler for /d/
 	"""
+	MODULE_NAME = "direct_download"
+
 	@tornado.web.asynchronous
 	@tornado.gen.engine
 	@sentry.captureTornado

@@ -7,11 +7,12 @@ from common.web import cheesegull
 from common.log import logUtils as log
 from constants import exceptions
 
-MODULE_NAME = "direct_np"
 class handler(requestsManager.asyncRequestHandler):
 	"""
 	Handler for /web/osu-search-set.php
 	"""
+	MODULE_NAME = "osu_direct_np"
+
 	@tornado.web.asynchronous
 	@tornado.gen.engine
 	@sentry.captureTornado
@@ -26,13 +27,13 @@ class handler(requestsManager.asyncRequestHandler):
 				_id = self.get_argument("s")
 				data = cheesegull.getBeatmapSet(_id)
 			else:
-				raise exceptions.invalidArgumentsException(MODULE_NAME)
+				raise exceptions.invalidArgumentsException(self.MODULE_NAME)
 
 			log.info("Requested osu!direct np: {}/{}".format("b" if "b" in self.request.arguments else "s", _id))
 
 			# Make sure cheesegull returned some valid data
 			if data is None or len(data) == 0:
-				raise exceptions.osuApiFailException(MODULE_NAME)
+				raise exceptions.osuApiFailException(self.MODULE_NAME)
 
 			# Write the response
 			output = cheesegull.toDirectNp(data) + "\r\n"

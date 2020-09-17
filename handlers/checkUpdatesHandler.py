@@ -6,9 +6,12 @@ import tornado.web
 
 from common.log import logUtils as log
 from common.web import requestsManager
+from objects import glob
 
 
 class handler(requestsManager.asyncRequestHandler):
+	MODULE_NAME = "check_updates"
+
 	@tornado.web.asynchronous
 	@tornado.gen.engine
 	def asyncGet(self):

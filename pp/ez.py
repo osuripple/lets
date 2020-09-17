@@ -1,13 +1,37 @@
+import contextlib
+
 import oppai
 
 from common.constants import gameModes, mods
 from common.log import logUtils as log
 from constants import exceptions
 from helpers import mapsHelper
-
+from objects import glob
 
 MODULE_NAME = "ez"
 
+stats = {
+	"latency": {
+		gameModes.STD: {
+			"classic": glob.stats["pp_calc_latency_seconds"].labels(game_mode="std", relax="0"),
+			"relax": glob.stats["pp_calc_latency_seconds"].labels(game_mode="std", relax="1")
+		},
+		gameModes.TAIKO: {
+			"classic": glob.stats["pp_calc_latency_seconds"].labels(game_mode="taiko", relax="0"),
+			"relax": glob.stats["pp_calc_latency_seconds"].labels(game_mode="taiko", relax="1")
+		}
+	},
+	"failures": {
+		gameModes.STD: {
+			"classic": glob.stats["pp_calc_failures"].labels(game_mode="std", relax="0"),
+			"relax": glob.stats["pp_calc_failures"].labels(game_mode="std", relax="1")
+		},
+		gameModes.TAIKO: {
+			"classic": glob.stats["pp_calc_failures"].labels(game_mode="taiko", relax="0"),
+			"relax": glob.stats["pp_calc_failures"].labels(game_mode="taiko", relax="1")
+		}
+	}
+}
 
 class Ez:
 	"""
@@ -62,7 +86,7 @@ class Ez:
 		log.debug("oppai ~> Initialized oppai diffcalc")
 		self.calculatePP()
 
-	def calculatePP(self):
+	def _calculatePP(self):
 		"""
 		Calculate total pp value with oppai and return it
 
@@ -146,3 +170,16 @@ class Ez:
 			if ez is not None:
 				oppai.ezpp_free(ez)
 			log.debug("oppai ~> Shutting down, pp = {}".format(self.pp))
+
+	def calculatePP(self):
+		latencyCtx = contextlib.suppress()
+		excC = None
+		if not self.tillerino and self.score.gameMode in (gameModes.STD, gameModes.TAIKO):
+			latencyCtx = stats["latency"][self.score.gameMode]["classic" if not self.score.isRelax else "relax"].time()
+			excC = stats["failures"][self.score.gameMode]["classic" if not self.score.isRelax else "relax"]
+		with latencyCtx:
+			try:
+				return self._calculatePP()
+			finally:
+				if self.pp <= 0 and excC is not None:
+					excC.inc()

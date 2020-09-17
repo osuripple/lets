@@ -7,11 +7,12 @@ from common.web import cheesegull
 from constants import exceptions
 from common.log import logUtils as log
 
-MODULE_NAME = "direct"
 class handler(requestsManager.asyncRequestHandler):
 	"""
 	Handler for /web/osu-search.php
 	"""
+	MODULE_NAME = "osu_direct_search"
+
 	@tornado.web.asynchronous
 	@tornado.gen.engine
 	@sentry.captureTornado
@@ -35,7 +36,7 @@ class handler(requestsManager.asyncRequestHandler):
 				if query.lower() in ["newest", "top rated", "most played"]:
 					query = ""
 			except ValueError:
-				raise exceptions.invalidArgumentsException(MODULE_NAME)
+				raise exceptions.invalidArgumentsException(self.MODULE_NAME)
 
 			# Get data from cheesegull API
 			log.info("Requested osu!direct search: {}".format(query if query != "" else "index"))

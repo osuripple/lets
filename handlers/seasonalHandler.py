@@ -5,6 +5,8 @@ from common.web import requestsManager
 
 
 class handler(requestsManager.asyncRequestHandler):
+	MODULE_NAME = "seasonal"
+
 	@tornado.web.asynchronous
 	@tornado.gen.engine
 	def asyncGet(self):

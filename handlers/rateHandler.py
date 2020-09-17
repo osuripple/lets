@@ -4,14 +4,13 @@ import tornado.web
 from common.ripple import userUtils
 from common.sentry import sentry
 from common.web import requestsManager
-from common.log import logUtils as log
 from constants import exceptions, rankedStatuses
 from objects import glob
 
-MODULE_NAME = "rate"
-
 
 class handler(requestsManager.asyncRequestHandler):
+	MODULE_NAME = "rate"
+
 	@tornado.web.asynchronous
 	@tornado.gen.engine
 	@sentry.captureTornado
@@ -28,11 +27,11 @@ class handler(requestsManager.asyncRequestHandler):
 			user_id = userUtils.getID(username)
 			checksum = self.get_argument("c").strip()
 			if not user_id:
-				raise exceptions.loginFailedException(MODULE_NAME, user_id)
+				raise exceptions.loginFailedException(self.MODULE_NAME, user_id)
 			if not userUtils.checkLogin(user_id, password, ip):
-				raise exceptions.loginFailedException(MODULE_NAME, username)
+				raise exceptions.loginFailedException(self.MODULE_NAME, username)
 			if userUtils.check2FA(user_id, ip):
-				raise exceptions.need2FAException(MODULE_NAME, user_id, ip)
+				raise exceptions.need2FAException(self.MODULE_NAME, user_id, ip)
 
 			ranked = glob.db.fetch(
 				"SELECT ranked FROM beatmaps WHERE beatmap_md5 = %s LIMIT 1",
@@ -60,7 +59,7 @@ class handler(requestsManager.asyncRequestHandler):
 			try:
 				vote = int(vote)
 			except ValueError:
-				raise exceptions.invalidArgumentsException(MODULE_NAME)
+				raise exceptions.invalidArgumentsException(self.MODULE_NAME)
 			if vote < 0 or vote > 10:
 				output = "out of range"
 				return

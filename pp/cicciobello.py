@@ -1,11 +1,25 @@
+import contextlib
+
 from common.log import logUtils as log
 from common.constants import gameModes, mods
 from constants import exceptions
 from helpers import mapsHelper
+from objects import glob
 
 from pp.catch_the_pp.osu_parser.beatmap import Beatmap as CalcBeatmap
 from pp.catch_the_pp.osu.ctb.difficulty import Difficulty
 from pp.catch_the_pp import ppCalc
+
+stats = {
+    "latency": {
+        "classic":glob.stats["pp_calc_latency_seconds"].labels(game_mode="ctb", relax="0"),
+        "relax": glob.stats["pp_calc_latency_seconds"].labels(game_mode="ctb", relax="1")
+    },
+    "failures": {
+        "classic": glob.stats["pp_calc_failures"].labels(game_mode="ctb", relax="0"),
+        "relax": glob.stats["pp_calc_failures"].labels(game_mode="ctb", relax="1"),
+    }
+}
 
 
 class Cicciobello:
@@ -42,7 +56,7 @@ class Cicciobello:
     def unrelaxMods(self):
         return self.mods & ~(mods.RELAX | mods.RELAX2)
 
-    def calculate_pp(self):
+    def _calculate_pp(self):
         try:
             # Cache beatmap
             mapFile = mapsHelper.cachedMapPath(self.beatmap.beatmapID)
@@ -92,3 +106,17 @@ class Cicciobello:
             raise
         finally:
             log.debug("cicciobello ~> Shutting down, pp = {}".format(self.pp))
+
+    def calculate_pp(self):
+        latencyCtx = contextlib.suppress()
+        excC = None
+        if not self.tillerino:
+            latencyCtx = stats["latency"]["classic" if not self.score.isRelax else "relax"].time()
+            excC = stats["failures"]["classic" if not self.score.isRelax else "relax"]
+
+        with latencyCtx:
+            try:
+                return self._calculate_pp()
+            finally:
+                if self.pp == 0 and excC is not None:
+                    excC.inc()

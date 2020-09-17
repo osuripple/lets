@@ -7,8 +7,9 @@ from constants import exceptions
 from helpers import osuapiHelper
 from common.sentry import sentry
 
-MODULE_NAME = "maps"
 class handler(requestsManager.asyncRequestHandler):
+	MODULE_NAME = "osu_download"
+
 	@tornado.web.asynchronous
 	@tornado.gen.engine
 	@sentry.captureTornado
@@ -16,9 +17,9 @@ class handler(requestsManager.asyncRequestHandler):
 		try:
 			# Check arguments
 			if fileName is None:
-				raise exceptions.invalidArgumentsException(MODULE_NAME)
+				raise exceptions.invalidArgumentsException(self.MODULE_NAME)
 			if fileName == "":
-				raise exceptions.invalidArgumentsException(MODULE_NAME)
+				raise exceptions.invalidArgumentsException(self.MODULE_NAME)
 
 			fileNameShort = fileName[:32]+"..." if len(fileName) > 32 else fileName[:-4]
 			log.info("Requested .osu file {}".format(fileNameShort))
@@ -27,7 +28,7 @@ class handler(requestsManager.asyncRequestHandler):
 			fileContent = osuapiHelper.getOsuFileFromName(fileName)
 			if fileContent is None:
 				# TODO: Sentry capture message here
-				raise exceptions.osuApiFailException(MODULE_NAME)
+				raise exceptions.osuApiFailException(self.MODULE_NAME)
 			self.write(fileContent)
 		except exceptions.invalidArgumentsException:
 			self.set_status(500)

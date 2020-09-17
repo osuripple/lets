@@ -11,7 +11,7 @@ polone() {
 trap polone INT TERM
 
 for ((i=$PORT;i<=$END;i++)); do
-    $PY lets.py -q -p $i &
+    $PY lets.py -q -p $i -s $((PROMETHEUS_START_PORT + i - PORT)) &
     PID="$!"
     echo "Spawned worker [pid:$PID, port:$i]"
     IDX=$((i - PORT))

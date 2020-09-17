@@ -7,12 +7,15 @@ from common.web import requestsManager
 from constants import exceptions
 from helpers import replayHelper
 from common.sentry import sentry
+from objects import glob
 
-MODULE_NAME = "get_full_replay"
+
 class handler(requestsManager.asyncRequestHandler):
 	"""
 	Handler for /replay/
 	"""
+	MODULE_NAME = "get_full_replay"
+
 	@tornado.web.asynchronous
 	@tornado.gen.engine
 	@sentry.captureTornado
@@ -33,3 +36,9 @@ class handler(requestsManager.asyncRequestHandler):
 			sentry.captureMessage("S3 timeout while fetching replay.")
 			self.set_status(500)
 			self.write("S3 Error")
+			glob.stats["replay_download_failures"].labels(type="full_s3_timeout").inc()
+		except:
+			glob.stats["replay_download_failures"].labels(type="full_other").inc()
+			self.set_status(500)
+			self.write("Internal Server Error")
+			raise

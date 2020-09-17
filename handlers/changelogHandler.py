@@ -38,6 +38,8 @@ class ChangelogEntry:
 
 
 class handler(requestsManager.asyncRequestHandler):
+    MODULE_NAME = "changelog"
+
     @tornado.web.asynchronous
     @tornado.gen.engine
     @sentry.captureTornado
