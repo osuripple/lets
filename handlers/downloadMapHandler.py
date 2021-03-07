@@ -1,5 +1,6 @@
 import tornado.gen
 import tornado.web
+import logging
 
 from common.web import requestsManager
 from common.sentry import sentry
@@ -22,7 +23,8 @@ class handler(requestsManager.asyncRequestHandler):
 			bid = int(bid)
 
 			self.set_status(302, "Moved Temporarily")
-			url = "https://bm6.ppy.sh/d/{}{}".format(bid, "?novideo" if noVideo else "")
+			domain = "bm6.ppy.sh" if self.request.host.lower() == "osu.ppy.sh" else "storage.ripple.moe"
+			url = "https://{}/d/{}{}".format(domain, bid, "?novideo" if noVideo else "")
 			self.add_header("Location", url)
 			self.add_header("Cache-Control", "no-cache")
 			self.add_header("Pragma", "no-cache")
