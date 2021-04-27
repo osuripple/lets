@@ -559,7 +559,7 @@ class handler(requestsManager.asyncRequestHandler):
 				self.write(output)
 			else:
 				# No ranking panel, send just "ok"
-				self.write("ok")
+				self.write("error: no")
 
 			# Send username change request to bancho if needed
 			# (key is deleted bancho-side)
