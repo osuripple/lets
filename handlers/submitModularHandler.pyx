@@ -558,8 +558,30 @@ class handler(requestsManager.asyncRequestHandler):
 				# Write message to client
 				self.write(output)
 			else:
-				# No ranking panel, send just "ok"
-				self.write("error: no")
+				# Trigger bancho stats cache update
+				glob.redis.publish("peppy:update_cached_stats", userID)
+				
+				dicts = [
+					collections.OrderedDict([
+						("beatmapId", beatmapInfo.beatmapID),
+						("beatmapSetId", beatmapInfo.beatmapSetID),
+						("beatmapPlaycount", beatmapInfo.playcount + 1),
+						("beatmapPasscount", None),
+						("approvedDate", beatmapInfo.rankingDate)
+					]),
+					BeatmapChartFailed(
+						0,
+						score.score(),
+						beatmapInfo.beatmapID,
+					),
+					OverallChartFailed(userID,0,0,0,"",0,0)
+				]
+	
+				output = "\n".join(zingonify(x) for x in dicts)
+				log.debug(output)
+				
+				# Write message to client
+				self.write(output)
 
 			# Send username change request to bancho if needed
 			# (key is deleted bancho-side)
