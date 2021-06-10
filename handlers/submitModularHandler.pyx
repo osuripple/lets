@@ -575,7 +575,7 @@ class handler(requestsManager.asyncRequestHandler):
 						beatmapInfo.beatmapID,
 					),
 					OverallChartFailed(userID,0,0,0,"",0,0)
-				]
+					]
 	
 				output = "\n".join(zingonify(x) for x in dicts)
 				log.debug(output)
