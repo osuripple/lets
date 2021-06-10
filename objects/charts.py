@@ -54,9 +54,9 @@ class Chart:
 	
 	@staticmethod
 	def before_after_dict_failed(name, values, none_value="0"):
-        
+		
 		i = 0
-        
+		
 		return {
 			f"{name}{'Before' if i == 0 else 'After'}": 0
 		}
