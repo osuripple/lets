@@ -13,5 +13,5 @@ boto3==1.9.169
 timeout-decorator==0.4.1
 pymysql==0.9.3
 pymysql-pool==0.3.3
-oppai==103.3.3
+oppai==103.4.2
 prometheus-client==0.8.0
