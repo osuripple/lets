@@ -51,8 +51,70 @@ class Chart:
         return {
             f"{name}{'Before' if i == 0 else 'After'}": x if x is not None else none_value for i, x in enumerate(values)
         }
+    
+    @staticmethod
+    def before_after_dict_failed(name, values, none_value="0"):
+        
+        i = 0
+        
+        return {
+            f"{name}{'Before' if i == 0 else 'After'}": 0
+        }
+    
+class BeatmapChartFailed(Chart):
+    """
+    Beatmap failed ranking chart
+    """
+    def __init__(self, old_score, new_score,beatmap_id):
 
+        super(BeatmapChartFailed, self).__init__("beatmap", f"https://ripple.moe/b/{beatmap_id}", "Beatmap Ranking")
+        self.rank = 0
+        self.max_combo = (0.00, 0.00)
+        self.accuracy = (0.00, 0.00)
+        self.ranked_score =(0, 0)
+        self.pp = (0, 0)
+        self.score_id = new_score.scoreID
 
+    @property
+    def output_attrs(self):
+        return {
+            **super(BeatmapChartFailed, self).output_attrs,
+            **self.before_after_dict_failed("rank", self.rank, none_value=""),
+            **self.before_after_dict_failed("maxCombo", self.max_combo),
+            **self.before_after_dict_failed("accuracy", self.accuracy),
+            **self.before_after_dict_failed("rankedScore", self.ranked_score),
+            **self.before_after_dict_failed("pp", self.pp),
+            "onlineScoreId": self.score_id
+        }
+
+class OverallChartFailed(Chart):
+
+    def __init__(self, user_id, old_user_stats, new_user_stats, score, new_achievements, old_rank, new_rank):
+
+        super(OverallChartFailed, self).__init__("overall", f"https://ripple.moe/u/{user_id}", "Overall Ranking")
+        self.rank = 0
+        self.ranked_score = (0, 0)
+        self.total_score =  (0, 0)
+        self.max_combo = (0, 0)     # TODO: Implement
+        self.accuracy = (0.00, 0.00)
+        self.pp = 0
+        self.new_achievements = new_achievements
+        self.score_id = -1
+
+    @property
+    def output_attrs(self):
+        return {
+            **super(OverallChartFailed, self).output_attrs,
+            **self.before_after_dict_failed("rank", self.rank),
+            **self.before_after_dict_failed("rankedScore", self.ranked_score),
+            **self.before_after_dict_failed("totalScore", self.total_score),
+            **self.before_after_dict_failed("maxCombo", self.max_combo),
+            **self.before_after_dict_failed("accuracy", self.accuracy),
+            **self.before_after_dict_failed("pp", self.pp),
+            "achievements-new": achievements_response(self.new_achievements),
+            "onlineScoreId": self.score_id
+        }
+ 
 class BeatmapChart(Chart):
     """
     Beatmap ranking chart
