@@ -31,7 +31,7 @@ from objects import beatmap
 from objects import glob
 from objects import score
 from objects import scoreboard
-from objects.charts import BeatmapChart, OverallChart , OverallChartFailed , BeatmapChartFailed
+from objects.charts import BeatmapChart, OverallChart, OverallChartFailed, BeatmapChartFailed
 from secret import butterCake
 
 class handler(requestsManager.asyncRequestHandler):
