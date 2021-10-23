@@ -45,6 +45,7 @@ from handlers import submitModularHandler
 from handlers import uploadScreenshotHandler
 from handlers import commentHandler
 from handlers import seasonalHandler
+from handlers import difficultyRatingHelper
 from helpers import consoleHelper
 from common import agpl
 from objects import glob
@@ -92,6 +93,8 @@ def make_app():
 		(r"/web/osu-addfavourite.php", emptyHandler.handler),
 
 		(r"/loadTest", loadTestHandler.handler),
+
+		(r"/difficulty-rating", difficultyRatingHandler.handler),
 	], default_handler_class=defaultHandler.handler)
 
 
