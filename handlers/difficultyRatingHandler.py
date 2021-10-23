@@ -11,7 +11,7 @@ class handler(requestsManager.asyncRequestHandler):
 	def asyncPost(self):
 		try:
 			headers = {'Content-type': 'application/json'}
-      data = self.request.body
+			data = self.request.body
 			response = requests.post("https://osu.ppy.sh/difficulty-rating", data=data, headers=headers)
 			self.write(response.text)
 		except Exception as e:
