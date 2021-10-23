@@ -45,7 +45,7 @@ from handlers import submitModularHandler
 from handlers import uploadScreenshotHandler
 from handlers import commentHandler
 from handlers import seasonalHandler
-from handlers import difficultyRatingHelper
+from handlers import difficultyRatingHandler
 from helpers import consoleHelper
 from common import agpl
 from objects import glob
