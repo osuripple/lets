@@ -1,19 +1,14 @@
-import requests
-import tornado.gen
-import tornado.web
-
-from common.log import logUtils as log
+from tornado.gen import engine
+from tornado.web import asynchronous
 from common.web import requestsManager
 
 class handler(requestsManager.asyncRequestHandler):
-	@tornado.web.asynchronous
-	@tornado.gen.engine
+	@asynchronous
+	@engine
 	def asyncPost(self):
 		try:
-			headers = {'Content-type': 'application/json'}
-			data = self.request.body
-			response = requests.post("https://osu.ppy.sh/difficulty-rating", data=data, headers=headers)
-			self.write(response.text)
-		except Exception as e:
-			log.error("difficulty-rating failed: {}".format(e))
+			self.set_status(307, "Moved Temporarily")
+			self.add_header("Location", f"https://osu.ppy.sh/difficulty-rating")
+		except ValueError:
+			self.set_status(400)
 			self.write("")
