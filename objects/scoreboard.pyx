@@ -26,7 +26,7 @@ class scoreboard:
 		self.username = username		# username of who's requesting the scoreboard. None if not known
 		self.userID = userUtils.getID(self.username)	# username's userID
 		self.gameMode = gameMode		# requested gameMode
-		self.beatmap = beatmap			# beatmap objecy relative to this leaderboard
+		self.beatmap = beatmap			# beatmap object relative to this leaderboard
 		self.country = country
 		self.friends = friends
 		self.mods = mods
