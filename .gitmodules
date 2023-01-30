@@ -1,13 +1,13 @@
 [submodule "common"]
 	path = common
-	url = https://zxq.co/ripple/ripple-python-common.git
+	url = ../ripple-python-common.git
 [submodule "secret"]
 	path = secret
-	url = git@zxq.co:ripple/lets-secret.git
+	url = ../lets-secret.git
 [submodule "pp/maniapp-osu-tools"]
 	path = pp/maniapp-osu-tools
-	url = git@zxq.co:ripple/maniapp-osu-tools.git
+	url = ../maniapp-osu-tools.git
 	branch = calc-no-replay
 [submodule "pp/catch_the_pp"]
         path = pp/catch_the_pp
-        url = https://zxq.co/ripple/catch-the-pp.git
+        url = ../catch-the-pp.git
