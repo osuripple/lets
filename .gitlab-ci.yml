@@ -1,0 +1,81 @@
+variables:
+  REGISTRY: d.nyodev.xyz
+  SERVICE: lets
+  IMAGE: ripple/$SERVICE
+  PRODUCTION_BRANCH: production
+  GIT_SUBMODULE_STRATEGY: recursive
+
+default:
+  before_script:
+    - TAG=$(cat version | tr -d '\n')
+
+stages:
+  - build-docker
+  - release
+  - deploy
+
+build-docker:
+  stage: build-docker
+  image: docker:20
+  services:
+    - docker:20-dind
+  variables:
+    DOCKERFILE: lets.Dockerfile
+  before_script:
+    # prep steps
+    - docker info
+    - docker login -u $REGISTRY_USER -p $REGISTRY_PASSWORD $REGISTRY
+
+    # fetches the latest image for this branch (not failing if image is not found)
+    - BRANCH_FOR_DOCKER=$(echo $CI_COMMIT_BRANCH | sed s#/#__#g)
+    - docker pull $REGISTRY/$IMAGE:$BRANCH_FOR_DOCKER || true
+
+    # get Dockerfile
+    - apk update
+    - apk add git
+    - git clone https://${GIT_USERNAME:-gitlab-ci-token}:${GIT_PASSWORD:-$CI_JOB_TOKEN}@zxq.co/ripple/dockerfiles.git /dockerfiles
+    - cp /dockerfiles/dockerfiles/$DOCKERFILE $(pwd)/Dockerfile
+  script:
+    - >
+      docker build
+      --pull
+      --build-arg http_proxy=$http_proxy
+      --build-arg https_proxy=$https_proxy
+      --build-arg no_proxy=$no_proxy
+      --build-arg VCS_REF=$CI_COMMIT_SHA
+      --build-arg VCS_URL=$CI_PROJECT_URL
+      --build-arg GIT_COMMIT_SHA=$CI_COMMIT_SHA
+      --cache-from $REGISTRY/$IMAGE:latest
+      --tag $REGISTRY/$IMAGE:$CI_COMMIT_SHA
+      .
+
+    # Tag and push (tags: "git commit hash" and "branch name")
+    - docker tag $REGISTRY/$IMAGE:$CI_COMMIT_SHA $REGISTRY/$IMAGE:$BRANCH_FOR_DOCKER
+    - docker push $REGISTRY/$IMAGE:$CI_COMMIT_SHA
+    - docker push $REGISTRY/$IMAGE:$BRANCH_FOR_DOCKER
+  rules:
+    - if: $CI_COMMIT_BRANCH != $PRODUCTION_BRANCH
+
+release:
+  stage: release
+  needs: ["build-docker"]
+  image: d.nyodev.xyz/ripple/gitlab-ci-tools
+  script:
+    - merge-into-production
+  rules:
+    - if: $CI_COMMIT_BRANCH != $PRODUCTION_BRANCH
+  when: manual
+
+deploy:
+  stage: deploy
+  image: d.nyodev.xyz/ripple/gitlab-ci-tools
+  services:
+    - docker:20-dind
+  variables:
+    DEPLOY_URL: https://deploy.ripple.moe
+    DEPLOY_SECRET: $DEPLOY_SECRET
+  script:
+    - tag-image-with-version $TAG
+    - deploy $SERVICE $TAG
+  rules:
+    - if: $CI_COMMIT_BRANCH == $PRODUCTION_BRANCH
