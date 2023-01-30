@@ -7,7 +7,6 @@
 [submodule "pp/maniapp-osu-tools"]
 	path = pp/maniapp-osu-tools
 	url = ../maniapp-osu-tools.git
-	branch = calc-no-replay
 [submodule "pp/catch_the_pp"]
         path = pp/catch_the_pp
         url = ../catch-the-pp.git
