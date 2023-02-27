@@ -34,6 +34,16 @@ from objects import scoreboard
 from objects.charts import BeatmapChart, OverallChart, OverallChartFailed, BeatmapChartFailed
 from secret import butterCake
 
+def isVerifiedPlayer(userID):
+	# check if the user has a "Verified Player" badge
+	sql = "SELECT user from user_badges WHERE user = %s AND badge = (SELECT id FROM badges WHERE id = 24 AND LOWER(name) = 'verified player' LIMIT 1) LIMIT 1;"
+	# fetchAll to get all entries as a list. len > 0 means there is something
+	users = glob.db.fetchAll(sql, (userID,))
+	if len(users) > 0:
+		return True
+	return False
+
+
 class handler(requestsManager.asyncRequestHandler):
 	"""
 	Handler for /web/osu-submit-modular.php
@@ -189,11 +199,20 @@ class handler(requestsManager.asyncRequestHandler):
 
 			# Restrict obvious cheaters
 			if s.pp >= 800 and s.gameMode == gameModes.STD and not restricted and not s.isRelax:
-				userUtils.restrict(userID)
-				userUtils.appendNotes(userID, "Restricted due to too high pp gain ({}pp)".format(s.pp))
-				log.cm(
-					"**{}** ({}) has been restricted due to too high pp gain **({}pp)**".format(username, userID, s.pp)
-				)
+				# check if the user has a "Verified Player" badge.
+				# Only restrict those without it
+				if not isVerifiedPlayer(userID):
+					userUtils.restrict(userID)
+					userUtils.appendNotes(userID, "Restricted due to too high pp gain ({}pp)".format(s.pp))
+					log.cm(
+						"**{}** ({}) has been restricted due to too high pp gain **({}pp)**".format(username, userID, s.pp)
+					)
+				else:
+					log.cm(
+						"**{}** ({}) would have been restricted due to too high pp gain **({}pp)**, but is verified.".format(
+							username, userID, s.pp
+						)
+					)
 
 			# Check notepad hack
 			if bmk is None and bml is None:
