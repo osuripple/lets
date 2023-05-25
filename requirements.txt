@@ -1,5 +1,5 @@
 -i https://p.nyodev.xyz
-tornado==4.4.2
+tornado==6.3.2
 progressbar2==3.38.0
 raven==5.32.0
 datadog==0.14.0
